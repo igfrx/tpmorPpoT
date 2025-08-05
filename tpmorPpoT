@@ -159,12 +159,6 @@ local function Con()
     return "Opening Console."
 end
 
--- Example commands using the new system
-local function sk()
-    loadstring(game:HttpGet("https://raw.githubusercontent.com/hm5650/InstantKillig/refs/heads/main/Coolkillguithingy", true))()
-    return "Opening 'SKILL' Window."
-end
-
 local function enableFlight()
     loadstring(game:HttpGet("https://raw.githubusercontent.com/OBFhm5650lol/F/refs/heads/main/F", true))()
     return "Opening 'Fly' Window."
@@ -1155,66 +1149,249 @@ AddCommand("reset", {"re"}, "Resets you", re)
 AddCommand("fly", {"f"}, "Opens FLYGUI", function() return enableFlight() end)
 AddCommand("noclip", {"nc"}, "Walk thru walls", ModeOn)
 AddCommand("clip", {"noc"}, "Stops Noclip", ModeOff)
-AddCommand("swordkill", {"skill"}, "Opens SKILL [TOOL]", sk)
-AddCommand("walkfling", {"wf"}, "Starts Touchfling", TFlingOn)
-AddCommand("unwalkfling", {"unwf"}, "Stops Touchfling", TFlingOff)
 
-AddCommandWithPlayer("fling", nil, "Fling a player", function(name)
-    local target = GetPlayer(name)
-    if not target then return "Player not found" end
-    return SkidFling(target)
-end)
+local swordkillActive = false
+local swordkillTarget = "all"
+local swordkillSilent = false
+local originalTool = nil
+local originalToolParent = nil
+local deadPlayers = {} -- Track dead players
 
-AddCommand("flingall", nil, "Fling all players", function()
-    local players = Players:GetPlayers()
-    local count = 0
-    
-    for _, player in ipairs(players) do
-        if player ~= Player then
-            SkidFling(player)
-            count = count + 1
-            task.wait(0.5) -- Small delay between flings
+-- List of tool names that should be considered as swords
+local SWORD_NAMES = {
+    "sword", "foil", "blade", "katana", "saber", "rapier", "cutlass", "dagger",
+    "knife", "longsword", "shortsword", "scimitar", "falchion", "broadsword"
+}
+
+-- Function to check if a tool is a sword
+local function isSword(tool)
+    if not tool then return false end
+    local toolName = tool.Name:lower()
+    for _, name in ipairs(SWORD_NAMES) do
+        if toolName:find(name) then
+            return true
+        end
+    end
+    return false
+end
+
+-- Function to find the first sword in player's inventory
+local function findSword(player)
+    -- Check character first
+    for _, tool in ipairs(player.Character:GetChildren()) do
+        if tool:IsA("Tool") and isSword(tool) then
+            return tool
         end
     end
     
-    return "Flinging "..count.." players"
+    -- Check backpack
+    local backpack = player:FindFirstChild("Backpack")
+    if backpack then
+        for _, tool in ipairs(backpack:GetChildren()) do
+            if tool:IsA("Tool") and isSword(tool) then
+                return tool
+            end
+        end
+    end
+    
+    return nil
+end
+
+-- Function to force equip a tool
+local function forceEquip(tool)
+    if not tool then return end
+    local player = game:GetService("Players").LocalPlayer
+    if not player.Character then return end
+    
+    -- Save current tool if it's different
+    if not originalTool or originalTool ~= tool then
+        originalTool = player.Character:FindFirstChildOfClass("Tool")
+        if originalTool then
+            originalToolParent = originalTool.Parent
+        end
+    end
+    
+    -- Equip the new tool
+    if tool.Parent ~= player.Character then
+        tool.Parent = player.Character
+    end
+    
+    -- Wait for tool to equip
+    task.wait(0.1)
+    return tool
+end
+
+-- Function to restore original tool
+local function restoreOriginalTool()
+    if originalTool and originalToolParent then
+        originalTool.Parent = originalToolParent
+        originalTool = nil
+        originalToolParent = nil
+    end
+end
+
+-- Function to setup death listener for a player
+local function setupDeathListener(player)
+    if deadPlayers[player] then return end
+    
+    local function onCharacterAdded(character)
+        if not swordkillActive then return end
+        
+        local humanoid = character:WaitForChild("Humanoid", 5)
+        if humanoid then
+            deadPlayers[player] = nil -- Player respawned
+            
+            humanoid.Died:Connect(function()
+                deadPlayers[player] = true
+            end)
+        end
+    end
+    
+    if player.Character then
+        local humanoid = player.Character:FindFirstChildOfClass("Humanoid")
+        if humanoid then
+            humanoid.Died:Connect(function()
+                deadPlayers[player] = true
+            end)
+        end
+    end
+    
+    player.CharacterAdded:Connect(onCharacterAdded)
+end
+
+AddCommandWithPlayer("swordkill", "skill", "Kills players using a sword tool [TOOL]", function(name)
+    local Players = game:GetService("Players")
+    local player = Players.LocalPlayer
+    swordkillActive = true
+    deadPlayers = {} -- Reset dead players tracking
+    
+    -- Set target
+    if name == "all" then
+        swordkillTarget = "all"
+        -- Setup death listeners for all players
+        for _, target in ipairs(Players:GetPlayers()) do
+            if target ~= player then
+                setupDeathListener(target)
+            end
+        end
+    else
+        local target = GetPlayer(name)
+        if not target then return "Target not found." end
+        if typeof(target) == "table" then target = target[1] end
+        swordkillTarget = target.Name
+        setupDeathListener(target)
+    end
+    
+    -- Check if we have a sword
+    local sword = findSword(player)
+    if not sword then
+        -- Try to find any tool that might work
+        sword = player.Character:FindFirstChildOfClass("Tool") or 
+               (player.Backpack and player.Backpack:FindFirstChildOfClass("Tool"))
+        if not sword then
+            return "No sword or tool found in your inventory."
+        end
+    end
+    
+    -- Start kill loop
+    coroutine.wrap(function()
+        while swordkillActive do
+            local character = player.Character
+            if not character then task.wait(0.1) continue end
+            
+            -- Find sword (in case it changed)
+            local sword = findSword(player) or character:FindFirstChildOfClass("Tool")
+            if not sword or not sword:FindFirstChild("Handle") then 
+                task.wait(0.1) 
+                continue 
+            end
+            
+            if swordkillTarget == "all" then
+                -- Kill all players except yourself
+                for _, target in ipairs(Players:GetPlayers()) do
+                    if target ~= player and target.Character and not deadPlayers[target] then
+                        local humanoid = target.Character:FindFirstChildOfClass("Humanoid")
+                        if humanoid and humanoid.Health > 0 then
+                            -- Only equip sword when needed
+                            sword = forceEquip(sword)
+                            local handle = sword.Handle
+                            
+                            if not swordkillSilent then
+                                sword:Activate()
+                            end
+                            
+                            -- Touch all parts of the character
+                            for _, part in ipairs(target.Character:GetChildren()) do
+                                if part:IsA("BasePart") then
+                                    firetouchinterest(handle, part, 0)
+                                    firetouchinterest(handle, part, 1)
+                                end
+                            end
+                        end
+                    elseif deadPlayers[target] then
+                        -- Player is dead, unequip sword
+                        if sword.Parent == player.Character then
+                            sword.Parent = player.Backpack
+                        end
+                    end
+                end
+            else
+                -- Kill specific target
+                local target = Players:FindFirstChild(swordkillTarget)
+                if target and target.Character and not deadPlayers[target] then
+                    local humanoid = target.Character:FindFirstChildOfClass("Humanoid")
+                    if humanoid and humanoid.Health > 0 then
+                        -- Equip sword only when attacking
+                        sword = forceEquip(sword)
+                        local handle = sword.Handle
+                        
+                        if not swordkillSilent then
+                            sword:Activate()
+                        end
+                        
+                        -- Touch all parts of the character
+                        for _, part in ipairs(target.Character:GetChildren()) do
+                            if part:IsA("BasePart") then
+                                firetouchinterest(handle, part, 0)
+                                firetouchinterest(handle, part, 1)
+                            end
+                        end
+                    end
+                elseif target and deadPlayers[target] then
+                    -- Target is dead, unequip sword
+                    if sword.Parent == player.Character then
+                        sword.Parent = player.Backpack
+                    end
+                end
+            end
+            
+            task.wait(0.1)
+        end
+        
+        -- Restore original tool when done
+        restoreOriginalTool()
+    end)()
+    
+    return "Sword kill started for " .. (swordkillTarget == "all" and "all players" or swordkillTarget)
 end)
 
+AddCommand("unswordkill ", "unskill", "Stops the sword kill process", function()
+    swordkillActive = false
+    restoreOriginalTool()
+    return "Sword kill stopped"
+end)
 
-AddCommand("Invisible", {"invis"}, "Hides you [R6 RECOMMENDED]", invis2)
-AddCommand("visible", {"vis"}, "Shows you", vis2)
-AddCommand("antibang", {"ab"}, "use when banged", StartAB)
-AddCommand("antifling", {"af"}, "Prevents exploiter flings", Afon)
-AddCommand("unantifling", {"unaf"}, "Vulnerable to exploiter flings", Afoff)
-AddCommand("antiafk", {"aafk"}, "Prevents idle kick", antiafkon)
-AddCommand("unantiafk", {"unaafk"}, "Stops Anti-Afk", antiafkoff)
-AddCommand("invertgrav", {"igrav"}, "Inverts UnachoredParts Gravity", GravOn)
-AddCommand("uninvertgrav", {"unigrav"}, "Stopps Inverting UnachoredParts Gravity", GravOff)
-AddCommand("telekinesis", {"tk"}, "Move any UnachoredParts", tk)
-AddCommand("partmover", {"pm"}, "Move any UnachoredParts like Btools", partm)
-AddCommand("blackhole", {"bh"}, "Sucks UnachoredParts", blackHoleScript)
-AddCommand("unblackhole", {"unbh"}, "stops sucking UnachoredParts", disableBlackHole)
-AddCommand("players", {"plrs"}, "Opens the players list", plrz)
-AddCommand("ragdoll", {"rag"}, "Ragdoll Tool", rag)
-AddCommand("console", {"cn"}, "Opens Console", Con)
-AddCommand("dex", {"explorer"}, "Opens Dex Explorer", DexExe)
-AddCommand("numero", {"nware"}, "really cool gui 8) [18+]", kfw)
-AddCommand("f3x", {"fex"}, "Loads Btools (CLIENT)", fex)
-AddCommand("f3xpanel", {"fexp"}, "Loads Btools panel [TOOL]", fexpanel)
-AddCommand("sit", nil, "Makes you sit", sit)
-AddCommand("cmdlooper", {"cmdl"}, "CmdLooper for HD Admin", cmdl)
-AddCommand("voidprotection", {"voidp"}, "Protects you from the void", VoidProtectionOn)
-AddCommand("unvoidprotection", {"unvoidp"}, "Stops VoidProtection", VoidProtectionOff)
-AddCommand("dropalltools", {"dat"}, "Drops all your tools", DAT)
-AddCommand("unvcban", {"vban"}, "Removes VoiceChat Ban", Vcban)
-AddCommand("toolcontrol", {"tc"}, "Control any tool [Tool]", tc)
+-- Setup player tracking
+game:GetService("Players").PlayerAdded:Connect(function(player)
+    if swordkillActive and swordkillTarget == "all" then
+        setupDeathListener(player)
+    end
+end)
 
--- New commands with aliases
-
-bkillall = false
+local bkillall = false  -- Default to targeting specific players
 local bkillActive = false
 
-AddCommandWithPlayer("bkill", "btoolkill", "Deletes part of the target player using Building Tools [TOOL]", function(name)
+AddCommandWithPlayer("btoolkill", "bkill", "Deletes part of the target player using Building Tools [TOOL]", function(name)
     local Players = game:GetService("Players")
     local player = Players.LocalPlayer
     bkillActive = true
@@ -1303,98 +1480,200 @@ AddCommandWithPlayer("bkill", "btoolkill", "Deletes part of the target player us
         end
     end)()
 
-    return "BKill loop started for all players except yourself"
+    return "BKill loop started for " .. (bkillall and "players" or "target(s)")
 end)
 
-AddCommand("unbkill", "btoolkillstop", "Stops the bkill process", function()
+AddCommand("unbtoolkill", "unbkill", "Stops the bkill process", function()
     bkillActive = false
     return "BKill process stopped"
 end)
 
-AddCommand("bkillall", "btoolkillall", "Toggles killing everyone except yourself", function()
-    bkillall = not bkillall
-    return "BKill all " .. (bkillall and "enabled" or "disabled")
+AddCommand("btoolkillall", "bkillall", "Enable killing everyone except yourself", function()
+    bkillall = true
+    return "BKill all enabled - will target everyone except you"
 end)
+
+AddCommand("unbtoolkillall", "unbkillall", "Disable killing everyone except yourself", function()
+    bkillall = false
+    return "BKill all disabled - will only target specified players"
+end)
+
+AddCommand("walkfling", {"wf"}, "Starts Touchfling", TFlingOn)
+AddCommand("unwalkfling", {"unwf"}, "Stops Touchfling", TFlingOff)
+
+AddCommandWithPlayer("fling", nil, "Fling a player", function(name)
+    local target = GetPlayer(name)
+    if not target then return "Player not found" end
+    return SkidFling(target)
+end)
+
+AddCommand("flingall", nil, "Fling all players", function()
+    local players = Players:GetPlayers()
+    local count = 0
+    
+    for _, player in ipairs(players) do
+        if player ~= Player then
+            SkidFling(player)
+            count = count + 1
+            task.wait(0.5) -- Small delay between flings
+        end
+    end
+    
+    return "Flinging "..count.." players"
+end)
+
+
+AddCommand("Invisible", {"invis"}, "Hides you [R6 RECOMMENDED]", invis2)
+AddCommand("visible", {"vis"}, "Shows you", vis2)
+AddCommand("antibang", {"ab"}, "use when banged", StartAB)
+AddCommand("antifling", {"af"}, "Prevents exploiter flings", Afon)
+AddCommand("unantifling", {"unaf"}, "Vulnerable to exploiter flings", Afoff)
+AddCommand("antiafk", {"aafk"}, "Prevents idle kick", antiafkon)
+AddCommand("unantiafk", {"unaafk"}, "Stops Anti-Afk", antiafkoff)
+AddCommand("invertgrav", {"igrav"}, "Inverts UnachoredParts Gravity", GravOn)
+AddCommand("uninvertgrav", {"unigrav"}, "Stopps Inverting UnachoredParts Gravity", GravOff)
+AddCommand("telekinesis", {"tk"}, "Move any UnachoredParts", tk)
+AddCommand("partmover", {"pm"}, "Move any UnachoredParts like Btools", partm)
+AddCommand("blackhole", {"bh"}, "Sucks UnachoredParts", blackHoleScript)
+AddCommand("unblackhole", {"unbh"}, "stops sucking UnachoredParts", disableBlackHole)
+AddCommand("players", {"plrs"}, "Opens the players list", plrz)
+AddCommand("ragdoll", {"rag"}, "Ragdoll Tool", rag)
+AddCommand("console", {"cn"}, "Opens Console", Con)
+AddCommand("dex", {"explorer"}, "Opens Dex Explorer", DexExe)
+AddCommand("numero", {"nware"}, "really cool gui 8) [18+]", kfw)
+AddCommand("f3x", {"fex"}, "Loads Btools (CLIENT)", fex)
+AddCommand("f3xpanel", {"fexp"}, "Loads Btools panel [TOOL]", fexpanel)
+AddCommand("sit", nil, "Makes you sit", sit)
+AddCommand("cmdlooper", {"cmdl"}, "CmdLooper for HD Admin", cmdl)
+AddCommand("voidprotection", {"voidp"}, "Protects you from the void", VoidProtectionOn)
+AddCommand("unvoidprotection", {"unvoidp"}, "Stops VoidProtection", VoidProtectionOff)
+AddCommand("dropalltools", {"dat"}, "Drops all your tools", DAT)
+AddCommand("unvcban", {"vban"}, "Removes VoiceChat Ban", Vcban)
+AddCommand("toolcontrol", {"tc"}, "Control any tool [Tool]", tc)
+
+-- New commands with aliases
 
 -- Hitbox command
 local originalSizes = {} -- Stores original sizes of HRPs
 local hitboxEnabled = false
+local currentSize = 0
+local connections = {} -- Stores player connections to clean up later
 
-AddCommandWithValue("hitbox", "size", "reach", "Changes other players hitbox size (0 to reset)", function(size)
+-- Function to apply hitbox to a character
+local function applyHitbox(character, player)
+    local hrp = character:FindFirstChild("HumanoidRootPart")
+    if hrp then
+        -- Store original size if we haven't already
+        if not originalSizes[player] then
+            originalSizes[player] = hrp.Size
+        end
+        
+        if hitboxEnabled then
+            -- Apply hitbox size
+            hrp.Size = Vector3.new(currentSize, currentSize, currentSize)
+            hrp.Transparency = 0.9
+            hrp.Material = Enum.Material.Neon
+            hrp.Color = Color3.fromRGB(255, 0, 0) -- Red color for visibility
+        else
+            -- Reset to original size
+            hrp.Size = originalSizes[player]
+            hrp.Transparency = 0
+            hrp.Material = Enum.Material.Plastic
+            hrp.Color = Color3.fromRGB(13, 105, 172) -- Default blue color
+        end
+    end
+end
+
+-- Function to handle character added events
+local function setupPlayer(player)
+    -- Clean up any existing connection for this player
+    if connections[player] then
+        connections[player]:Disconnect()
+        connections[player] = nil
+    end
+    
+    -- Set up new connection
+    connections[player] = player.CharacterAdded:Connect(function(character)
+        applyHitbox(character, player)
+    end)
+    
+    -- Apply to existing character if it exists
+    if player.Character then
+        applyHitbox(player.Character, player)
+    end
+end
+
+-- Cleanup function
+local function cleanup()
+    hitboxEnabled = false
+    currentSize = 0
+    
+    -- Disconnect all player connections
+    for player, connection in pairs(connections) do
+        connection:Disconnect()
+    end
+    connections = {}
+    
+    -- Reset all hitboxes
+    for player, originalSize in pairs(originalSizes) do
+        if player.Character then
+            local hrp = player.Character:FindFirstChild("HumanoidRootPart")
+            if hrp then
+                hrp.Size = originalSize
+                hrp.Transparency = 0
+                hrp.Material = Enum.Material.Plastic
+                hrp.Color = Color3.fromRGB(13, 105, 172)
+            end
+        end
+    end
+end
+
+-- Main command
+AddCommandWithValue("hitbox", "amount", "reach", "Changes other players hitbox size (0 to reset)", function(size)
     local sizeNum = tonumber(size)
     if not sizeNum then return "Invalid size value" end
     
-    hitboxEnabled = sizeNum ~= 0
+    -- Clean up if resetting
+    if sizeNum == 0 then
+        cleanup()
+        return "Hitboxes reset to normal"
+    end
     
+    -- Set new state
+    hitboxEnabled = true
+    currentSize = sizeNum
+    
+    -- Setup existing players
     for _, player in ipairs(game:GetService("Players"):GetPlayers()) do
         if player ~= game.Players.LocalPlayer then
-            local character = player.Character
-            if character then
-                local hrp = character:FindFirstChild("HumanoidRootPart")
-                if hrp then
-                    -- Store original size if we haven't already
-                    if not originalSizes[player] then
-                        originalSizes[player] = hrp.Size
-                    end
-                    
-                    if hitboxEnabled then
-                        -- Apply hitbox size
-                        hrp.Size = Vector3.new(sizeNum, sizeNum, sizeNum)
-                        hrp.Transparency = 0.9
-                        hrp.Material = Enum.Material.Neon
-                        hrp.Color = Color3.fromRGB(255, 0, 0) -- Red color for visibility
-                    else
-                        -- Reset to original size
-                        hrp.Size = originalSizes[player]
-                        hrp.Transparency = 0
-                        hrp.Material = Enum.Material.Plastic
-                        hrp.Color = Color3.fromRGB(13, 105, 172) -- Default blue color
-                    end
-                end
-            end
+            setupPlayer(player)
         end
     end
     
-    -- Handle new players joining
-    if hitboxEnabled then
-        game:GetService("Players").PlayerAdded:Connect(function(player)
-            player.CharacterAdded:Connect(function(character)
-                if hitboxEnabled then
-                    local hrp = character:WaitForChild("HumanoidRootPart")
-                    if not originalSizes[player] then
-                        originalSizes[player] = hrp.Size
-                    end
-                    hrp.Size = Vector3.new(sizeNum, sizeNum, sizeNum)
-                    hrp.Transparency = 0.9
-                    hrp.Material = Enum.Material.Neon
-                    hrp.Color = Color3.fromRGB(255, 0, 0)
-                end
-            end)
+    -- Setup future players
+    if not connections.playerAdded then
+        connections.playerAdded = game:GetService("Players").PlayerAdded:Connect(function(player)
+            setupPlayer(player)
         end)
     end
     
-    return hitboxEnabled and ("Hitbox size set to "..sizeNum) or "Hitboxes reset to normal"
+    return "Hitbox size set to "..sizeNum
 end)
 
--- Reset all hitboxes when script ends or when character respawns
+-- Clean up when local player respawns
 game.Players.LocalPlayer.CharacterAdded:Connect(function()
-    if not hitboxEnabled then return end
-    
-    for _, player in ipairs(game:GetService("Players"):GetPlayers()) do
-        if player ~= game.Players.LocalPlayer then
-            local character = player.Character
-            if character then
-                local hrp = character:FindFirstChild("HumanoidRootPart")
-                if hrp and originalSizes[player] then
-                    hrp.Size = originalSizes[player]
-                    hrp.Transparency = 0
-                    hrp.Material = Enum.Material.Plastic
-                    hrp.Color = Color3.fromRGB(13, 105, 172)
-                end
+    if hitboxEnabled then
+        -- Reapply hitboxes to all players
+        for _, player in ipairs(game:GetService("Players"):GetPlayers()) do
+            if player ~= game.Players.LocalPlayer and player.Character then
+                applyHitbox(player.Character, player)
             end
         end
     end
 end)
+
+-- Clean up when script ends
+game:GetService("Players").LocalPlayer.CharacterRemoving:Connect(cleanup)
 
 AddCommandWithValue("jumppower", "amount", "jp", "Sets your jump power", function(power)
     local num = tonumber(power)
@@ -1495,9 +1774,9 @@ AddCommand("fps", nil, "Toggles FPS counter", function()
         fpsLabel.TextColor3 = Color3.new(0,255,0)
         fpsLabel.BackgroundTransparency = 1
         fpsLabel.Size = UDim2.new(0, 100, 0, 30)  -- Changed height from 300 to 30 (more reasonable for text)
-        fpsLabel.Position = UDim2.new(0, 10, 0, 5)
+        fpsLabel.Position = UDim2.new(0, 12, 0, 44)
         fpsLabel.Font = Enum.Font.Arcade
-        fpsLabel.TextSize = 20
+        fpsLabel.TextSize = 19
         fpsLabel.TextXAlignment = Enum.TextXAlignment.Left
         fpsLabel.Parent = screenGui
 
@@ -1758,27 +2037,44 @@ local function FindPlayer(name)
 end
 
 -- View command
+local currentViewConnection -- to disconnect old connections
+local currentViewedPlayer -- to track which player is being viewed
+
 AddCommandWithPlayer("view", nil, "View a player", function(name)
     local targetPlayer = FindPlayer(name)
     if not targetPlayer then
         return "Player not found"
     end
 
-    local targetCharacter = targetPlayer.Character
-    if not targetCharacter then
-        return "Target player has no character"
+    local function updateView(character)
+        local humanoid = character:FindFirstChildWhichIsA("Humanoid")
+        local hrp = character:FindFirstChild("HumanoidRootPart")
+
+        if humanoid then
+            workspace.CurrentCamera.CameraSubject = humanoid
+        elseif hrp then
+            workspace.CurrentCamera.CameraSubject = hrp
+        end
     end
 
-    local humanoid = targetCharacter:FindFirstChildWhichIsA("Humanoid")
-    local hrp = targetCharacter:FindFirstChild("HumanoidRootPart")
-
-    if humanoid then
-        workspace.CurrentCamera.CameraSubject = humanoid
-    elseif hrp then
-        workspace.CurrentCamera.CameraSubject = hrp
-    else
-        return "Target has no viewable body part"
+    -- Disconnect previous connection if viewing another player
+    if currentViewConnection then
+        currentViewConnection:Disconnect()
+        currentViewConnection = nil
     end
+
+    -- Update view immediately
+    if targetPlayer.Character then
+        updateView(targetPlayer.Character)
+    end
+
+    -- Listen for respawn
+    currentViewConnection = targetPlayer.CharacterAdded:Connect(function(char)
+        task.wait(0.1) -- Wait a bit for Humanoid to load
+        updateView(char)
+    end)
+
+    currentViewedPlayer = targetPlayer
 
     return "Now viewing " .. targetPlayer.Name
 end)
