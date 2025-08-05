@@ -2480,7 +2480,7 @@ local function initializeGUI()
     MainFrame.Parent = ScreenGui
 
     local UICorner = Instance.new("UICorner")
-    UICorner.CornerRadius = UDim.new(0, 21)
+    UICorner.CornerRadius = UDim.new(1, 0)
     UICorner.Parent = MainFrame
 
     local Arrow = Instance.new("TextLabel")
