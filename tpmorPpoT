@@ -1,4 +1,343 @@
-er = LocalPlayer.Character
+-- Services
+local Players = game:GetService("Players")
+local UserInputService = game:GetService("UserInputService")
+local RunService = game:GetService("RunService")
+local TweenService = game:GetService("TweenService")
+local SoundService = game:GetService("SoundService")
+local GuiService = game:GetService("GuiService")
+
+-- Player references
+local localPlayer = Players.LocalPlayer
+local character = localPlayer.Character or localPlayer.CharacterAdded:Wait()
+local humanoid = character:WaitForChild("Humanoid")
+
+-- Sound effects
+local clickSound = Instance.new("Sound")
+clickSound.SoundId = "rbxassetid://177266782" -- Typewriter click
+clickSound.Volume = 0.3
+clickSound.Parent = SoundService
+
+local errorSound = Instance.new("Sound")
+errorSound.SoundId = "rbxassetid://138081500" -- Error beep
+errorSound.Volume = 0.4
+errorSound.Parent = SoundService
+
+local successSound = Instance.new("Sound")
+successSound.SoundId = "rbxassetid://6026984224" -- Success beep
+successSound.Volume = 0.4
+successSound.Parent = SoundService
+
+-- Command System
+local Commands = {}
+local CommandOrder = {} -- This will track the order commands were added
+
+-- Type 1: Simple command with description and function
+function AddCommand(name, aliases, description, func)
+    local commandData = {
+        desc = description,
+        exec = func,
+        hasValue = false,
+        hasPlayer = false,
+        aliases = type(aliases) == "string" and {aliases} or aliases or {}
+    }
+    
+    -- Add main command
+    Commands[name:lower()] = commandData
+    table.insert(CommandOrder, name:lower())
+    
+    -- Add aliases
+    for _, alias in ipairs(commandData.aliases) do
+        Commands[alias:lower()] = commandData
+    end
+end
+
+-- Type 2: Command with value input
+function AddCommandWithValue(name, valueName, aliases, description, func)
+    local commandData = {
+        desc = description,
+        exec = func,
+        hasValue = true,
+        valueName = valueName,
+        hasPlayer = false,
+        aliases = type(aliases) == "string" and {aliases} or aliases or {}
+    }
+    
+    -- Add main command
+    Commands[name:lower()] = commandData
+    table.insert(CommandOrder, name:lower())
+    
+    -- Add aliases
+    for _, alias in ipairs(commandData.aliases) do
+        Commands[alias:lower()] = commandData
+    end
+end
+
+-- Type 3: Command with player input
+function AddCommandWithPlayer(name, aliases, description, func)
+    local commandData = {
+        desc = description,
+        exec = func,
+        hasValue = false,
+        hasPlayer = true,
+        aliases = type(aliases) == "string" and {aliases} or aliases or {}
+    }
+    
+    -- Add main command
+    Commands[name:lower()] = commandData
+    table.insert(CommandOrder, name:lower())
+    
+    -- Add aliases
+    for _, alias in ipairs(commandData.aliases) do
+        Commands[alias:lower()] = commandData
+    end
+end
+
+-- Type 4: Command with both value and player inputs
+function AddCommandWithValueAndPlayer(name, valueName, aliases, description, func)
+    local commandData = {
+        desc = description,
+        exec = func,
+        hasValue = true,
+        valueName = valueName,
+        hasPlayer = true,
+        aliases = type(aliases) == "string" and {aliases} or aliases or {}
+    }
+    
+    -- Add main command
+    Commands[name:lower()] = commandData
+    table.insert(CommandOrder, name:lower())
+    
+    -- Add aliases
+    for _, alias in ipairs(commandData.aliases) do
+        Commands[alias:lower()] = commandData
+    end
+end
+
+-- Alternative simplified command system
+function AddCmd(name, description, ...)
+    local inputs = {...}
+    local hasValue = false
+    local valueName = nil
+    local hasPlayer = false
+    
+    for _, input in ipairs(inputs) do
+        if input == "value" then
+            hasValue = true
+            valueName = "value"
+        elseif input == "player" then
+            hasPlayer = true
+        end
+    end
+    
+    return function(func, aliases)
+        local commandData = {
+            desc = description,
+            exec = func,
+            hasValue = hasValue,
+            valueName = valueName,
+            hasPlayer = hasPlayer,
+            aliases = type(aliases) == "string" and {aliases} or aliases or {}
+        }
+        
+        -- Add main command
+        Commands[name:lower()] = commandData
+        table.insert(CommandOrder, name:lower())
+        
+        -- Add aliases
+        for _, alias in ipairs(commandData.aliases) do
+            Commands[alias:lower()] = commandData
+        end
+    end
+end
+
+AddCommand("cmds", nil, "Shows all commands", function() return "Opening cmds window..." end)
+
+-- command functionality 
+
+local function Con()
+    game:GetService("StarterGui"):SetCore("DevConsoleVisible",true)
+    return "Opening Console."
+end
+
+local function enableFlight()
+    loadstring(game:HttpGet("https://raw.githubusercontent.com/OBFhm5650lol/F/refs/heads/main/F", true))()
+    return "Opening 'Fly' Window."
+end
+
+local function plrz()
+     loadstring(game:HttpGet("https://raw.githubusercontent.com/igfrxx/PlayerSeletcte/refs/heads/main/r", true))()
+     return "Opening 'Players' Window"
+end
+
+local Players = game:GetService("Players")
+local player = Players.LocalPlayer
+local character = player.Character or player.CharacterAdded:Wait()
+
+local function setTransparency(character, transparency)
+    for _, part in pairs(character:GetDescendants()) do
+        if part:IsA("BasePart") or part:IsA("Decal") then
+            part.Transparency = transparency
+        end
+    end
+end
+
+function invis2()
+    local savedpos = character:WaitForChild("HumanoidRootPart").CFrame
+    task.wait()
+    character:MoveTo(Vector3.new(-25.95, 84, 3537.55))
+    task.wait(0.15)
+
+    local seat = Instance.new("Seat")
+    seat.Name = "invischair"
+    seat.Anchored = false
+    seat.CanCollide = false
+    seat.Transparency = 1
+    seat.Position = Vector3.new(-25.95, 84, 3537.55)
+    seat.Parent = workspace
+
+    local weld = Instance.new("Weld", seat)
+    weld.Part0 = seat
+    weld.Part1 = character:FindFirstChild("Torso") or character:FindFirstChild("UpperTorso")
+
+    task.wait()
+    seat.CFrame = savedpos
+    setTransparency(character, 0.5)
+   return "Invisibility: TRUE"
+end
+
+function vis2()
+    local invisChair = workspace:FindFirstChild("invischair")
+    if invisChair then
+        invisChair:Destroy()
+    end
+
+    setTransparency(character, 0)
+   return "Invisibility: FALSE"
+end
+
+local TeleportTime = 0.2
+local AutoStopTime = 5 -- seconds to run before auto-stopping
+
+local Players = game:GetService("Players")
+local RunService = game:GetService("RunService")
+local TweenService = game:GetService("TweenService")
+
+local localPlayer = Players.LocalPlayer
+
+local function resetCameraSubject()
+    if workspace.CurrentCamera and localPlayer.Character then
+        local humanoid = localPlayer.Character:FindFirstChildWhichIsA("Humanoid")
+        if humanoid then
+            workspace.CurrentCamera.CameraSubject = humanoid
+        end
+    end
+end
+
+local function StartAB()
+    local plr = Players.LocalPlayer
+    local character = plr.Character or plr.CharacterAdded:Wait()
+    local hrp = character:WaitForChild("HumanoidRootPart")
+    
+    local lastPos = hrp.Position
+    local targetPos = Vector3.new(0, -80000000, 0)
+    local db = false
+    local velConn
+    
+    -- Clean up any existing Gaze parts
+    for _, gaze in ipairs(workspace:GetDescendants()) do
+        if gaze:IsA("Part") and gaze.Name == "Gaze" and gaze.Transparency == 0.5 then
+            workspace.Gaze:Destroy()
+        end
+    end
+
+    local function createTween(targetCFrame)
+        local tweenInfo = TweenInfo.new(TeleportTime, Enum.EasingStyle.Linear, Enum.EasingDirection.Out)
+        return TweenService:Create(hrp, tweenInfo, {CFrame = targetCFrame})
+    end
+
+    local function startVelLoop()
+        velConn = RunService.Heartbeat:Connect(function()
+            hrp.Velocity = Vector3.new(0, 0, 0)
+        end)
+    end
+
+    local function stopScript()
+        if db then return end
+        db = true
+        
+        -- Stop velocity loop
+        if velConn then
+            velConn:Disconnect()
+            velConn = nil
+        end
+        
+        -- Tween back to original position
+        local tweenBack = createTween(CFrame.new(lastPos))
+        tweenBack:Play()
+        tweenBack.Completed:Wait()
+        
+        -- Reset camera and clean up
+        workspace.FallenPartsDestroyHeight = -500
+        resetCameraSubject()
+        
+        for _, gaze in ipairs(workspace:GetDescendants()) do
+            if gaze:IsA("Part") and gaze.Name == "Gaze" and gaze.Transparency == 0.5 then
+                workspace.Gaze:Destroy()
+            end
+        end
+        
+        db = false
+    end
+
+    if db then return end
+    db = true
+    
+    -- Store original position
+    lastPos = hrp.Position
+    
+    -- First teleport 20 studs underground
+    local undergroundPos = Vector3.new(lastPos.X, lastPos.Y - 20, lastPos.Z)
+    local undergroundTween = createTween(CFrame.new(undergroundPos))
+    undergroundTween:Play()
+    undergroundTween.Completed:Wait()
+    
+    -- Create Gaze part and set camera
+    local part = Instance.new("Part")
+    part.Size = Vector3.new(4, 5, 4)
+    part.Position = lastPos
+    part.Anchored = true
+    part.CanCollide = false
+    part.Transparency = 0.5
+    part.Name = "Gaze"
+    part.Parent = game.Workspace
+    workspace.CurrentCamera.CameraSubject = part
+    
+    workspace.FallenPartsDestroyHeight = 0/0
+    
+    -- Tween to target position
+    local tweenToTarget = createTween(CFrame.new(targetPos))
+    tweenToTarget:Play()
+    tweenToTarget.Completed:Wait()
+    
+    -- Start velocity loop
+    startVelLoop()
+    
+    -- Schedule automatic stop after AutoStopTime seconds
+    delay(AutoStopTime, stopScript)
+    
+    db = false
+    return "AntiBang Executed.."
+end
+
+local LocalPlayer = Players.LocalPlayer
+local TFlingActive = false
+local ModeActive = false
+local TFlingCoroutine
+local ModeConnection
+
+-- TFling functionality
+local function TFling()
+    local character = LocalPlayer.Character
     if not character then return end
 
     local rootPart = character:FindFirstChild("HumanoidRootPart")
