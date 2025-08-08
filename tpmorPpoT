@@ -1492,6 +1492,16 @@ local function kfw()
     return "Numero Loaded.."
 end
 
+local function PCR()
+loadstring(game:HttpGet("https://raw.githubusercontent.com/hm5650/PartController/refs/heads/main/PartController.lua", true))()
+return "PC Loaded.."
+end
+
+local function tornado()
+loadstring(game:HttpGet("https://raw.githubusercontent.com/hm5650/TornadoGuiIg/refs/heads/main/Srrylolitsobfuscatednomorestealing", true))()
+return "TornadoGui Loaded.."
+end
+
 -- Services
 local Players = game:GetService("Players")
 local RunService = game:GetService("RunService")
@@ -1697,6 +1707,52 @@ local function stopdestroyer()
     end
 end
 
+local function AL1()
+
+local Lighting = game:GetService("Lighting")
+local Players = game:GetService("Players")
+for _, v in ipairs(Lighting:GetChildren()) do
+    if v:IsA("PostEffect") then
+        v:Destroy()
+    end
+end
+Lighting.GlobalShadows = false
+Lighting.FogEnd = 9e9
+Lighting.Brightness = 2
+local function handleInstance(instance)
+    if instance:IsA("BasePart") then
+        local player = Players.LocalPlayer
+        if player and player.Character and instance:IsDescendantOf(player.Character) then
+            return
+        end
+        instance.Material = Enum.Material.SmoothPlastic
+        instance.Reflectance = 0
+    end
+    if instance:IsA("Texture") or instance:IsA("Decal") then 
+        local player = Players.LocalPlayer
+        if player and player.Character and instance:IsDescendantOf(player.Character) then
+            return
+        end
+        instance.Transparency = 1
+    end
+end
+for _, instance in ipairs(workspace:GetDescendants()) do
+    handleInstance(instance)
+end
+local terrain = workspace:FindFirstChild("Terrain")
+if terrain then
+    terrain.WaterWaveSize = 0
+    terrain.WaterWaveSpeed = 0
+    terrain.WaterReflectance = 0
+    terrain.WaterTransparency = 1
+end
+settings().Physics.AllowSleep = true
+settings().Rendering.QualityLevel = 1
+settings().Rendering.EagerBulkExecution = false
+settings().Rendering.TextureQuality = Enum.TextureQuality.Low
+
+return "Optimized!.."
+end
 
 AddCommand("reset", {"re"}, "Resets you", re)
 AddCommand("fly", {"f"}, "Opens FLYGUI", function() return enableFlight() end)
@@ -2054,13 +2110,13 @@ end)
 AddCommand("walkfling", {"wf"}, "Starts Touchfling", TFlingOn)
 AddCommand("unwalkfling", {"unwf"}, "Stops Touchfling", TFlingOff)
 
-AddCommandWithPlayer("fling", nil, "Fling a player", function(name)
+AddCommandWithPlayer("kill", {"fling"}, "Fling a player", function(name)
     local target = GetPlayer(name)
     if not target then return "Player not found" end
     return SkidFling(target)
 end)
 
-AddCommand("flingall", nil, "Fling all players", function()
+AddCommand("killall", {"flingall"}, "Fling all players", function()
     local players = Players:GetPlayers()
     local count = 0
     
@@ -2083,6 +2139,7 @@ AddCommand("antifling", {"af"}, "Prevents exploiter flings", Afon)
 AddCommand("unantifling", {"unaf"}, "Vulnerable to exploiter flings", Afoff)
 AddCommand("antiafk", {"aafk"}, "Prevents idle kick", antiafkon)
 AddCommand("unantiafk", {"unaafk"}, "Stops Anti-Afk", antiafkoff)
+AddCommand("antilag", {"al"}, "Reduces Lag", AL1)
 AddCommand("invertgrav", {"igrav"}, "Inverts UnachoredParts Gravity", GravOn)
 AddCommand("uninvertgrav", {"unigrav"}, "Stopps Inverting UnachoredParts Gravity", GravOff)
 AddCommand("telekinesis", {"tk"}, "Move any UnachoredParts", tk)
@@ -2092,6 +2149,8 @@ AddCommand("unblackhole", {"unbh"}, "stops sucking UnachoredParts", disableBlack
 AddCommand("ringparts", "rp", "Loads The Ringparts Gui", R1)
 AddCommand("tpua", nil, "Tps unachored to everyone", StartDestroyer)
 AddCommand("untpua", nil, "Stops Tpua", stopdestroyer)
+AddCommand("tornado", {"td"}, "Loads Tornado Gui", tornado)
+AddCommand("partcontroller", {"pc"}, "Loads Partcontroller", PCR)
 AddCommand("players", {"plrs"}, "Opens the players list", plrz)
 AddCommand("ragdoll", {"rag"}, "Ragdoll Tool", rag)
 AddCommand("console", {"cn"}, "Opens Console", Con)
@@ -3090,7 +3149,7 @@ local function initializeGUI()
 
     local VersionLabel = Instance.new("TextLabel")
     VersionLabel.Name = "VersionLabel"
-    VersionLabel.Text = "V0.3"
+    VersionLabel.Text = "V0.4"
     VersionLabel.TextSize = 10
     VersionLabel.TextTransparency = 0.6
     VersionLabel.TextColor3 = Color3.fromRGB(0, 0, 0)
