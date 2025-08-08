@@ -411,12 +411,14 @@ pcall(function()
 local Players = game:GetService("Players")
 local RunService = game:GetService("RunService")
 local UserInputService = game:GetService("UserInputService")
+local CollectionService = game:GetService("CollectionService")
 local LocalPlayer = Players.LocalPlayer
 local Workspace = game:GetService("Workspace")
 
 local character = LocalPlayer.Character or LocalPlayer.CharacterAdded:Wait()
 local humanoidRootPart = character:WaitForChild("HumanoidRootPart")
 
+-- Create the invisible part for attachments
 local Folder = Instance.new("Folder", Workspace)
 local Part = Instance.new("Part", Folder)
 local Attachment1 = Instance.new("Attachment", Part)
@@ -424,6 +426,127 @@ Part.Anchored = true
 Part.CanCollide = false
 Part.Transparency = 1
 
+-- GUI Implementation
+local G2L = {}
+
+-- Create ScreenGui
+G2L["ScreenGui_1"] = Instance.new("ScreenGui", game:GetService("Players").LocalPlayer:WaitForChild("PlayerGui"))
+G2L["ScreenGui_1"]["ZIndexBehavior"] = Enum.ZIndexBehavior.Sibling
+
+-- Tags
+CollectionService:AddTag(G2L["ScreenGui_1"], "main")
+
+-- Main Frame
+G2L["Frame_2"] = Instance.new("Frame", G2L["ScreenGui_1"])
+G2L["Frame_2"]["BorderSizePixel"] = 0
+G2L["Frame_2"]["BackgroundColor3"] = Color3.fromRGB(0, 0, 0)
+G2L["Frame_2"]["Size"] = UDim2.new(0, 130, 0, 148)
+G2L["Frame_2"]["Position"] = UDim2.new(0, 310, 0, 60)
+G2L["Frame_2"]["BackgroundTransparency"] = 0.2
+
+-- Radius TextBox
+G2L["RaidusTextBox_3"] = Instance.new("TextBox", G2L["Frame_2"])
+G2L["RaidusTextBox_3"]["CursorPosition"] = -1
+G2L["RaidusTextBox_3"]["Name"] = "RaidusTextBox"
+G2L["RaidusTextBox_3"]["BorderSizePixel"] = 0
+G2L["RaidusTextBox_3"]["TextColor3"] = Color3.fromRGB(0, 255, 0)
+G2L["RaidusTextBox_3"]["BackgroundColor3"] = Color3.fromRGB(0, 0, 0)
+G2L["RaidusTextBox_3"]["PlaceholderText"] = "Radius"
+G2L["RaidusTextBox_3"]["Size"] = UDim2.new(0, 100, 0, 20)
+G2L["RaidusTextBox_3"]["Position"] = UDim2.new(0, 16, 0, 62)
+G2L["RaidusTextBox_3"]["Text"] = "70"
+G2L["RaidusTextBox_3"]["TextSize"] = 14
+G2L["RaidusTextBox_3"]["Font"] = Enum.Font.Arcade
+
+
+-- Radius TextBox Corner
+G2L["UICorner_4"] = Instance.new("UICorner", G2L["RaidusTextBox_3"])
+
+-- Main Frame Corner
+G2L["UICorner_5"] = Instance.new("UICorner", G2L["Frame_2"])
+
+-- Frame for minimize button
+G2L["Frame2_6"] = Instance.new("Frame", G2L["Frame_2"])
+G2L["Frame2_6"]["BorderSizePixel"] = 0
+G2L["Frame2_6"]["BackgroundColor3"] = Color3.fromRGB(0, 0, 0)
+G2L["Frame2_6"]["Size"] = UDim2.new(0, 130, 0, 20)
+G2L["Frame2_6"]["Name"] = "Frame2"
+
+-- Frame2 Corner
+G2L["UICorner_7"] = Instance.new("UICorner", G2L["Frame2_6"])
+
+-- Minimize Button
+G2L["MinimiseBtn_8"] = Instance.new("TextButton", G2L["Frame2_6"])
+G2L["MinimiseBtn_8"]["BorderSizePixel"] = 0
+G2L["MinimiseBtn_8"]["TextSize"] = 11
+G2L["MinimiseBtn_8"]["BackgroundColor3"] = Color3.fromRGB(0, 255, 0)
+G2L["MinimiseBtn_8"]["BackgroundTransparency"] = 1
+G2L["MinimiseBtn_8"]["Size"] = UDim2.new(0, 32, 0, 18)
+G2L["MinimiseBtn_8"]["Text"] = "➖"
+G2L["MinimiseBtn_8"]["Name"] = "MinimiseBtn"
+G2L["MinimiseBtn_8"]["Position"] = UDim2.new(0, 98, 0, 0)
+
+-- Attraction Strength TextBox
+G2L["ASTextBox_9"] = Instance.new("TextBox", G2L["Frame_2"])
+G2L["ASTextBox_9"]["CursorPosition"] = -1
+G2L["ASTextBox_9"]["Name"] = "ASTextBox"
+G2L["ASTextBox_9"]["BorderSizePixel"] = 0
+G2L["ASTextBox_9"]["TextColor3"] = Color3.fromRGB(0, 255, 0)
+G2L["ASTextBox_9"]["BackgroundColor3"] = Color3.fromRGB(0, 0, 0)
+G2L["ASTextBox_9"]["PlaceholderText"] = "Speed"
+G2L["ASTextBox_9"]["Size"] = UDim2.new(0, 100, 0, 20)
+G2L["ASTextBox_9"]["Position"] = UDim2.new(0, 16, 0, 86)
+G2L["ASTextBox_9"]["Text"] = "555"
+G2L["ASTextBox_9"]["TextSize"] = 14
+G2L["ASTextBox_9"]["Font"] = Enum.Font.Arcade
+
+
+-- AS TextBox Corner
+G2L["UICorner_a"] = Instance.new("UICorner", G2L["ASTextBox_9"])
+
+-- Toggle Button
+G2L["Toggle_b"] = Instance.new("TextButton", G2L["Frame_2"])
+G2L["Toggle_b"]["BorderSizePixel"] = 0
+G2L["Toggle_b"]["TextColor3"] = Color3.fromRGB(0, 255, 0)
+G2L["Toggle_b"]["BackgroundColor3"] = Color3.fromRGB(0, 0, 0)
+G2L["Toggle_b"]["Size"] = UDim2.new(0, 104, 0, 24)
+G2L["Toggle_b"]["Text"] = "Ringparts: OFF"
+G2L["Toggle_b"]["Name"] = "Toggle"
+G2L["Toggle_b"]["Position"] = UDim2.new(0, 14, 0, 30)
+G2L["Toggle_b"]["TextSize"] = 12
+G2L["Toggle_b"]["Font"] = Enum.Font.Arcade
+
+-- Toggle Button Corner
+G2L["UICorner_c"] = Instance.new("UICorner", G2L["Toggle_b"])
+
+-- Title
+G2L["Title_d"] = Instance.new("TextLabel", G2L["Frame_2"])
+G2L["Title_d"]["BorderSizePixel"] = 0
+G2L["Title_d"]["BackgroundColor3"] = Color3.fromRGB(0, 0, 0)
+G2L["Title_d"]["TextColor3"] = Color3.fromRGB(0, 255, 0)
+G2L["Title_d"]["BackgroundTransparency"] = 1
+G2L["Title_d"]["Size"] = UDim2.new(0, 88, 0, 12)
+G2L["Title_d"]["Text"] = "RingParts"
+G2L["Title_d"]["Name"] = "Title"
+G2L["Title_d"]["Position"] = UDim2.new(0, 20, 0, 4)
+G2L["Title_d"]["TextSize"] = 14
+G2L["Title_d"]["Font"] = Enum.Font.Arcade
+
+
+-- UI Stroke
+G2L["UIStroke_e"] = Instance.new("UIStroke", G2L["Frame_2"])
+G2L["UIStroke_e"]["Transparency"] = 0.1
+G2L["UIStroke_e"]["Thickness"] = 3
+G2L["UIStroke_e"]["Color"] = Color3.fromRGB(0, 0, 0)
+
+-- SuperRing functionality
+local radius = tonumber(G2L["RaidusTextBox_3"].Text) or 70
+local height = 100
+local rotationSpeed = 0.5
+local attractionStrength = tonumber(G2L["ASTextBox_9"].Text) or 555
+local ringPartsEnabled = false
+
+-- Network part control
 if not getgenv().Network then
     getgenv().Network = {
         BaseParts = {},
@@ -482,124 +605,6 @@ local function ForcePart(v)
         AlignPosition.Attachment1 = Attachment1
     end
 end
-
--- New GUI Implementation
-local CollectionService = game:GetService("CollectionService")
-local G2L = {}
-
--- Create ScreenGui
-G2L["ScreenGui_1"] = Instance.new("ScreenGui", game:GetService("Players").LocalPlayer:WaitForChild("PlayerGui"))
-G2L["ScreenGui_1"]["ZIndexBehavior"] = Enum.ZIndexBehavior.Sibling
-
--- Tags
-CollectionService:AddTag(G2L["ScreenGui_1"], "main")
-
--- Main Frame
-G2L["Frame_2"] = Instance.new("Frame", G2L["ScreenGui_1"])
-G2L["Frame_2"]["BorderSizePixel"] = 0
-G2L["Frame_2"]["BackgroundColor3"] = Color3.fromRGB(41, 41, 41)
-G2L["Frame_2"]["Size"] = UDim2.new(0, 130, 0, 148)
-G2L["Frame_2"]["Position"] = UDim2.new(0, 310, 0, 60)
-G2L["Frame_2"]["BackgroundTransparency"] = 0.2
-
--- Radius TextBox
-G2L["RaidusTextBox_3"] = Instance.new("TextBox", G2L["Frame_2"])
-G2L["RaidusTextBox_3"]["CursorPosition"] = -1
-G2L["RaidusTextBox_3"]["Name"] = "RaidusTextBox"
-G2L["RaidusTextBox_3"]["BorderSizePixel"] = 0
-G2L["RaidusTextBox_3"]["TextColor3"] = Color3.fromRGB(0, 255, 0)
-G2L["RaidusTextBox_3"]["BackgroundColor3"] = Color3.fromRGB(0, 0, 0)
-G2L["RaidusTextBox_3"]["PlaceholderText"] = "Radius"
-G2L["RaidusTextBox_3"]["Size"] = UDim2.new(0, 100, 0, 20)
-G2L["RaidusTextBox_3"]["Position"] = UDim2.new(0, 16, 0, 62)
-G2L["RaidusTextBox_3"]["TextSize"] = 14
-G2L["RaidusTextBox_3"]["Font"] = Enum.Font.Arcade
-G2L["RaidusTextBox_3"]["Text"] = "70"
-
--- Radius TextBox Corner
-G2L["UICorner_4"] = Instance.new("UICorner", G2L["RaidusTextBox_3"])
-
--- Main Frame Corner
-G2L["UICorner_5"] = Instance.new("UICorner", G2L["Frame_2"])
-
--- Frame for minimize button
-G2L["Frame2_6"] = Instance.new("Frame", G2L["Frame_2"])
-G2L["Frame2_6"]["BorderSizePixel"] = 0
-G2L["Frame2_6"]["BackgroundColor3"] = Color3.fromRGB(0, 0, 0)
-G2L["Frame2_6"]["Size"] = UDim2.new(0, 130, 0, 20)
-G2L["Frame2_6"]["Name"] = "Frame2"
-
--- Frame2 Corner
-G2L["UICorner_7"] = Instance.new("UICorner", G2L["Frame2_6"])
-
--- Minimize Button
-G2L["MinimiseBtn_8"] = Instance.new("TextButton", G2L["Frame2_6"])
-G2L["MinimiseBtn_8"]["BorderSizePixel"] = 0
-G2L["MinimiseBtn_8"]["TextSize"] = 11
-G2L["MinimiseBtn_8"]["BackgroundColor3"] = Color3.fromRGB(255, 255, 255)
-G2L["MinimiseBtn_8"]["BackgroundTransparency"] = 1
-G2L["MinimiseBtn_8"]["Size"] = UDim2.new(0, 32, 0, 18)
-G2L["MinimiseBtn_8"]["Text"] = "➕"
-G2L["MinimiseBtn_8"]["Name"] = "MinimiseBtn"
-G2L["MinimiseBtn_8"]["Position"] = UDim2.new(0, 98, 0, 0)
-
--- Attraction Strength TextBox
-G2L["ASTextBox_9"] = Instance.new("TextBox", G2L["Frame_2"])
-G2L["ASTextBox_9"]["CursorPosition"] = -1
-G2L["ASTextBox_9"]["Name"] = "ASTextBox"
-G2L["ASTextBox_9"]["BorderSizePixel"] = 0
-G2L["ASTextBox_9"]["TextColor3"] = Color3.fromRGB(0, 255, 0)
-G2L["ASTextBox_9"]["BackgroundColor3"] = Color3.fromRGB(0, 0, 0)
-G2L["ASTextBox_9"]["PlaceholderText"] = "Speed"
-G2L["ASTextBox_9"]["Size"] = UDim2.new(0, 100, 0, 20)
-G2L["ASTextBox_9"]["Position"] = UDim2.new(0, 16, 0, 86)
-G2L["ASTextBox_9"]["TextSize"] = 14
-G2L["ASTextBox_9"]["Font"] = Enum.Font.Arcade
-G2L["ASTextBox_9"]["Text"] = "555"
-
--- AS TextBox Corner
-G2L["UICorner_a"] = Instance.new("UICorner", G2L["ASTextBox_9"])
-
--- Toggle Button
-G2L["Toggle_b"] = Instance.new("TextButton", G2L["Frame_2"])
-G2L["Toggle_b"]["BorderSizePixel"] = 0
-G2L["Toggle_b"]["TextColor3"] = Color3.fromRGB(0, 255, 0)
-G2L["Toggle_b"]["BackgroundColor3"] = Color3.fromRGB(0, 0, 0)
-G2L["Toggle_b"]["Size"] = UDim2.new(0, 104, 0, 24)
-G2L["Toggle_b"]["Text"] = "Ringparts: OFF"
-G2L["Toggle_b"]["Name"] = "Toggle"
-G2L["Toggle_b"]["Position"] = UDim2.new(0, 14, 0, 30)
-G2L["Toggle_b"]["TextSize"] = 12
-G2L["Toggle_b"]["Font"] = Enum.Font.Arcade
-
--- Toggle Button Corner
-G2L["UICorner_c"] = Instance.new("UICorner", G2L["Toggle_b"])
-
--- Title
-G2L["Title_d"] = Instance.new("TextLabel", G2L["Frame_2"])
-G2L["Title_d"]["BorderSizePixel"] = 0
-G2L["Title_d"]["BackgroundColor3"] = Color3.fromRGB(255, 255, 255)
-G2L["Title_d"]["TextColor3"] = Color3.fromRGB(0, 255, 0)
-G2L["Title_d"]["BackgroundTransparency"] = 1
-G2L["Title_d"]["Size"] = UDim2.new(0, 88, 0, 12)
-G2L["Title_d"]["Text"] = "RingParts"
-G2L["Title_d"]["Name"] = "Title"
-G2L["Title_d"]["Position"] = UDim2.new(0, 20, 0, 4)
-G2L["Title_d"]["TextSize"] = 14
-G2L["Title_d"]["Font"] = Enum.Font.Arcade
-
--- UI Stroke
-G2L["UIStroke_e"] = Instance.new("UIStroke", G2L["Frame_2"])
-G2L["UIStroke_e"]["Transparency"] = 0.1
-G2L["UIStroke_e"]["Thickness"] = 3
-G2L["UIStroke_e"]["Color"] = Color3.fromRGB(0, 0, 0)
-
--- Ring Parts Logic
-local radius = tonumber(G2L["RaidusTextBox_3"].Text) or 70
-local height = 100
-local rotationSpeed = 1
-local attractionStrength = tonumber(G2L["ASTextBox_9"].Text) or 555
-local ringPartsEnabled = false
 
 local function RetainPart(Part)
     if Part:IsA("BasePart") and not Part.Anchored and Part:IsDescendantOf(workspace) then
