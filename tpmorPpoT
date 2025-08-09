@@ -169,9 +169,15 @@ local function plrz()
      return "Opening 'Players' Window"
 end
 
+-- invis
 local Players = game:GetService("Players")
 local player = Players.LocalPlayer
 local character = player.Character or player.CharacterAdded:Wait()
+
+-- Track current character and connections
+local currentCharacter = character
+local characterAddedConn = nil
+local humanoidDiedConn = nil
 
 local function setTransparency(character, transparency)
     for _, part in pairs(character:GetDescendants()) do
@@ -181,10 +187,49 @@ local function setTransparency(character, transparency)
     end
 end
 
+local function cleanupInvisibility()
+    local invisChair = workspace:FindFirstChild("invischair")
+    if invisChair then
+        invisChair:Destroy()
+    end
+end
+
+local function setupCharacter(newCharacter)
+    -- Clean up previous character connections
+    if humanoidDiedConn then
+        humanoidDiedConn:Disconnect()
+        humanoidDiedConn = nil
+    end
+    
+    -- Set up new character
+    currentCharacter = newCharacter
+    
+    -- Connect to humanoid's death event
+    local humanoid = newCharacter:WaitForChild("Humanoid")
+    humanoidDiedConn = humanoid.Died:Connect(function()
+        cleanupInvisibility()
+    end)
+end
+
+-- Initial character setup
+setupCharacter(character)
+
+-- Connect to CharacterAdded for respawns
+characterAddedConn = player.CharacterAdded:Connect(function(newCharacter)
+    cleanupInvisibility()
+    setupCharacter(newCharacter)
+end)
+
 function invis2()
-    local savedpos = character:WaitForChild("HumanoidRootPart").CFrame
+    if not currentCharacter or not currentCharacter:FindFirstChild("HumanoidRootPart") then
+        return "Invisibility: FAILED"
+    end
+    
+    cleanupInvisibility() -- Clean up any existing invisibility
+    
+    local savedpos = currentCharacter:WaitForChild("HumanoidRootPart").CFrame
     task.wait()
-    character:MoveTo(Vector3.new(-25.95, 84, 3537.55))
+    currentCharacter:MoveTo(Vector3.new(-25.95, 84, 3537.55))
     task.wait(0.15)
 
     local seat = Instance.new("Seat")
@@ -197,22 +242,33 @@ function invis2()
 
     local weld = Instance.new("Weld", seat)
     weld.Part0 = seat
-    weld.Part1 = character:FindFirstChild("Torso") or character:FindFirstChild("UpperTorso")
+    weld.Part1 = currentCharacter:FindFirstChild("Torso") or currentCharacter:FindFirstChild("UpperTorso")
 
     task.wait()
     seat.CFrame = savedpos
-    setTransparency(character, 0.5)
-   return "Invisibility: TRUE"
+    setTransparency(currentCharacter, 0.5)
+    return "Invisibility: TRUE"
 end
 
 function vis2()
-    local invisChair = workspace:FindFirstChild("invischair")
-    if invisChair then
-        invisChair:Destroy()
+    cleanupInvisibility()
+    
+    if currentCharacter then
+        setTransparency(currentCharacter, 0)
     end
+    
+    return "Invisibility: FALSE"
+end
 
-    setTransparency(character, 0)
-   return "Invisibility: FALSE"
+-- Cleanup when script is destroyed
+local function onDestroy()
+    cleanupInvisibility()
+    if characterAddedConn then
+        characterAddedConn:Disconnect()
+    end
+    if humanoidDiedConn then
+        humanoidDiedConn:Disconnect()
+    end
 end
 
 local TeleportTime = 0.2
@@ -1507,6 +1563,11 @@ loadstring(game:HttpGet("https://raw.githubusercontent.com/hm5650/TornadoGuiIg/r
 return "TornadoGui Loaded.."
 end
 
+local function al11()
+loadstring(game:HttpGet("https://raw.githubusercontent.com/igfrx/tpmorPpoT/refs/heads/main/aL", true))()
+return "Optimized!.."
+end
+
 -- Services
 local Players = game:GetService("Players")
 local RunService = game:GetService("RunService")
@@ -1710,53 +1771,6 @@ local function stopdestroyer()
     else
         return "No active Tpua to stop"
     end
-end
-
-local function AL1()
-
-local Lighting = game:GetService("Lighting")
-local Players = game:GetService("Players")
-for _, v in ipairs(Lighting:GetChildren()) do
-    if v:IsA("PostEffect") then
-        v:Destroy()
-    end
-end
-Lighting.GlobalShadows = false
-Lighting.FogEnd = 9e9
-Lighting.Brightness = 2
-local function handleInstance(instance)
-    if instance:IsA("BasePart") then
-        local player = Players.LocalPlayer
-        if player and player.Character and instance:IsDescendantOf(player.Character) then
-            return
-        end
-        instance.Material = Enum.Material.SmoothPlastic
-        instance.Reflectance = 0
-    end
-    if instance:IsA("Texture") or instance:IsA("Decal") then 
-        local player = Players.LocalPlayer
-        if player and player.Character and instance:IsDescendantOf(player.Character) then
-            return
-        end
-        instance.Transparency = 1
-    end
-end
-for _, instance in ipairs(workspace:GetDescendants()) do
-    handleInstance(instance)
-end
-local terrain = workspace:FindFirstChild("Terrain")
-if terrain then
-    terrain.WaterWaveSize = 0
-    terrain.WaterWaveSpeed = 0
-    terrain.WaterReflectance = 0
-    terrain.WaterTransparency = 1
-end
-settings().Physics.AllowSleep = true
-settings().Rendering.QualityLevel = 1
-settings().Rendering.EagerBulkExecution = false
-settings().Rendering.TextureQuality = Enum.TextureQuality.Low
-
-return "Optimized!.."
 end
 
 AddCommand("reset", {"re"}, "Resets you", re)
@@ -2136,7 +2150,6 @@ AddCommand("killall", {"flingall"}, "Fling all players", function()
     return "Flinging "..count.." players"
 end)
 
-
 AddCommand("Invisible", {"invis"}, "Hides you [R6 RECOMMENDED]", invis2)
 AddCommand("visible", {"vis"}, "Shows you", vis2)
 AddCommand("antibang", {"ab"}, "use when banged", StartAB)
@@ -2144,7 +2157,7 @@ AddCommand("antifling", {"af"}, "Prevents exploiter flings", Afon)
 AddCommand("unantifling", {"unaf"}, "Vulnerable to exploiter flings", Afoff)
 AddCommand("antiafk", {"aafk"}, "Prevents idle kick", antiafkon)
 AddCommand("unantiafk", {"unaafk"}, "Stops Anti-Afk", antiafkoff)
-AddCommand("antilag", {"al"}, "Reduces Lag", AL1)
+AddCommand("antilag", {"al"}, "Reduces Lags", al11)
 AddCommand("invertgrav", {"igrav"}, "Inverts UnachoredParts Gravity", GravOn)
 AddCommand("uninvertgrav", {"unigrav"}, "Stopps Inverting UnachoredParts Gravity", GravOff)
 AddCommand("telekinesis", {"tk"}, "Move any UnachoredParts", tk)
