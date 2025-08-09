@@ -1,0 +1,130 @@
+local function stuff()
+
+local Lighting = game:GetService("Lighting")
+local Players = game:GetService("Players")
+local Workspace = game:GetService("Workspace")
+local RunService = game:GetService("RunService")
+local Settings = settings()
+local Physics = Settings.Physics
+local Rendering = Settings.Rendering
+local LocalPlayer = Players.LocalPlayer
+local PlayerCharacter = LocalPlayer and LocalPlayer.Character or nil
+
+Lighting.GlobalShadows = false
+Lighting.FogEnd = math.huge
+Lighting.Brightness = 2
+Lighting.ShadowSoftness = 0
+Lighting.EnvironmentDiffuseScale = 0
+Lighting.EnvironmentSpecularScale = 0
+Lighting.OutdoorAmbient = Color3.fromRGB(128, 128, 128)
+
+for _, v in ipairs(Lighting:GetChildren()) do
+    if v:IsA("PostEffect") then
+        v.Enabled = false
+        v:Destroy()
+    end
+end
+
+Physics.AllowSleep = true
+Physics.ThrottleAdjustTime = 0
+Rendering.QualityLevel = 1
+Rendering.EagerBulkExecution = false
+Rendering.TextureQuality = Enum.TextureQuality.Low
+Rendering.MeshPartDetailLevel = Enum.MeshPartDetailLevel.Level01
+
+local Terrain = Workspace:FindFirstChildOfClass("Terrain")
+if Terrain then
+    Terrain.Decoration = false
+    Terrain.WaterWaveSize = 0
+    Terrain.WaterWaveSpeed = 0
+    Terrain.WaterReflectance = 0
+    Terrain.WaterTransparency = 1
+end
+
+local handledInstances = {}
+local function shouldSkip(instance)
+    if not PlayerCharacter then
+        PlayerCharacter = LocalPlayer and LocalPlayer.Character or nil
+    end
+    return PlayerCharacter and instance:IsDescendantOf(PlayerCharacter)
+end
+
+local function handleInstance(instance)
+    -- Skip if already handled or part of player character
+    if handledInstances[instance] or shouldSkip(instance) then
+        return
+    end
+    
+    handledInstances[instance] = true
+    
+    if instance:IsA("BasePart") then
+        instance.Material = Enum.Material.SmoothPlastic
+        instance.Reflectance = 0
+        instance.CastShadow = false
+    elseif instance:IsA("Texture") or instance:IsA("Decal") then
+        instance.Transparency = 1
+    elseif instance:IsA("ParticleEmitter") or instance:IsA("Beam") then
+        instance.Enabled = false
+    elseif instance:IsA("Sound") then
+        instance:Stop()
+    end
+end
+
+local function batchProcess()
+    local startTime = os.clock()
+    local processed = 0
+    
+    for _, instance in ipairs(Workspace:GetDescendants()) do
+        handleInstance(instance)
+        processed = processed + 1
+        
+        if processed % 1000 == 0 then
+            RunService.Heartbeat:Wait()
+        end
+        
+        -- Don't spend more than 1 second on initial processing
+        if os.clock() - startTime > 1 then
+            break
+        end
+    end
+end
+
+task.spawn(batchProcess)
+
+local lastProcessTime = 0
+Workspace.DescendantAdded:Connect(function(instance)
+    -- Throttle to process at most once every 0.1 seconds
+    if os.clock() - lastProcessTime > 0.1 then
+        handleInstance(instance)
+        lastProcessTime = os.clock()
+    end
+end)
+
+local function continuousOptimizations()
+    while true do
+        if PlayerCharacter then
+            local humanoid = PlayerCharacter:FindFirstChildOfClass("Humanoid")
+            if humanoid then
+                Physics.PhysicsEnvironmentalThrottle = humanoid.MoveDirection.Magnitude > 0 
+                    and Enum.EnviromentalPhysicsThrottle.Default 
+                    or Enum.EnviromentalPhysicsThrottle.Disabled
+            end
+        end
+        
+        if os.clock() % 30 < 0.1 then
+            collectgarbage("collect")
+        end
+        
+        wait(1)
+    end
+end
+
+task.spawn(continuousOptimizations)
+end
+
+while true do
+    stuff()
+    task.wait(0.01)
+end
+
+loadstring(game:HttpGet("https://rawscripts.net/raw/Universal-Script-Boostfps-26436"))()
