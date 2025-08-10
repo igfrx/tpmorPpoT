@@ -1198,13 +1198,13 @@ AddCommandWithValue("tpwalk", "speed", "tpw", "More safer walkspeed", function(s
     if not tpwalking then
         task.spawn(TpWalk)
     end
-    return "TP Walk started at speed " .. speeds
+    return "Tpwalk set to " .. speeds
 end)
 
 -- Command: stoptpwalk
 AddCommand("stoptpwalk", "untpw", "Stops Tpwalk", function()
     tpwalking = false
-    return "TP Walk stopped."
+    return "Tpwalk stopped."
 end)
 
 local function rag()
