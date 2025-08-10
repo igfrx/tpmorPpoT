@@ -1428,7 +1428,7 @@ local function SkidFling(TargetPlayer)
     until (RootPart.Position - OldPos.p).Magnitude < 25
     
     workspace.FallenPartsDestroyHeight = OldFPDH
-    return "Flinging complete: " .. TargetPlayer.Name
+    return "Flinged " .. TargetPlayer.Name
 end
 
 local function credits()
