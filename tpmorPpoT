@@ -1808,7 +1808,7 @@ local function StartDestroyer()
             game:GetService("NetworkClient"):SetOutgoingKBPSLimit(math.huge)
         end
     end)
-    return "Tpua Started"
+    return "Tpuaall Started"
 end
 
 -- Function to stop the destroyer
@@ -1816,7 +1816,7 @@ local function stopdestroyer()
     if handler then
         handler:Stop()
         handler = nil
-        return "Tpua stopped"
+        return "Tpuaall stopped"
     else
         return "No active Tpua to stop"
     end
@@ -2214,8 +2214,228 @@ AddCommand("partmover", {"pm"}, "Move any UnachoredParts like Btools", partm)
 AddCommand("blackhole", {"bh"}, "Sucks UnachoredParts", blackHoleScript)
 AddCommand("unblackhole", {"unbh"}, "stops sucking UnachoredParts", disableBlackHole)
 AddCommand("ringparts", "rp", "Loads The Ringparts Gui", R1)
-AddCommand("tpua", nil, "Tps unachored to everyone", StartDestroyer)
-AddCommand("untpua", nil, "Stops Tpua", stopdestroyer)
+AddCommand("tpuaall", "bpall", "Tps unachored to everyone", StartDestroyer)
+AddCommand("untpuaall", "unbpall", "Stops Tpuaall", stopdestroyer)
+
+local Players = game:GetService("Players")
+local RunService = game:GetService("RunService")
+local Workspace = game:GetService("Workspace")
+local LocalPlayer = Players.LocalPlayer
+
+-- Blackhole system (only initialized when needed)
+local Blackhole = {
+    Active = false,
+    Attachment1 = nil,
+    Folder = nil,
+    AnchorPart = nil,
+    HumanoidRootPart = nil,
+    Connections = {},
+    ModifiedParts = {}
+}
+
+-- Network optimization (only initialized when needed)
+local Network = {
+    Initialized = false,
+    BaseParts = {},
+    Velocity = Vector3.new(14.46262424, 14.46262424, 14.46262424),
+    HeartbeatConnection = nil
+}
+
+-- Initialize network system (only when first needed)
+local function InitializeNetwork()
+    if not Network.Initialized then
+        Network.HeartbeatConnection = RunService.Heartbeat:Connect(function()
+            sethiddenproperty(LocalPlayer, "SimulationRadius", math.huge)
+            for _, part in pairs(Network.BaseParts) do
+                if part and part:IsDescendantOf(Workspace) then
+                    part.Velocity = Network.Velocity
+                end
+            end
+        end)
+        Network.Initialized = true
+    end
+end
+
+-- Retain part in network system
+local function RetainPart(part)
+    if part:IsA("BasePart") and part:IsDescendantOf(Workspace) then
+        table.insert(Network.BaseParts, part)
+        part.CustomPhysicalProperties = PhysicalProperties.new(0, 0, 0, 0, 0)
+        part.CanCollide = false
+    end
+end
+
+-- Create hidden anchor part (only when needed)
+local function CreateAttachmentPart()
+    if not Blackhole.Folder then
+        Blackhole.Folder = Instance.new("Folder")
+        Blackhole.Folder.Name = "BlackholeSystem"
+        Blackhole.Folder.Parent = Workspace
+        
+        Blackhole.AnchorPart = Instance.new("Part")
+        Blackhole.AnchorPart.Name = "BlackholeAnchor"
+        Blackhole.AnchorPart.Anchored = true
+        Blackhole.AnchorPart.CanCollide = false
+        Blackhole.AnchorPart.Transparency = 1
+        Blackhole.AnchorPart.Size = Vector3.new(0.1, 0.1, 0.1)
+        Blackhole.AnchorPart.Parent = Blackhole.Folder
+        
+        Blackhole.Attachment1 = Instance.new("Attachment")
+        Blackhole.Attachment1.Name = "BlackholeAttachment"
+        Blackhole.Attachment1.Parent = Blackhole.AnchorPart
+    end
+end
+
+-- Clean up a modified part
+local function CleanPart(part)
+    if part and part:IsA("BasePart") then
+        -- Restore original properties if we stored them
+        if Blackhole.ModifiedParts[part] then
+            local original = Blackhole.ModifiedParts[part]
+            part.CanCollide = original.CanCollide
+            part.CustomPhysicalProperties = original.CustomPhysicalProperties
+            Blackhole.ModifiedParts[part] = nil
+        end
+        
+        -- Remove created instances
+        for _, child in ipairs(part:GetChildren()) do
+            if child.Name == "BlackholeAttachment" or 
+               child.Name == "BlackholeAlignPosition" or
+               child.Name == "BlackholeTorque" then
+                child:Destroy()
+            end
+        end
+    end
+end
+
+-- Function to "blackhole" parts
+local function ForcePart(part)
+    if part:IsA("BasePart") and not part.Anchored and
+       not part.Parent:FindFirstChildOfClass("Humanoid") and
+       not part.Parent:FindFirstChild("Head") and
+       part.Name ~= "Handle" then
+        
+        -- Store original properties
+        if not Blackhole.ModifiedParts[part] then
+            Blackhole.ModifiedParts[part] = {
+                CanCollide = part.CanCollide,
+                CustomPhysicalProperties = part.CustomPhysicalProperties
+            }
+        end
+        
+        -- Clean up existing movers
+        for _, child in ipairs(part:GetChildren()) do
+            if child:IsA("BodyMover") or child:IsA("RocketPropulsion") then
+                child:Destroy()
+            end
+        end
+        
+        part.CanCollide = false
+        part.CustomPhysicalProperties = PhysicalProperties.new(0, 0, 0, 0, 0)
+        
+        -- Create new attachment if needed
+        if not part:FindFirstChild("BlackholeAttachment") then
+            local attachment = Instance.new("Attachment")
+            attachment.Name = "BlackholeAttachment"
+            attachment.Parent = part
+            
+            local torque = Instance.new("Torque")
+            torque.Name = "BlackholeTorque"
+            torque.Torque = Vector3.new(100000, 100000, 100000)
+            torque.Attachment0 = attachment
+            torque.Parent = part
+            
+            local alignPos = Instance.new("AlignPosition")
+            alignPos.Name = "BlackholeAlignPosition"
+            alignPos.MaxForce = math.huge
+            alignPos.MaxVelocity = math.huge
+            alignPos.Responsiveness = 200
+            alignPos.Attachment0 = attachment
+            alignPos.Attachment1 = Blackhole.Attachment1
+            alignPos.Parent = part
+        end
+        
+        RetainPart(part)
+    end
+end
+
+-- Start bringing parts
+local function StartBringParts(target)
+    InitializeNetwork()
+    CreateAttachmentPart()
+    
+    local character = target.Character or target.CharacterAdded:Wait()
+    Blackhole.HumanoidRootPart = character:WaitForChild("HumanoidRootPart")
+    
+    Blackhole.Active = true
+    
+    -- Process existing parts
+    for _, part in ipairs(Workspace:GetDescendants()) do
+        ForcePart(part)
+    end
+    
+    -- Connect to new parts
+    Blackhole.Connections.DescendantAdded = Workspace.DescendantAdded:Connect(function(part)
+        if Blackhole.Active then
+            ForcePart(part)
+        end
+    end)
+    
+    -- Update position loop
+    Blackhole.Connections.RenderStepped = RunService.RenderStepped:Connect(function()
+        if Blackhole.Active and Blackhole.Attachment1 and Blackhole.HumanoidRootPart then
+            Blackhole.Attachment1.WorldCFrame = Blackhole.HumanoidRootPart.CFrame
+        end
+    end)
+    
+    return "Started Tpua to " .. target.Name
+end
+
+-- Stop bringing parts (full cleanup)
+local function StopBringParts()
+    Blackhole.Active = false
+    
+    -- Disconnect all connections
+    for name, connection in pairs(Blackhole.Connections) do
+        if connection then
+            connection:Disconnect()
+        end
+        Blackhole.Connections[name] = nil
+    end
+    
+    -- Clean up modified parts
+    for part, _ in pairs(Blackhole.ModifiedParts) do
+        if part then
+            CleanPart(part)
+        end
+    end
+    Blackhole.ModifiedParts = {}
+    
+    -- Clean up anchor system
+    if Blackhole.Folder then
+        Blackhole.Folder:Destroy()
+        Blackhole.Folder = nil
+        Blackhole.Attachment1 = nil
+        Blackhole.AnchorPart = nil
+    end
+    
+    -- Clear network parts (but keep network system running)
+    Network.BaseParts = {}
+    
+    return "Stopped Tpua"
+end
+
+-- Commands
+AddCommandWithPlayer("tpua", "bp", "Tps unanchored to player", function(name)
+    local target = GetPlayer(name)
+    if not target then return "Player not found." end
+    return StartBringParts(target)
+end)
+
+AddCommand("untpua", "unbp", "Stops Tpua", function()
+    return StopBringParts()
+end)
+
 AddCommand("tornado", {"td"}, "Loads Tornado Gui", tornado)
 AddCommand("partcontroller", {"pc"}, "Loads Partcontroller", PCR)
 AddCommand("players", {"plrs"}, "Opens the players list", plrz)
@@ -2719,7 +2939,6 @@ local function FindPlayer(name)
     return nil
 end
 
--- View command
 local currentViewConnection -- to disconnect old connections
 local currentViewedPlayer -- to track which player is being viewed
 
@@ -2728,11 +2947,24 @@ AddCommandWithPlayer("view", nil, "View a player", function(name)
     if not targetPlayer then
         return "Player not found"
     end
-
+    
+    -- If already viewing this player, stop viewing
+    if currentViewedPlayer == targetPlayer then
+        if currentViewConnection then
+            currentViewConnection:Disconnect()
+            currentViewConnection = nil
+        end
+        currentViewedPlayer = nil
+        return "Stopped viewing " .. targetPlayer.Name
+    end
+    
     local function updateView(character)
-        local humanoid = character:FindFirstChildWhichIsA("Humanoid")
+        if not character then return end
+        
+        -- Wait for humanoid to exist (might not be immediately available after respawn)
+        local humanoid = character:WaitForChild("Humanoid", 5) or character:FindFirstChildWhichIsA("Humanoid")
         local hrp = character:FindFirstChild("HumanoidRootPart")
-
+        
         if humanoid then
             workspace.CurrentCamera.CameraSubject = humanoid
         elseif hrp then
@@ -2747,40 +2979,37 @@ AddCommandWithPlayer("view", nil, "View a player", function(name)
     end
 
     -- Update view immediately
-    if targetPlayer.Character then
-        updateView(targetPlayer.Character)
-    end
+    updateView(targetPlayer.Character)
 
     -- Listen for respawn
-    currentViewConnection = targetPlayer.CharacterAdded:Connect(function(char)
-        task.wait(0.1) -- Wait a bit for Humanoid to load
-        updateView(char)
-    end)
-
+    currentViewConnection = targetPlayer.CharacterAdded:Connect(updateView)
     currentViewedPlayer = targetPlayer
 
     return "Now viewing " .. targetPlayer.Name
 end)
 
--- Unview command (returns camera to self)
 AddCommand("unview", nil, "Reset camera back to yourself", function()
-    local character = game.Players.LocalPlayer.Character
-    if not character then
-        return "Your character not found"
+    -- Clear viewing state
+    if currentViewConnection then
+        currentViewConnection:Disconnect()
+        currentViewConnection = nil
     end
-
-    local humanoid = character:FindFirstChildWhichIsA("Humanoid")
+    currentViewedPlayer = nil
+    
+    -- Reset to local player
+    local player = game.Players.LocalPlayer
+    local character = player.Character or player.CharacterAdded:Wait()
+    
+    local humanoid = character:WaitForChild("Humanoid", 5) or character:FindFirstChildWhichIsA("Humanoid")
     local hrp = character:FindFirstChild("HumanoidRootPart")
 
     if humanoid then
         workspace.CurrentCamera.CameraSubject = humanoid
     elseif hrp then
         workspace.CurrentCamera.CameraSubject = hrp
-    else
-        return "You have no viewable body part"
     end
 
-    return "Stopped Viewing"
+    return "Stopped viewing"
 end)
 
 -- Fixed version of the goto command
@@ -3216,7 +3445,7 @@ local function initializeGUI()
 
     local VersionLabel = Instance.new("TextLabel")
     VersionLabel.Name = "VersionLabel"
-    VersionLabel.Text = "V0.4"
+    VersionLabel.Text = "V0.5"
     VersionLabel.TextSize = 10
     VersionLabel.TextTransparency = 0.6
     VersionLabel.TextColor3 = Color3.fromRGB(0, 0, 0)
