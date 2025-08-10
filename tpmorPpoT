@@ -1143,7 +1143,7 @@ local function tk()
 end
 
 -- Commands with aliases
-AddCommandWithValue("walkspeed", "speed", "ws", "Sets your speed", function(speed)
+AddCommandWithValue("walkspeed", "speed", "ws", "Sets your speed (16 Default)", function(speed)
     speed = tonumber(speed)
     if not speed then
         return "Invalid speed value."
@@ -1156,6 +1156,55 @@ AddCommandWithValue("walkspeed", "speed", "ws", "Sets your speed", function(spee
     else
         return "Character or Humanoid not found."
     end
+end)
+
+local Players = game:GetService("Players")
+local RunService = game:GetService("RunService")
+local LocalPlayer = Players.LocalPlayer
+
+local tpwalking = false
+local speeds = 1
+
+local function getCharacter()
+    local character = LocalPlayer.Character or LocalPlayer.CharacterAdded:Wait()
+    local humanoid = character:WaitForChild("Humanoid")
+    local rootPart = character:WaitForChild("HumanoidRootPart")
+    return character, humanoid, rootPart
+end
+
+local function TpWalk()
+    local _, humanoid, rootPart = getCharacter()
+    tpwalking = true
+
+    while tpwalking and humanoid.Health > 0 do
+        RunService.Heartbeat:Wait()
+
+        if humanoid.MoveDirection.Magnitude > 0 then
+            local moveDirection = humanoid.MoveDirection.Unit
+            local velocity = moveDirection * speeds * 50
+            rootPart.CFrame = rootPart.CFrame + velocity * RunService.Heartbeat:Wait()
+        end
+    end
+end
+
+-- Command: tpwalk <value>
+AddCommandWithValue("tpwalk", "speed", "tpw", "More safer walkspeed", function(speed)
+    speed = tonumber(speed)
+    if not speed then
+        return "Invalid speed value."
+    end
+
+    speeds = speed
+    if not tpwalking then
+        task.spawn(TpWalk)
+    end
+    return "TP Walk started at speed " .. speeds
+end)
+
+-- Command: stoptpwalk
+AddCommand("stoptpwalk", "untpw", "Stops Tpwalk", function()
+    tpwalking = false
+    return "TP Walk stopped."
 end)
 
 local function rag()
