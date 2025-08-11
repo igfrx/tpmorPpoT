@@ -165,8 +165,333 @@ local function enableFlight()
 end
 
 local function plrz()
-     loadstring(game:HttpGet("https://raw.githubusercontent.com/igfrxx/PlayerSeletcte/refs/heads/main/r", true))()
-     return "Opening 'Players' Window"
+
+local Players = game:GetService("Players")
+local TweenService = game:GetService("TweenService")
+local UserInputService = game:GetService("UserInputService")
+local player = game.Players.LocalPlayer
+
+local gui = Instance.new("ScreenGui")
+gui.Name = "PlayerListGUI"
+gui.ResetOnSpawn = false
+gui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
+
+-- Main Frame
+local mainFrame = Instance.new("Frame")
+mainFrame.Name = "MainFrame"
+mainFrame.BackgroundColor3 = Color3.fromRGB(0, 0, 0)
+mainFrame.BorderColor3 = Color3.fromRGB(27, 42, 53)
+mainFrame.BackgroundTransparency = 0.2
+mainFrame.BorderSizePixel = 2
+mainFrame.Position = UDim2.new(0.05, 0, 0.05, 0)
+mainFrame.Size = UDim2.new(0, 200, 0, 300)
+mainFrame.ClipsDescendants = true
+mainFrame.Parent = gui
+
+-- Corner rounding
+local corner = Instance.new("UICorner")
+corner.CornerRadius = UDim.new(0, 6)
+corner.Parent = mainFrame
+
+-- Drop shadow
+local shadow = Instance.new("ImageLabel")
+shadow.Name = "Shadow"
+shadow.Image = "rbxassetid://1316045217"
+shadow.ImageColor3 = Color3.new(0, 0, 0)
+shadow.ImageTransparency = 0.8
+shadow.ScaleType = Enum.ScaleType.Slice
+shadow.SliceCenter = Rect.new(10, 10, 118, 118)
+shadow.Size = UDim2.new(1, 10, 1, 10)
+shadow.Position = UDim2.new(0, -5, 0, -5)
+shadow.BackgroundTransparency = 1
+shadow.Parent = mainFrame
+shadow.ZIndex = -1
+
+-- Title Bar
+local titleBar = Instance.new("Frame")
+titleBar.Name = "TitleBar"
+titleBar.BackgroundColor3 = Color3.fromRGB(0, 0, 0)
+titleBar.BorderSizePixel = 0
+titleBar.Size = UDim2.new(1, 0, 0, 30)
+titleBar.Parent = mainFrame
+
+local titleCorner = Instance.new("UICorner")
+titleCorner.CornerRadius = UDim.new(0, 6)
+titleCorner.Parent = titleBar
+
+local titleText = Instance.new("TextLabel")
+titleText.Name = "TitleText"
+titleText.BackgroundTransparency = 1
+titleText.Position = UDim2.new(0, 10, 0, 0)
+titleText.Size = UDim2.new(0.6, 0, 1, 0)
+titleText.Font = Enum.Font.Arcade
+titleText.Text = "Player List"
+titleText.TextColor3 = Color3.fromRGB(0, 255, 0)
+titleText.TextSize = 14
+titleText.TextXAlignment = Enum.TextXAlignment.Left
+titleText.Parent = titleBar
+
+-- Minimize Button
+local minimizeButton = Instance.new("TextButton")
+minimizeButton.Name = "MinimizeButton"
+minimizeButton.BackgroundTransparency = 1
+minimizeButton.Position = UDim2.new(0.7, 0, 0, 0)
+minimizeButton.Size = UDim2.new(0.15, 0, 1, 0)
+minimizeButton.Font = Enum.Font.GothamBold
+minimizeButton.Text = "_"
+minimizeButton.TextColor3 = Color3.fromRGB(0, 255, 0)
+minimizeButton.TextSize = 16
+minimizeButton.Parent = titleBar
+
+-- Close Button
+local closeButton = Instance.new("TextButton")
+closeButton.Name = "CloseButton"
+closeButton.BackgroundTransparency = 1
+closeButton.Position = UDim2.new(0.85, 0, 0, 0)
+closeButton.Size = UDim2.new(0.15, 0, 1, 0)
+closeButton.Font = Enum.Font.GothamBold
+closeButton.Text = "X"
+closeButton.TextColor3 = Color3.fromRGB(255, 0, 0)
+closeButton.TextSize = 14
+closeButton.Parent = titleBar
+
+-- Button hover effects
+local function setupButtonHover(button)
+    local originalTextColor = button.TextColor3
+    local originalSize = button.Size
+    
+    button.MouseEnter:Connect(function()
+        local tween = TweenService:Create(
+            button,
+            TweenInfo.new(0.2),
+            {TextColor3 = Color3.fromRGB(255, 255, 255)}
+        )
+        tween:Play()
+    end)
+    
+    button.MouseLeave:Connect(function()
+        local tween = TweenService:Create(
+            button,
+            TweenInfo.new(0.2),
+            {TextColor3 = originalTextColor}
+        )
+        tween:Play()
+    end)
+end
+
+setupButtonHover(minimizeButton)
+setupButtonHover(closeButton)
+
+-- Scrolling Frame for Players
+local scrollFrame = Instance.new("ScrollingFrame")
+scrollFrame.Name = "PlayerScrollFrame"
+scrollFrame.BackgroundTransparency = 1
+scrollFrame.Position = UDim2.new(0, 0, 0, 30)
+scrollFrame.Size = UDim2.new(1, 0, 1, -30)
+scrollFrame.CanvasSize = UDim2.new(0, 0, 0, 0)
+scrollFrame.ScrollBarThickness = 5
+scrollFrame.Parent = mainFrame
+
+local listLayout = Instance.new("UIListLayout")
+listLayout.Padding = UDim.new(0, 5)
+listLayout.Parent = scrollFrame
+
+-- Function to update player list
+local function updatePlayerList()
+    for _, child in ipairs(scrollFrame:GetChildren()) do
+        if child:IsA("Frame") then
+            child:Destroy()
+        end
+    end
+    
+    local playerCount = 0
+    for _, plr in ipairs(Players:GetPlayers()) do
+        playerCount = playerCount + 1
+        
+        local playerFrame = Instance.new("Frame")
+        playerFrame.Name = plr.Name
+        playerFrame.BackgroundColor3 = Color3.fromRGB(30, 30, 30)
+        playerFrame.BackgroundTransparency = 0.5
+        playerFrame.Size = UDim2.new(1, -10, 0, 30)
+        playerFrame.Position = UDim2.new(0, 5, 0, (playerCount-1) * 35)
+        
+        -- Animation for when player frame is added
+        playerFrame.Size = UDim2.new(0, 0, 0, 30)
+        playerFrame.Position = UDim2.new(0.5, 0, 0, (playerCount-1) * 35)
+        
+        local expandTween = TweenService:Create(
+            playerFrame,
+            TweenInfo.new(0.3, Enum.EasingStyle.Quad, Enum.EasingDirection.Out),
+            {Size = UDim2.new(1, -10, 0, 30), Position = UDim2.new(0, 5, 0, (playerCount-1) * 35)}
+        )
+        expandTween:Play()
+        
+        local playerCorner = Instance.new("UICorner")
+        playerCorner.CornerRadius = UDim.new(0, 4)
+        playerCorner.Parent = playerFrame
+        
+        local username = Instance.new("TextLabel")
+        username.Name = "Username"
+        username.BackgroundTransparency = 1
+        username.Position = UDim2.new(0, 10, 0, 0)
+        username.Size = UDim2.new(0.7, 0, 1, 0)
+        username.Font = Enum.Font.Arcade
+        username.Text = plr.Name
+        username.TextColor3 = Color3.fromRGB(0, 170, 220)
+        username.TextSize = 12
+        username.TextXAlignment = Enum.TextXAlignment.Left
+        username.Parent = playerFrame
+        
+        local copyButton = Instance.new("TextButton")
+        copyButton.Name = "CopyButton"
+        copyButton.BackgroundColor3 = Color3.fromRGB(40, 40, 40)
+        copyButton.Position = UDim2.new(0.7, 5, 0.15, 0)
+        copyButton.Size = UDim2.new(0.25, 0, 0.7, 0)
+        copyButton.Font = Enum.Font.Arcade
+        copyButton.Text = "Copy"
+        copyButton.TextColor3 = Color3.fromRGB(0, 255, 0)
+        copyButton.TextSize = 12
+        
+        local buttonCorner = Instance.new("UICorner")
+        buttonCorner.CornerRadius = UDim.new(0, 4)
+        buttonCorner.Parent = copyButton
+        
+        -- Button hover effect
+        copyButton.MouseEnter:Connect(function()
+            local tween = TweenService:Create(
+                copyButton,
+                TweenInfo.new(0.2),
+                {BackgroundColor3 = Color3.fromRGB(50, 50, 50), TextColor3 = Color3.fromRGB(255, 255, 255)}
+            )
+            tween:Play()
+        end)
+        
+        copyButton.MouseLeave:Connect(function()
+            local tween = TweenService:Create(
+                copyButton,
+                TweenInfo.new(0.2),
+                {BackgroundColor3 = Color3.fromRGB(40, 40, 40), TextColor3 = Color3.fromRGB(200, 200, 200)}
+            )
+            tween:Play()
+        end)
+        
+        copyButton.MouseButton1Click:Connect(function()
+            setclipboard(plr.Name)
+            
+            -- Animation when copied
+            local originalText = copyButton.Text
+            local originalSize = copyButton.Size
+            
+            local tween1 = TweenService:Create(
+                copyButton,
+                TweenInfo.new(0.1),
+                {Size = UDim2.new(0.23, 0, 0.65, 0), Text = "Copied!"}
+            )
+            
+            local tween2 = TweenService:Create(
+                copyButton,
+                TweenInfo.new(0.1, Enum.EasingStyle.Quad, Enum.EasingDirection.Out, 0, false, 0.1),
+                {Size = originalSize}
+            )
+            
+            tween1:Play()
+            tween1.Completed:Connect(function()
+                tween2:Play()
+            end)
+            
+            wait(1.5)
+            copyButton.Text = originalText
+        end)
+        
+        copyButton.Parent = playerFrame
+        playerFrame.Parent = scrollFrame
+    end
+    
+    scrollFrame.CanvasSize = UDim2.new(0, 0, 0, playerCount * 35)
+end
+
+-- Draggable functionality
+local dragging
+local dragInput
+local dragStart
+local startPos
+
+local function update(input)
+    local delta = input.Position - dragStart
+    local newPos = UDim2.new(startPos.X.Scale, startPos.X.Offset + delta.X, startPos.Y.Scale, startPos.Y.Offset + delta.Y)
+    mainFrame.Position = newPos
+end
+
+titleBar.InputBegan:Connect(function(input)
+    if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
+        dragging = true
+        dragStart = input.Position
+        startPos = mainFrame.Position
+        
+        input.Changed:Connect(function()
+            if input.UserInputState == Enum.UserInputState.End then
+                dragging = false
+            end
+        end)
+    end
+end)
+
+titleBar.InputChanged:Connect(function(input)
+    if input.UserInputType == Enum.UserInputType.MouseMovement or input.UserInputType == Enum.UserInputType.Touch then
+        dragInput = input
+    end
+end)
+
+UserInputService.InputChanged:Connect(function(input)
+    if input == dragInput and dragging then
+        update(input)
+    end
+end)
+
+-- Minimize functionality
+local isMinimized = false
+minimizeButton.MouseButton1Click:Connect(function()
+    isMinimized = not isMinimized
+    if isMinimized then
+        local tween = TweenService:Create(
+            mainFrame,
+            TweenInfo.new(0.3, Enum.EasingStyle.Quad, Enum.EasingDirection.Out),
+            {Size = UDim2.new(0, 200, 0, 30)}
+        )
+        tween:Play()
+        minimizeButton.Text = "+"
+    else
+        local tween = TweenService:Create(
+            mainFrame,
+            TweenInfo.new(0.3, Enum.EasingStyle.Quad, Enum.EasingDirection.Out),
+            {Size = UDim2.new(0, 200, 0, 300)}
+        )
+        tween:Play()
+        minimizeButton.Text = "_"
+    end
+end)
+
+-- Close functionality
+closeButton.MouseButton1Click:Connect(function()
+    local tween = TweenService:Create(
+        mainFrame,
+        TweenInfo.new(0.2, Enum.EasingStyle.Quad, Enum.EasingDirection.Out),
+        {Size = UDim2.new(0, 200, 0, 0)}
+    )
+    tween:Play()
+    
+    tween.Completed:Connect(function()
+        gui:Destroy()
+    end)
+end)
+
+-- Initial setup
+Players.PlayerAdded:Connect(updatePlayerList)
+Players.PlayerRemoving:Connect(updatePlayerList)
+updatePlayerList()
+
+gui.Parent = player:WaitForChild("PlayerGui")
+
 end
 
 -- invis
