@@ -1477,7 +1477,7 @@ AddCommandWithValue("walkspeed", "speed", "ws", "Sets your speed (16 Default)", 
     local character = game.Players.LocalPlayer.Character
     if character and character:FindFirstChildOfClass("Humanoid") then
         character:FindFirstChildOfClass("Humanoid").WalkSpeed = speed
-        return "WalkSpeed set to " .. speed
+        return "WalkSpeed set to\n" .. speed
     else
         return "Character or Humanoid not found."
     end
@@ -1523,7 +1523,7 @@ AddCommandWithValue("tpwalk", "speed", "tpw", "More safer walkspeed", function(s
     if not tpwalking then
         task.spawn(TpWalk)
     end
-    return "Tpwalk set to " .. speeds
+    return "Tpwalk set to\n" .. speeds
 end)
 
 -- Command: stoptpwalk
@@ -2291,7 +2291,7 @@ AddCommandWithPlayer("swordkill", "skill", "Kills players using a sword tool [TO
         sword = player.Character:FindFirstChildOfClass("Tool") or 
                (player.Backpack and player.Backpack:FindFirstChildOfClass("Tool"))
         if not sword then
-            return "No sword or tool found in your inventory."
+            return "No sword found!"
         end
     end
     
@@ -2374,7 +2374,7 @@ AddCommandWithPlayer("swordkill", "skill", "Kills players using a sword tool [TO
         restoreOriginalTool()
     end)()
     
-    return "Sword kill started for " .. (swordkillTarget == "all" and "all players" or swordkillTarget)
+    return "Sword killed\n" .. (swordkillTarget == "all" and "all players" or swordkillTarget)
 end)
 
 AddCommand("unswordkill ", "unskill", "Stops the sword kill process", function()
@@ -2482,22 +2482,22 @@ AddCommandWithPlayer("btoolkill", "bkill", "Deletes part of the target player us
         end
     end)()
 
-    return "BKill loop started for " .. (bkillall and "players" or "target(s)")
+    return "Bkilled\n" .. (bkillall and "players" or "target(s)")
 end)
 
 AddCommand("unbtoolkill", "unbkill", "Stops the bkill process", function()
     bkillActive = false
-    return "BKill process stopped"
+    return "Bkill stopped"
 end)
 
 AddCommand("btoolkillall", "bkillall", "Enable killing everyone except yourself", function()
     bkillall = true
-    return "BKill all enabled - will target everyone except you"
+    return "BKill all enabled"
 end)
 
 AddCommand("unbtoolkillall", "unbkillall", "Disable killing everyone except yourself", function()
     bkillall = false
-    return "BKill all disabled - will only target specified players"
+    return "BKill all disabled"
 end)
 
 AddCommand("walkfling", {"wf"}, "Starts Touchfling", TFlingOn)
@@ -2521,7 +2521,7 @@ AddCommand("killall", {"flingall"}, "Fling all players", function()
         end
     end
     
-    return "Flinging "..count.." players"
+    return "Flinging\n"..count.." players"
 end)
 
 AddCommand("Invisible", {"invis"}, "Hides you [R6 RECOMMENDED]", invis2)
@@ -2713,7 +2713,7 @@ local function StartBringParts(target)
         end
     end)
     
-    return "Started Tpua to " .. target.Name
+    return "Tpua\n" .. target.Name
 end
 
 -- Stop bringing parts (full cleanup)
@@ -2920,7 +2920,7 @@ AddCommandWithValue("gravity", "value", "grav", "Sets workspace gravity", functi
     if not num then return "Invalid number" end
     
     workspace.Gravity = num
-    return "Gravity set to "..num
+    return "Gravity set to\n"..num
 end)
 
 AddCommandWithValue("hipheight", "amount", "hh", "Sets your hip height", function(height)
@@ -2930,7 +2930,7 @@ AddCommandWithValue("hipheight", "amount", "hh", "Sets your hip height", functio
     local humanoid = game.Players.LocalPlayer.Character:FindFirstChildOfClass("Humanoid")
     if humanoid then
         humanoid.HipHeight = num
-        return "Hip height set to "..num
+        return "Hip height set to\n"..num
     end
     return "Humanoid not found"
 end)
@@ -2968,7 +2968,7 @@ AddCommandWithValue("spin", "speed", nil, "Spin your character at the given spee
         end
     end)
 
-    return "Spinning at speed " .. speed
+    return "Spinning at\n" .. speed
 end)
 
 AddCommand("unspin", nil, "Stop spinning your character", function()
@@ -2977,7 +2977,7 @@ AddCommand("unspin", nil, "Stop spinning your character", function()
         spinning = nil
         return "Spin stopped"
     else
-        return "You are not spinning"
+        return "Stopped spinning"
     end
 end)
 
@@ -3090,7 +3090,7 @@ AddCommand("serverhop", {"sh"}, "Joins a random server", function()
         end
     end
     
-    return "No available servers found"
+    return "No available\nservers found"
 end)
 
 -- Copy Position command
@@ -3106,7 +3106,7 @@ AddCommand("copypos", {"cp"}, "Copies your current position to clipboard", funct
     local text = string.format("Vector3.new(%d, %d, %d)", position.X, position.Y, position.Z)
     
     setclipboard(text)
-    return "Position copied to clipboard: "..text
+    return "copied to clipboard:\n"..text
 end)
 
 -- Size command
@@ -3123,7 +3123,7 @@ AddCommandWithValue("size", "amount", "scale", "Scales your character size", fun
         end
     end
     
-    return "Character scaled to "..num.."x"
+    return "scaled to\n"..num.."x"
 end)
 
 -- Enable fakelag with adjustable delay
@@ -3166,7 +3166,7 @@ AddCommandWithValue("fakelag", "delay", "flag", "Makes you look  like you have L
         end
     end)
 
-    return "Fakelag enabled (delay: " .. waitTime .. "s)"
+    return "Fakelag enabled\n(delay: " .. waitTime .. "s)"
 end)
 
 -- Disable fakelag
@@ -3218,7 +3218,7 @@ AddCommandWithValue("animspeed", "value", "as", "Sets animation speed (1 = defau
         end
     end)
 
-    return "animspeed set to: " .. speed
+    return "animspeed set to\n" .. speed
 end)
 
 -- Set max camera zoom only (does NOT change min zoom)
@@ -3231,7 +3231,7 @@ AddCommandWithValue("zoom", "value", "z", "Sets max camera zoom distance", funct
     local player = game.Players.LocalPlayer
     player.CameraMaxZoomDistance = num
 
-    return "Max zoom set to " .. num
+    return "Zoom set to\n" .. num
 end)
 
 -- Reset zoom to Roblox defaults (min stays at default 0.5, max at 128)
@@ -3250,7 +3250,7 @@ AddCommandWithValue("fov", "value", nil, "Sets camera Field of View", function(v
     end
 
     workspace.CurrentCamera.FieldOfView = num
-    return "FOV set to " .. num
+    return "FOV set to\n" .. num
 end)
 
 -- Helper: Find a player by partial username or display name
@@ -3280,7 +3280,7 @@ AddCommandWithPlayer("view", nil, "View a player", function(name)
             currentViewConnection = nil
         end
         currentViewedPlayer = nil
-        return "Stopped viewing " .. targetPlayer.Name
+        return "Stopped viewing\n" .. targetPlayer.Name
     end
     
     local function updateView(character)
@@ -3310,7 +3310,7 @@ AddCommandWithPlayer("view", nil, "View a player", function(name)
     currentViewConnection = targetPlayer.CharacterAdded:Connect(updateView)
     currentViewedPlayer = targetPlayer
 
-    return "Now viewing " .. targetPlayer.Name
+    return "Viewing\n" .. targetPlayer.Name
 end)
 
 AddCommand("unview", nil, "Reset camera back to yourself", function()
@@ -3358,7 +3358,7 @@ AddCommandWithPlayer("goto", {"tp"}, "Teleport to a player", function(name)
     local offset = CFrame.new(0, 0, 5)
     humanoidRootPart.CFrame = targetHRP.CFrame * offset
 
-    return "Teleported to " .. targetPlayer.Name
+    return "Teleported to\n" .. targetPlayer.Name
 end)
 
 AddCommand("teleporttool", {"tptool"}, "Click any where to teleport", CreateTptool)
