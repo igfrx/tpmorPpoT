@@ -4503,7 +4503,7 @@ local function initializeGUI()
         local label = Instance.new("TextLabel")
         label.Name = "Text"
         label.Text = ""
-        label.Font = Enum.Font.GothamMedium
+        label.Font = Enum.Font.Arcade
         label.TextSize = 13
         label.TextColor3 = isError and Color3.fromRGB(255, 120, 120) or Color3.fromRGB(180, 255, 180)
         label.BackgroundTransparency = 1
@@ -5107,49 +5107,6 @@ local function initializeGUI()
             end
         end)
     end
-
-    -- Initial notification with delay
-    task.delay(1.5, function()
-        local notification = Instance.new("TextLabel")
-        notification.Name = "Notification"
-        notification.Text = "type 'cmds' for commands\n:D"
-        notification.Font = Enum.Font.Arcade
-        notification.TextSize = 15
-        notification.TextColor3 = Color3.fromRGB(0, 255, 255)
-        notification.BackgroundColor3 = Color3.fromRGB(0, 0, 0)
-        notification.BackgroundTransparency = 1
-        notification.Size = UDim2.new(0, 200, 0, 40)
-        notification.Position = UDim2.new(0, 20, 0, 69)
-        notification.ZIndex = 10
-        notification.Parent = ScreenGui
-        
-        local corner = Instance.new("UICorner")
-        corner.CornerRadius = UDim.new(0, 15)
-        corner.Parent = notification
-        
-        clickSound:Play()
-        
-        -- Fade in
-        notification.BackgroundTransparency = 1
-        notification.TextTransparency = 1
-        local fadeIn = TweenService:Create(notification, TweenInfo.new(0.3), {
-            BackgroundTransparency = 0.5,
-            TextTransparency = 0
-        })
-        fadeIn:Play()
-        
-        -- Fade out after delay
-        task.delay(3, function()
-            local fadeOut = TweenService:Create(notification, TweenInfo.new(0.3), {
-                TextTransparency = 1,
-                BackgroundTransparency = 1
-            })
-            fadeOut:Play()
-            fadeOut.Completed:Connect(function()
-                notification:Destroy()
-            end)
-        end)
-    end)
 end
 
 -- Initialize the GUI
