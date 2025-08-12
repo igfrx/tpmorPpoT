@@ -6,6 +6,9 @@ local TweenService = game:GetService("TweenService")
 local SoundService = game:GetService("SoundService")
 local GuiService = game:GetService("GuiService")
 
+--[[
+showNotification("Invalid speed!", true)
+]]
 
 local function addlayer()
 local CollectionService = game:GetService("CollectionService")
@@ -272,8 +275,639 @@ local function Con()
 end
 
 local function enableFlight()
-    loadstring(game:HttpGet("https://raw.githubusercontent.com/OBFhm5650lol/F/refs/heads/main/F", true))()
-    return "Opening 'Fly' Window."
+
+local main = Instance.new("ScreenGui")
+local Frame = Instance.new("Frame")
+local dragHandle = Instance.new("Frame")
+local title = Instance.new("TextLabel")
+local up = Instance.new("TextButton")
+local down = Instance.new("TextButton")
+local onof = Instance.new("TextButton")
+local plus = Instance.new("TextButton")
+local speed = Instance.new("TextBox") -- Changed from TextLabel to TextBox
+local mine = Instance.new("TextButton")
+local closebutton = Instance.new("TextButton")
+local mini = Instance.new("TextButton")
+local mini2 = Instance.new("TextButton")
+
+-- Main GUI
+main.Name = "main"
+main.Parent = game.Players.LocalPlayer:WaitForChild("PlayerGui")
+main.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
+main.ResetOnSpawn = false
+
+-- Main Frame
+Frame.Parent = main
+Frame.BackgroundColor3 = Color3.fromRGB(0, 0, 0)
+Frame.BackgroundTransparency = 0.2
+Frame.BorderSizePixel = 0
+Frame.Position = UDim2.new(0.100320168, 0, 0.379746825, 0)
+Frame.Size = UDim2.new(0, 200, 0, 120)
+Frame.Active = true
+Frame.Draggable = true
+
+-- Add rounded corners
+local corner = Instance.new("UICorner")
+corner.CornerRadius = UDim.new(0, 8)
+corner.Parent = Frame
+
+-- Add subtle drop shadow
+local shadow = Instance.new("UIStroke")
+shadow.ApplyStrokeMode = Enum.ApplyStrokeMode.Border
+shadow.Color = Color3.fromRGB(60, 60, 60)
+shadow.Thickness = 2
+shadow.Transparency = 0.7
+shadow.Parent = Frame
+
+-- Drag Handle
+dragHandle.Name = "DragHandle"
+dragHandle.Parent = Frame
+dragHandle.BackgroundColor3 = Color3.fromRGB(0, 0, 0)
+dragHandle.BorderSizePixel = 0
+dragHandle.Size = UDim2.new(1, 0, 0, 30)
+dragHandle.ZIndex = 2
+
+-- Drag handle corners
+local dragCorner = Instance.new("UICorner")
+dragCorner.CornerRadius = UDim.new(0, 8)
+dragCorner.Parent = dragHandle
+
+-- Title
+title.Name = "Title"
+title.Parent = dragHandle
+title.BackgroundTransparency = 1
+title.Position = UDim2.new(0, 10, 0, 0)
+title.Size = UDim2.new(1, -10, 1, 0)
+title.Font = Enum.Font.Arcade
+title.Text = "FLYGUI"
+title.TextColor3 = Color3.fromRGB(0, 255, 0)
+title.TextSize = 14
+title.TextXAlignment = Enum.TextXAlignment.Left
+
+-- Close Button
+closebutton.Name = "Close"
+closebutton.Parent = dragHandle
+closebutton.BackgroundColor3 = Color3.fromRGB(0, 0, 0)
+closebutton.BackgroundTransparency = 0.8
+closebutton.Position = UDim2.new(1, -30, 0, 2)
+closebutton.Size = UDim2.new(0, 26, 0, 26)
+closebutton.Font = Enum.Font.Arcade
+closebutton.Text = "X"
+closebutton.TextColor3 = Color3.fromRGB(255, 0, 0)
+closebutton.TextSize = 16
+closebutton.ZIndex = 3
+
+-- Close button corner
+local closeCorner = Instance.new("UICorner")
+closeCorner.CornerRadius = UDim.new(0, 6)
+closeCorner.Parent = closebutton
+
+-- Minimize Button
+mini.Name = "minimize"
+mini.Parent = dragHandle
+mini.BackgroundColor3 = Color3.fromRGB(0, 0, 0)
+mini.BackgroundTransparency = 0.8
+mini.Position = UDim2.new(1, -60, 0, 2)
+mini.Size = UDim2.new(0, 26, 0, 26)
+mini.Font = Enum.Font.Arcade
+mini.Text = "-"
+mini.TextColor3 = Color3.fromRGB(0, 255, 0)
+mini.TextSize = 20
+mini.ZIndex = 3
+
+-- Minimize button corner
+local miniCorner = Instance.new("UICorner")
+miniCorner.CornerRadius = UDim.new(0, 6)
+miniCorner.Parent = mini
+
+-- Restore Button (initially hidden)
+mini2.Name = "minimize2"
+mini2.Parent = dragHandle
+mini2.BackgroundColor3 = Color3.fromRGB(0, 0, 0)
+mini2.BackgroundTransparency = 0.8
+mini2.Position = UDim2.new(1, -60, 0, 2)
+mini2.Size = UDim2.new(0, 26, 0, 26)
+mini2.Font = Enum.Font.Arcade
+mini2.Text = "+"
+mini2.TextColor3 = Color3.fromRGB(0, 255, 0)
+mini2.TextSize = 16
+mini2.Visible = false
+mini2.ZIndex = 3
+
+-- Restore button corner
+local mini2Corner = Instance.new("UICorner")
+mini2Corner.CornerRadius = UDim.new(0, 6)
+mini2Corner.Parent = mini2
+
+-- Up Button
+up.Name = "up"
+up.Parent = Frame
+up.BackgroundColor3 = Color3.fromRGB(0, 0, 0)
+up.Position = UDim2.new(0.05, 0, 0.35, 0)
+up.Size = UDim2.new(0.4, 0, 0.25, 0)
+up.Font = Enum.Font.Arcade
+up.Text = "UP"
+up.TextColor3 = Color3.fromRGB(0, 255, 0)
+up.TextSize = 14
+
+-- Up button corner and hover effects
+local upCorner = Instance.new("UICorner")
+upCorner.CornerRadius = UDim.new(0, 6)
+upCorner.Parent = up
+
+up.MouseEnter:Connect(function()
+    up.BackgroundColor3 = Color3.fromRGB(0, 0, 0)
+end)
+
+up.MouseLeave:Connect(function()
+    up.BackgroundColor3 = Color3.fromRGB(0, 0, 0)
+end)
+
+-- Down Button
+down.Name = "down"
+down.Parent = Frame
+down.BackgroundColor3 = Color3.fromRGB(0, 0, 0)
+down.Position = UDim2.new(0.55, 0, 0.35, 0)
+down.Size = UDim2.new(0.4, 0, 0.25, 0)
+down.Font = Enum.Font.Arcade
+down.Text = "DOWN"
+down.TextColor3 = Color3.fromRGB(00, 255, 0)
+down.TextSize = 14
+
+-- Down button corner and hover effects
+local downCorner = Instance.new("UICorner")
+downCorner.CornerRadius = UDim.new(0, 6)
+downCorner.Parent = down
+
+down.MouseEnter:Connect(function()
+    down.BackgroundColor3 = Color3.fromRGB(0, 0, 0)
+end)
+
+down.MouseLeave:Connect(function()
+    down.BackgroundColor3 = Color3.fromRGB(0, 0, 0)
+end)
+
+-- Fly Toggle Button
+onof.Name = "onof"
+onof.Parent = Frame
+onof.BackgroundColor3 = Color3.fromRGB(0, 0, 0)
+onof.Position = UDim2.new(0.55, 0, 0.65, 0)
+onof.Size = UDim2.new(0.4, 0, 0.25, 0)
+onof.Font = Enum.Font.Arcade
+onof.Text = "FLY"
+onof.TextColor3 = Color3.fromRGB(0, 255, 0)
+onof.TextSize = 14
+
+-- Fly button corner and hover effects
+local onofCorner = Instance.new("UICorner")
+onofCorner.CornerRadius = UDim.new(0, 6)
+onofCorner.Parent = onof
+
+onof.MouseEnter:Connect(function()
+    onof.BackgroundColor3 = Color3.fromRGB(0, 0, 0)
+end)
+
+onof.MouseLeave:Connect(function()
+    onof.BackgroundColor3 = Color3.fromRGB(0, 0, 0)
+end)
+
+-- Speed Display (now a TextBox for input)
+speed.Name = "speed"
+speed.Parent = Frame
+speed.BackgroundColor3 = Color3.fromRGB(0, 0, 0)
+speed.Position = UDim2.new(0.3, 0, 0.65, 0)
+speed.Size = UDim2.new(0.2, 0, 0.25, 0)
+speed.Font = Enum.Font.Arcade
+speed.Text = "1"
+speed.PlaceholderText = "Speed"
+speed.TextColor3 = Color3.fromRGB(0, 255, 255)
+speed.TextSize = 14
+speed.ClearTextOnFocus = false
+speed.TextScaled = false
+speed.TextWrapped = true
+
+-- Speed display corner
+local speedCorner = Instance.new("UICorner")
+speedCorner.CornerRadius = UDim.new(0, 6)
+speedCorner.Parent = speed
+
+-- Plus Button
+plus.Name = "plus"
+plus.Parent = Frame
+plus.BackgroundColor3 = Color3.fromRGB(0, 0, 0)
+plus.Position = UDim2.new(0.05, 0, 0.65, 0)
+plus.Size = UDim2.new(0.2, 0, 0.25, 0)
+plus.Font = Enum.Font.Arcade
+plus.Text = "+"
+plus.TextColor3 = Color3.fromRGB(0, 255, 0)
+plus.TextSize = 16
+
+-- Plus button corner and hover effects
+local plusCorner = Instance.new("UICorner")
+plusCorner.CornerRadius = UDim.new(0, 6)
+plusCorner.Parent = plus
+
+plus.MouseEnter:Connect(function()
+    plus.BackgroundColor3 = Color3.fromRGB(0, 0, 0)
+end)
+
+plus.MouseLeave:Connect(function()
+    plus.BackgroundColor3 = Color3.fromRGB(0, 0, 0)
+end)
+
+-- Minus Button
+mine.Name = "mine"
+mine.Parent = Frame
+mine.BackgroundColor3 = Color3.fromRGB(0, 0, 0)
+mine.Position = UDim2.new(0.05, 0, 0.65, 0)
+mine.Size = UDim2.new(0.2, 0, 0.25, 0)
+mine.Font = Enum.Font.Arcade
+mine.Text = "-"
+mine.TextColor3 = Color3.fromRGB(0, 255, 0)
+mine.TextSize = 16
+mine.Visible = false -- Initially hidden since plus is shown first
+
+-- Minus button corner and hover effects
+local mineCorner = Instance.new("UICorner")
+mineCorner.CornerRadius = UDim.new(0, 6)
+mineCorner.Parent = mine
+
+mine.MouseEnter:Connect(function()
+    mine.BackgroundColor3 = Color3.fromRGB(0, 0, 0)
+end)
+
+mine.MouseLeave:Connect(function()
+    mine.BackgroundColor3 = Color3.fromRGB(0, 0, 0)
+end)
+
+-- =============================================
+-- IMPROVED DRAGGING IMPLEMENTATION
+-- =============================================
+
+local UserInputService = game:GetService("UserInputService")
+local dragging, dragInput, dragStart, startPos
+
+local function update(input)
+	if not dragging then return end
+	local delta = input.Position - dragStart
+	Frame.Position = UDim2.new(
+		startPos.X.Scale,
+		startPos.X.Offset + delta.X,
+		startPos.Y.Scale,
+		startPos.Y.Offset + delta.Y
+	)
+end
+
+local function startDrag(input)
+	dragging = true
+	dragStart = input.Position
+	startPos = Frame.Position
+
+	input.Changed:Connect(function()
+		if input.UserInputState == Enum.UserInputState.End then
+			dragging = false
+		end
+	end)
+end
+
+for _, element in pairs({dragHandle, title}) do
+	element.InputBegan:Connect(function(input)
+		if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
+			startDrag(input)
+		end
+	end)
+end
+
+UserInputService.InputChanged:Connect(function(input)
+	if input == dragInput and (input.UserInputType == Enum.UserInputType.MouseMovement or input.UserInputType == Enum.UserInputType.Touch) then
+		update(input)
+	end
+end)
+
+-- Set dragInput on InputBegan
+dragHandle.InputBegan:Connect(function(input)
+	if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
+		dragInput = input
+	end
+end)
+
+-- =============================================
+-- REST OF THE FUNCTIONALITY
+-- =============================================
+
+local speeds = 1
+local speaker = game:GetService("Players").LocalPlayer
+local chr = game.Players.LocalPlayer.Character
+local hum = chr and chr:FindFirstChildWhichIsA("Humanoid")
+local nowe = false
+
+-- Function to get current speed value
+local function getSpeed()
+    local num = tonumber(speed.Text)
+    if num and num > 0 then
+        return num
+    else
+        speed.Text = "1"
+        return 1
+    end
+end
+
+-- Function to set speed value
+local function setSpeed(value)
+    speeds = value
+    speed.Text = tostring(value)
+end
+
+-- Update speed when text changes
+speed.FocusLost:Connect(function(enterPressed)
+    local num = tonumber(speed.Text)
+    if num and num > 0 then
+        speeds = num
+    else
+        speed.Text = tostring(speeds)
+    end
+end)
+
+onof.MouseButton1Down:connect(function()
+    if nowe == true then
+        nowe = false
+        onof.BackgroundColor3 = Color3.fromRGB(80, 60, 60)
+        speaker.Character.Humanoid:SetStateEnabled(Enum.HumanoidStateType.Climbing,true)
+        speaker.Character.Humanoid:SetStateEnabled(Enum.HumanoidStateType.FallingDown,true)
+        speaker.Character.Humanoid:SetStateEnabled(Enum.HumanoidStateType.Flying,true)
+        speaker.Character.Humanoid:SetStateEnabled(Enum.HumanoidStateType.Freefall,true)
+        speaker.Character.Humanoid:SetStateEnabled(Enum.HumanoidStateType.GettingUp,true)
+        speaker.Character.Humanoid:SetStateEnabled(Enum.HumanoidStateType.Jumping,true)
+        speaker.Character.Humanoid:SetStateEnabled(Enum.HumanoidStateType.Landed,true)
+        speaker.Character.Humanoid:SetStateEnabled(Enum.HumanoidStateType.Physics,true)
+        speaker.Character.Humanoid:SetStateEnabled(Enum.HumanoidStateType.PlatformStanding,true)
+        speaker.Character.Humanoid:SetStateEnabled(Enum.HumanoidStateType.Ragdoll,true)
+        speaker.Character.Humanoid:SetStateEnabled(Enum.HumanoidStateType.Running,true)
+        speaker.Character.Humanoid:SetStateEnabled(Enum.HumanoidStateType.RunningNoPhysics,true)
+        speaker.Character.Humanoid:SetStateEnabled(Enum.HumanoidStateType.Seated,true)
+        speaker.Character.Humanoid:SetStateEnabled(Enum.HumanoidStateType.StrafingNoPhysics,true)
+        speaker.Character.Humanoid:SetStateEnabled(Enum.HumanoidStateType.Swimming,true)
+        speaker.Character.Humanoid:ChangeState(Enum.HumanoidStateType.RunningNoPhysics)
+    else
+        nowe = true
+        onof.BackgroundColor3 = Color3.fromRGB(60, 80, 60)
+        for i = 1, getSpeed() do
+            spawn(function()
+                local hb = game:GetService("RunService").Heartbeat             
+                tpwalking = true
+                local chr = game.Players.LocalPlayer.Character
+                local hum = chr and chr:FindFirstChildWhichIsA("Humanoid")
+                while tpwalking and hb:Wait() and chr and hum and hum.Parent do
+                    if hum.MoveDirection.Magnitude > 0 then
+                        chr:TranslateBy(hum.MoveDirection)
+                    end
+                end
+            end)
+        end
+        game.Players.LocalPlayer.Character.Animate.Disabled = true
+        local Char = game.Players.LocalPlayer.Character
+        local Hum = Char:FindFirstChildOfClass("Humanoid") or Char:FindFirstChildOfClass("AnimationController")
+        for i,v in next, Hum:GetPlayingAnimationTracks() do
+            v:AdjustSpeed(0)
+        end
+        speaker.Character.Humanoid:SetStateEnabled(Enum.HumanoidStateType.Climbing,false)
+        speaker.Character.Humanoid:SetStateEnabled(Enum.HumanoidStateType.FallingDown,false)
+        speaker.Character.Humanoid:SetStateEnabled(Enum.HumanoidStateType.Flying,false)
+        speaker.Character.Humanoid:SetStateEnabled(Enum.HumanoidStateType.Freefall,false)
+        speaker.Character.Humanoid:SetStateEnabled(Enum.HumanoidStateType.GettingUp,false)
+        speaker.Character.Humanoid:SetStateEnabled(Enum.HumanoidStateType.Jumping,false)
+        speaker.Character.Humanoid:SetStateEnabled(Enum.HumanoidStateType.Landed,false)
+        speaker.Character.Humanoid:SetStateEnabled(Enum.HumanoidStateType.Physics,false)
+        speaker.Character.Humanoid:SetStateEnabled(Enum.HumanoidStateType.PlatformStanding,false)
+        speaker.Character.Humanoid:SetStateEnabled(Enum.HumanoidStateType.Ragdoll,false)
+        speaker.Character.Humanoid:SetStateEnabled(Enum.HumanoidStateType.Running,false)
+        speaker.Character.Humanoid:SetStateEnabled(Enum.HumanoidStateType.RunningNoPhysics,false)
+        speaker.Character.Humanoid:SetStateEnabled(Enum.HumanoidStateType.Seated,false)
+        speaker.Character.Humanoid:SetStateEnabled(Enum.HumanoidStateType.StrafingNoPhysics,false)
+        speaker.Character.Humanoid:SetStateEnabled(Enum.HumanoidStateType.Swimming,false)
+        speaker.Character.Humanoid:ChangeState(Enum.HumanoidStateType.Swimming)
+    end
+    
+    if game:GetService("Players").LocalPlayer.Character:FindFirstChildOfClass("Humanoid").RigType == Enum.HumanoidRigType.R6 then
+        local plr = game.Players.LocalPlayer
+        local torso = plr.Character.Torso
+        local flying = true
+        local deb = true
+        local ctrl = {f = 0, b = 0, l = 0, r = 0}
+        local lastctrl = {f = 0, b = 0, l = 0, r = 0}
+        local maxspeed = getSpeed() * 10 -- Scale the speed
+        local speed = 0
+        local bg = Instance.new("BodyGyro", torso)
+        bg.P = 9e4
+        bg.maxTorque = Vector3.new(9e9, 9e9, 9e9)
+        bg.cframe = torso.CFrame
+        local bv = Instance.new("BodyVelocity", torso)
+        bv.velocity = Vector3.new(0,0.1,0)
+        bv.maxForce = Vector3.new(9e9, 9e9, 9e9)
+        if nowe == true then
+            plr.Character.Humanoid.PlatformStand = true
+        end
+        while nowe == true or game:GetService("Players").LocalPlayer.Character.Humanoid.Health == 0 do
+            game:GetService("RunService").RenderStepped:Wait()
+            if ctrl.l + ctrl.r ~= 0 or ctrl.f + ctrl.b ~= 0 then
+                speed = speed+.5+(speed/maxspeed)
+                if speed > maxspeed then
+                    speed = maxspeed
+                end
+            elseif not (ctrl.l + ctrl.r ~= 0 or ctrl.f + ctrl.b ~= 0) and speed ~= 0 then
+                speed = speed-1
+                if speed < 0 then
+                    speed = 0
+                end
+            end
+            if (ctrl.l + ctrl.r) ~= 0 or (ctrl.f + ctrl.b) ~= 0 then
+                bv.velocity = ((game.Workspace.CurrentCamera.CoordinateFrame.lookVector * (ctrl.f+ctrl.b)) + ((game.Workspace.CurrentCamera.CoordinateFrame * CFrame.new(ctrl.l+ctrl.r,(ctrl.f+ctrl.b)*.2,0).p) - game.Workspace.CurrentCamera.CoordinateFrame.p))*speed
+                lastctrl = {f = ctrl.f, b = ctrl.b, l = ctrl.l, r = ctrl.r}
+            elseif (ctrl.l + ctrl.r) == 0 and (ctrl.f + ctrl.b) == 0 and speed ~= 0 then
+                bv.velocity = ((game.Workspace.CurrentCamera.CoordinateFrame.lookVector * (lastctrl.f+lastctrl.b)) + ((game.Workspace.CurrentCamera.CoordinateFrame * CFrame.new(lastctrl.l+lastctrl.r,(lastctrl.f+lastctrl.b)*.2,0).p) - game.Workspace.CurrentCamera.CoordinateFrame.p))*speed
+            else
+                bv.velocity = Vector3.new(0,0,0)
+            end
+            bg.cframe = game.Workspace.CurrentCamera.CoordinateFrame * CFrame.Angles(-math.rad((ctrl.f+ctrl.b)*50*speed/maxspeed),0,0)
+        end
+        ctrl = {f = 0, b = 0, l = 0, r = 0}
+        lastctrl = {f = 0, b = 0, l = 0, r = 0}
+        speed = 0
+        bg:Destroy()
+        bv:Destroy()
+        plr.Character.Humanoid.PlatformStand = false
+        game.Players.LocalPlayer.Character.Animate.Disabled = false
+        tpwalking = false
+    else
+        local plr = game.Players.LocalPlayer
+        local UpperTorso = plr.Character.UpperTorso
+        local flying = true
+        local deb = true
+        local ctrl = {f = 0, b = 0, l = 0, r = 0}
+        local lastctrl = {f = 0, b = 0, l = 0, r = 0}
+        local maxspeed = getSpeed() * 10 -- Scale the speed
+        local speed = 0
+        local bg = Instance.new("BodyGyro", UpperTorso)
+        bg.P = 9e4
+        bg.maxTorque = Vector3.new(9e9, 9e9, 9e9)
+        bg.cframe = UpperTorso.CFrame
+        local bv = Instance.new("BodyVelocity", UpperTorso)
+        bv.velocity = Vector3.new(0,0.1,0)
+        bv.maxForce = Vector3.new(9e9, 9e9, 9e9)
+        if nowe == true then
+            plr.Character.Humanoid.PlatformStand = true
+        end
+        while nowe == true or game:GetService("Players").LocalPlayer.Character.Humanoid.Health == 0 do
+            wait()
+            if ctrl.l + ctrl.r ~= 0 or ctrl.f + ctrl.b ~= 0 then
+                speed = speed+.5+(speed/maxspeed)
+                if speed > maxspeed then
+                    speed = maxspeed
+                end
+            elseif not (ctrl.l + ctrl.r ~= 0 or ctrl.f + ctrl.b ~= 0) and speed ~= 0 then
+                speed = speed-1
+                if speed < 0 then
+                    speed = 0
+                end
+            end
+            if (ctrl.l + ctrl.r) ~= 0 or (ctrl.f + ctrl.b) ~= 0 then
+                bv.velocity = ((game.Workspace.CurrentCamera.CoordinateFrame.lookVector * (ctrl.f+ctrl.b)) + ((game.Workspace.CurrentCamera.CoordinateFrame * CFrame.new(ctrl.l+ctrl.r,(ctrl.f+ctrl.b)*.2,0).p) - game.Workspace.CurrentCamera.CoordinateFrame.p))*speed
+                lastctrl = {f = ctrl.f, b = ctrl.b, l = ctrl.l, r = ctrl.r}
+            elseif (ctrl.l + ctrl.r) == 0 and (ctrl.f + ctrl.b) == 0 and speed ~= 0 then
+                bv.velocity = ((game.Workspace.CurrentCamera.CoordinateFrame.lookVector * (lastctrl.f+lastctrl.b)) + ((game.Workspace.CurrentCamera.CoordinateFrame * CFrame.new(lastctrl.l+lastctrl.r,(lastctrl.f+lastctrl.b)*.2,0).p) - game.Workspace.CurrentCamera.CoordinateFrame.p))*speed
+            else
+                bv.velocity = Vector3.new(0,0,0)
+            end
+            bg.cframe = game.Workspace.CurrentCamera.CoordinateFrame * CFrame.Angles(-math.rad((ctrl.f+ctrl.b)*50*speed/maxspeed),0,0)
+        end
+        ctrl = {f = 0, b = 0, l = 0, r = 0}
+        lastctrl = {f = 0, b = 0, l = 0, r = 0}
+        speed = 0
+        bg:Destroy()
+        bv:Destroy()
+        plr.Character.Humanoid.PlatformStand = false
+        game.Players.LocalPlayer.Character.Animate.Disabled = false
+        tpwalking = false
+    end
+end)
+
+local tis
+up.MouseButton1Down:connect(function()
+    tis = up.MouseEnter:connect(function()
+        while tis do
+            wait()
+            game.Players.LocalPlayer.Character.HumanoidRootPart.CFrame = game.Players.LocalPlayer.Character.HumanoidRootPart.CFrame * CFrame.new(0,1,0)
+        end
+    end)
+end)
+
+up.MouseLeave:connect(function()
+    if tis then
+        tis:Disconnect()
+        tis = nil
+    end
+end)
+
+local dis
+down.MouseButton1Down:connect(function()
+    dis = down.MouseEnter:connect(function()
+        while dis do
+            wait()
+            game.Players.LocalPlayer.Character.HumanoidRootPart.CFrame = game.Players.LocalPlayer.Character.HumanoidRootPart.CFrame * CFrame.new(0,-1,0)
+        end
+    end)
+end)
+
+down.MouseLeave:connect(function()
+    if dis then
+        dis:Disconnect()
+        dis = nil
+    end
+end)
+
+game:GetService("Players").LocalPlayer.CharacterAdded:Connect(function(char)
+    wait(0.7)
+    game.Players.LocalPlayer.Character.Humanoid.PlatformStand = false
+    game.Players.LocalPlayer.Character.Animate.Disabled = false
+end)
+
+plus.MouseButton1Down:connect(function()
+    setSpeed(getSpeed() + 1)
+    if nowe == true then
+        tpwalking = false
+        for i = 1, getSpeed() do
+            spawn(function()
+                local hb = game:GetService("RunService").Heartbeat             
+                tpwalking = true
+                local chr = game.Players.LocalPlayer.Character
+                local hum = chr and chr:FindFirstChildWhichIsA("Humanoid")
+                while tpwalking and hb:Wait() and chr and hum and hum.Parent do
+                    if hum.MoveDirection.Magnitude > 0 then
+                        chr:TranslateBy(hum.MoveDirection)
+                    end
+                end
+            end)
+        end
+    end
+end)
+
+mine.MouseButton1Down:connect(function()
+    if getSpeed() == 1 then
+        speed.Text = 'cannot be < 1'
+        wait(1)
+        speed.Text = tostring(speeds)
+    else
+        setSpeed(getSpeed() - 1)
+        if nowe == true then
+            tpwalking = false
+            for i = 1, getSpeed() do
+                spawn(function()
+                    local hb = game:GetService("RunService").Heartbeat             
+                    tpwalking = true
+                    local chr = game.Players.LocalPlayer.Character
+                    local hum = chr and chr:FindFirstChildWhichIsA("Humanoid")
+                    while tpwalking and hb:Wait() and chr and hum and hum.Parent do
+                        if hum.MoveDirection.Magnitude > 0 then
+                            chr:TranslateBy(hum.MoveDirection)
+                        end
+                    end
+                end)
+            end
+        end
+    end
+end)
+
+closebutton.MouseButton1Click:Connect(function()
+    main:Destroy()
+end)
+
+mini.MouseButton1Click:Connect(function()
+    up.Visible = false
+    down.Visible = false
+    onof.Visible = false
+    plus.Visible = false
+    speed.Visible = false
+    mine.Visible = false
+    mini.Visible = false
+    mini2.Visible = true
+    Frame.Size = UDim2.new(0, 200, 0, 30)
+    Frame.BackgroundTransparency = 0.5
+end)
+
+mini2.MouseButton1Click:Connect(function()
+    up.Visible = true
+    down.Visible = true
+    onof.Visible = true
+    plus.Visible = true
+    speed.Visible = true
+    mine.Visible = true
+    mini.Visible = true
+    mini2.Visible = false
+    Frame.Size = UDim2.new(0, 200, 0, 120)
+    Frame.BackgroundTransparency = 0
+end)
+
+return "Opened 'Fly' Window."
 end
 
 
@@ -660,7 +1294,7 @@ end)
 
 function invis2()
     if not currentCharacter or not currentCharacter:FindFirstChild("HumanoidRootPart") then
-        return "Invisibility: FAILED"
+        showNotification("Invisibility: FAILED!", true)
     end
     
     cleanupInvisibility() -- Clean up any existing invisibility
@@ -1271,7 +1905,7 @@ function antiafkoff()
         antiAFKConnection = nil
         return "Anti-AFK disabled"
     else
-        return "Anti-AFK wasn't enabled"
+        showNotification("Anti-AFK wasn't enabled!", true)
     end
 end
 
@@ -1584,7 +2218,7 @@ end
 AddCommandWithValue("walkspeed", "speed", "ws", "Sets your speed (16 Default)", function(speed)
     speed = tonumber(speed)
     if not speed then
-        return "Invalid speed value."
+        showNotification("Invalid speed!", true)
     end
 
     local character = game.Players.LocalPlayer.Character
@@ -1629,7 +2263,7 @@ end
 AddCommandWithValue("tpwalk", "speed", "tpw", "More safer walkspeed", function(speed)
     speed = tonumber(speed)
     if not speed then
-        return "Invalid speed value."
+        showNotification("Invalid speed!", true)
     end
 
     speeds = speed
@@ -1723,15 +2357,15 @@ local function SkidFling(TargetPlayer)
     local Handle = Accessory and Accessory:FindFirstChild("Handle")
 
     if not Character or not Humanoid or not RootPart then
-        return "Character not found"
+        showNotification("Character not found!", true)
     end
 
     if not TCharacter or not THumanoid then
-        return "Target character not found"
+        showNotification("Target not found!", true)
     end
 
     if THumanoid.Sit then
-        return "Target is sitting"
+        showNotification("Target Is Sitting!", true)
     end
 
     -- Save original position
@@ -1918,7 +2552,7 @@ local function sit()
         character.Humanoid.Sit = true
         return "Sitting.."
     else
-        return "Failed to sit: Character or Humanoid not found."
+        showNotification("Failed to sit!", true)
     end
 end
 
@@ -1929,7 +2563,7 @@ local function DAT()
     local backpack = player:FindFirstChild("Backpack")
     
     if not backpack then
-        warn("Backpack not found!")
+        showNotification("Backpack not found!", true)
         return
     end
     
@@ -1952,7 +2586,7 @@ local function DAT()
         tool:FindFirstChild("Handle").Anchored = false -- Ensure it can fall
     end
     
-    return "Dropped " .. #tools .. " tools"
+    return "Dropped:\n" .. #tools .. " tools"
 end
 
 -- VoidProtection Variable
@@ -2391,7 +3025,7 @@ AddCommandWithPlayer("swordkill", "skill", "Kills players using a sword tool [TO
         end
     else
         local target = GetPlayer(name)
-        if not target then return "Target not found." end
+        if not target then showNotification("Target not found!", true) end
         if typeof(target) == "table" then target = target[1] end
         swordkillTarget = target.Name
         setupDeathListener(target)
@@ -2523,7 +3157,7 @@ AddCommandWithPlayer("btoolkill", "bkill", "Deletes part of the target player us
     else
         -- Use the specified target
         targets = GetPlayer(name)
-        if not targets then return "Target not found." end
+        if not targets then showNotification("Target not found!", true) end
         if typeof(targets) ~= "table" then targets = {targets} end
     end
 
@@ -2618,7 +3252,7 @@ AddCommand("unwalkfling", {"unwf"}, "Stops Touchfling", TFlingOff)
 
 AddCommandWithPlayer("kill", {"fling"}, "Fling a player", function(name)
     local target = GetPlayer(name)
-    if not target then return "Player not found" end
+    if not target then showNotification("Target not found!", true) end
     return SkidFling(target)
 end)
 
@@ -2866,7 +3500,7 @@ end
 -- Commands
 AddCommandWithPlayer("tpua", "bp", "Tps unanchored to player", function(name)
     local target = GetPlayer(name)
-    if not target then return "Player not found." end
+    if not target then showNotification("Target not found!", true) end
     return StartBringParts(target)
 end)
 
@@ -3383,7 +4017,7 @@ local currentViewedPlayer -- to track which player is being viewed
 AddCommandWithPlayer("view", nil, "View a player", function(name)
     local targetPlayer = FindPlayer(name)
     if not targetPlayer then
-        return "Player not found"
+        showNotification("Target not found!", true)
     end
     
     -- If already viewing this player, stop viewing
@@ -3453,7 +4087,7 @@ end)
 -- Fixed version of the goto command
 AddCommandWithPlayer("goto", {"tp"}, "Teleport to a player", function(name)
     local targetPlayer = FindPlayer(name)
-    if not targetPlayer then return "Target player not found" end
+    if not targetPlayer then showNotification("Target not found!", true) end
 
     local character = game.Players.LocalPlayer.Character
     if not character then return "Your character not found" end
@@ -3482,7 +4116,7 @@ AddCommand("aat", {"activatealltools"}, "Activates all tools in your inventory",
     local backpack = player:FindFirstChild("Backpack")
     local character = player.Character
     
-    if not backpack and not character then return "No tools found" end
+    if not backpack and not character then showNotification("Tools not found!", true) end
     
     local tools = {}
     
@@ -3504,7 +4138,7 @@ AddCommand("aat", {"activatealltools"}, "Activates all tools in your inventory",
         end
     end
     
-    if #tools == 0 then return "No tools found" end
+    if #tools == 0 then showNotification("Tools not found!", true) end
     
     -- Equip and activate all tools
     for _, tool in ipairs(tools) do
@@ -3833,6 +4467,151 @@ local function initializeGUI()
     UICorner.CornerRadius = UDim.new(1, 0)
     UICorner.Parent = MainFrame
 
+    -- Enhanced Notification System with Typewriter Effect
+    local function showNotification(message, isError)
+        -- Create sleek notification frame
+        local notification = Instance.new("Frame")
+        notification.Name = "Notification"
+        notification.BackgroundColor3 = isError and Color3.fromRGB(40, 20, 20) or Color3.fromRGB(20, 30, 20)
+        notification.BackgroundTransparency = 0.2
+        notification.BorderSizePixel = 0
+        notification.Size = UDim2.new(0, 250, 0, 30)  -- Smaller size
+        notification.Position = UDim2.new(0, 20, 0, 69)
+        notification.ZIndex = 10
+        notification.Parent = ScreenGui
+        
+        -- Add smooth corner rounding
+        local corner = Instance.new("UICorner")
+        corner.CornerRadius = UDim.new(0, 6)
+        corner.Parent = notification
+        
+        -- Add subtle shadow effect
+        local shadow = Instance.new("ImageLabel")
+        shadow.Name = "Shadow"
+        shadow.Image = "rbxassetid://1316045217"
+        shadow.ImageColor3 = Color3.new(0, 0, 0)
+        shadow.ImageTransparency = 0.8
+        shadow.ScaleType = Enum.ScaleType.Slice
+        shadow.SliceCenter = Rect.new(10, 10, 118, 118)
+        shadow.BackgroundTransparency = 1
+        shadow.Size = UDim2.new(1, 10, 1, 10)
+        shadow.Position = UDim2.new(0, -5, 0, -5)
+        shadow.ZIndex = 9
+        shadow.Parent = notification
+        
+        -- Add modern text label
+        local label = Instance.new("TextLabel")
+        label.Name = "Text"
+        label.Text = ""
+        label.Font = Enum.Font.GothamMedium
+        label.TextSize = 13
+        label.TextColor3 = isError and Color3.fromRGB(255, 120, 120) or Color3.fromRGB(180, 255, 180)
+        label.BackgroundTransparency = 1
+        label.Size = UDim2.new(1, -20, 1, 0)
+        label.Position = UDim2.new(0, 15, 0, 0)
+        label.TextXAlignment = Enum.TextXAlignment.Left
+        label.TextYAlignment = Enum.TextYAlignment.Center
+        label.TextWrapped = false
+        label.Parent = notification
+        
+        -- Add accent bar
+        local accent = Instance.new("Frame")
+        accent.Name = "Accent"
+        accent.BackgroundColor3 = isError and Color3.fromRGB(255, 80, 80) or Color3.fromRGB(100, 255, 100)
+        accent.BorderSizePixel = 0
+        accent.Size = UDim2.new(0, 3, 0.7, 0)
+        accent.Position = UDim2.new(0, 5, 0.15, 0)
+        accent.ZIndex = 11
+        accent.Parent = notification
+        
+        -- Round accent corners
+        local accentCorner = Instance.new("UICorner")
+        accentCorner.CornerRadius = UDim.new(1, 0)
+        accentCorner.Parent = accent
+        
+        -- Play notification sound
+        if clickSound then
+            clickSound:Play() -- Play click sound when notification appears
+        end
+        
+        -- Play error/success sound if defined
+        if isError and errorSound then
+            errorSound:Play()
+        elseif successSound then
+            successSound:Play()
+        end
+        
+        -- Animation sequence
+        notification.Size = UDim2.new(0, 0, 0, 30)
+        notification.Position = UDim2.new(0, 20, 0, 69)
+        
+        -- Smooth expand animation
+        local expand = TweenService:Create(notification, TweenInfo.new(0.2, Enum.EasingStyle.Quint), {
+            Size = UDim2.new(0, 250, 0, 30)
+        })
+        expand:Play()
+        
+        -- Typewriter effect with click sounds
+        local fullText = message
+        local currentText = ""
+        local charIndex = 0
+        local typewriterConnection
+        
+        local function updateText()
+            charIndex = charIndex + 1
+            if charIndex <= #fullText then
+                currentText = string.sub(fullText, 1, charIndex)
+                label.Text = currentText
+                
+                -- Play click sound randomly during typing (60% chance per character)
+                if clickSound and math.random() < 0.6 then
+                    clickSound:Play()
+                end
+            else
+                -- Stop the typewriter effect when done
+                if typewriterConnection then
+                    typewriterConnection:Disconnect()
+                end
+            end
+        end
+        
+        -- Start typewriter effect (15ms per character)
+        typewriterConnection = RunService.Heartbeat:Connect(function()
+            updateText()
+            task.wait(0.015) -- Adjust this value to change typing speed
+        end)
+        
+        -- Auto-close after shorter delay (3s for success, 4s for error)
+        task.delay(isError and 4 or 3, function()
+            -- Disconnect typewriter if still running
+            if typewriterConnection then
+                typewriterConnection:Disconnect()
+            end
+            
+            local fadeOut = TweenService:Create(notification, TweenInfo.new(0.2, Enum.EasingStyle.Quint), {
+                BackgroundTransparency = 1,
+                Size = UDim2.new(0, 0, 0, 30)
+            })
+            fadeOut:Play()
+            
+            local textFade = TweenService:Create(label, TweenInfo.new(0.2), {
+                TextTransparency = 1
+            })
+            textFade:Play()
+            
+            local accentFade = TweenService:Create(accent, TweenInfo.new(0.2), {
+                BackgroundTransparency = 1
+            })
+            accentFade:Play()
+            
+            fadeOut.Completed:Connect(function()
+                notification:Destroy()
+            end)
+        end)
+        
+        return notification
+    end
+    
     local Arrow = Instance.new("TextLabel")
     Arrow.Name = "Arrow"
     Arrow.Text = ">"
@@ -3883,7 +4662,7 @@ local function initializeGUI()
 
     local VersionLabel = Instance.new("TextLabel")
     VersionLabel.Name = "VersionLabel"
-    VersionLabel.Text = "V0.6"
+    VersionLabel.Text = "V0.7"
     VersionLabel.TextSize = 10
     VersionLabel.TextTransparency = 0.6
     VersionLabel.TextColor3 = Color3.fromRGB(0, 0, 0)
@@ -4224,120 +5003,28 @@ local function initializeGUI()
                         value = table.concat(parts, " ", currentIndex)
                     elseif command.hasValue then
                         -- Missing value
-                        local errorNotification = Instance.new("TextLabel")
-                        errorNotification.Name = "Notification"
-                        errorNotification.Text = string.format("Missing value for %s. Usage: %s%s%s", 
+                        showNotification(string.format("Missing value for %s. Usage: %s%s%s", 
                             commandText, 
                             commandText,
                             command.hasPlayer and " <player>" or "",
-                            command.hasValue and " <"..(command.valueName or "value")..">" or "")
-                        errorNotification.Font = Enum.Font.Arcade
-                        errorNotification.TextSize = 15
-                        errorNotification.TextColor3 = Color3.fromRGB(255, 0, 0)
-                        errorNotification.BackgroundColor3 = Color3.fromRGB(0, 0, 0)
-                        errorNotification.BackgroundTransparency = 0.1
-                        errorNotification.Size = UDim2.new(0, 300, 0, 40)
-                        errorNotification.Position = UDim2.new(0, 20, 0, 69)
-                        errorNotification.ZIndex = 10
-                        errorNotification.Parent = ScreenGui
-                        
-                        local corner = Instance.new("UICorner")
-                        corner.CornerRadius = UDim.new(0, 15)
-                        corner.Parent = errorNotification
-                        
-                        errorSound:Play()
-                        
-                        -- Fade in
-                        errorNotification.BackgroundTransparency = 1
-                        errorNotification.TextTransparency = 1
-                        local fadeIn = TweenService:Create(errorNotification, TweenInfo.new(0.3), {
-                            BackgroundTransparency = 0.5,
-                            TextTransparency = 0
-                        })
-                        fadeIn:Play()
-                        
-                        -- Fade out after delay
-                        task.delay(3, function()
-                            local fadeOut = TweenService:Create(errorNotification, TweenInfo.new(0.3), {
-                                TextTransparency = 1,
-                                BackgroundTransparency = 1
-                            })
-                            fadeOut:Play()
-                            fadeOut.Completed:Connect(function()
-                                errorNotification:Destroy()
-                            end)
-                        end)
+                            command.hasValue and " <"..(command.valueName or "value")..">" or ""), true)
                         return
                     end
                     
                     -- Execute command with inputs
-                    local success, message
-                    if command.hasPlayer and command.hasValue then
-                        success, message = pcall(function() return command.exec(playerName, value) end)
-                    elseif command.hasPlayer then
-                        success, message = pcall(function() return command.exec(playerName) end)
-                    elseif command.hasValue then
-                        success, message = pcall(function() return command.exec(value) end)
-                    end
+                    local success, result = pcall(function()
+                        if command.hasPlayer and command.hasValue then
+                            return command.exec(playerName, value)
+                        elseif command.hasPlayer then
+                            return command.exec(playerName)
+                        elseif command.hasValue then
+                            return command.exec(value)
+                        end
+                    end)
                     
                     if success then
                         if commandText ~= "cmds" then
-                            -- Show success notification
-                            local notification = Instance.new("TextLabel")
-                            notification.Name = "Notification"
-                            notification.Text = message
-                            notification.Font = Enum.Font.Arcade
-                            notification.TextSize = 15
-                            notification.TextColor3 = Color3.fromRGB(0, 255, 0)
-                            notification.BackgroundColor3 = Color3.fromRGB(0, 0, 0)
-                            notification.BackgroundTransparency = 0.1
-                            notification.Size = UDim2.new(0, 200, 0, 40)
-                            notification.Position = UDim2.new(0, 20, 0, 69)
-                            notification.ZIndex = 10
-                            notification.Parent = ScreenGui
-                            
-                            local corner = Instance.new("UICorner")
-                            corner.CornerRadius = UDim.new(0, 15)
-                            corner.Parent = notification
-                            
-                            successSound:Play()
-                            
-                            -- Type out the text character by character
-                            local fullText = message
-                            notification.Text = ""
-                            
-                            local charIndex = 0
-                            local connection
-                            connection = RunService.Heartbeat:Connect(function()
-                                if charIndex < #fullText then
-                                    charIndex = charIndex + 1
-                                    notification.Text = string.sub(fullText, 1, charIndex)
-                                    if math.random() > 0.7 then
-                                        clickSound:Play()
-                                    end
-                                else
-                                    connection:Disconnect()
-                                end
-                            end)
-                            
-                            -- Fade in background
-                            notification.BackgroundTransparency = 1
-                            local bgFadeIn = TweenService:Create(notification, TweenInfo.new(0.3), {
-                                BackgroundTransparency = 0.5
-                            })
-                            bgFadeIn:Play()
-                            
-                            -- Fade out after delay
-                            task.delay(3, function()
-                                local fadeOut = TweenService:Create(notification, TweenInfo.new(0.3), {
-                                    TextTransparency = 1,
-                                    BackgroundTransparency = 1
-                                })
-                                fadeOut:Play()
-                                fadeOut.Completed:Connect(function()
-                                    notification:Destroy()
-                                end)
-                            end)
+                            showNotification(tostring(result), false)
                             
                             -- On PC, hide the GUI after command execution
                             if not isMobile() then
@@ -4350,112 +5037,20 @@ local function initializeGUI()
                                     ScreenGui.Enabled = false
                                 end)
                             end
+                        else
+                            createHelpWindow()
                         end
                     else
-                        -- Show error notification
-                        local errorNotification = Instance.new("TextLabel")
-                        errorNotification.Name = "Notification"
-                        errorNotification.Text = "Error: " .. message
-                        errorNotification.Font = Enum.Font.Arcade
-                        errorNotification.TextSize = 15
-                        errorNotification.TextColor3 = Color3.fromRGB(255, 0, 0)
-                        errorNotification.BackgroundColor3 = Color3.fromRGB(0, 0, 0)
-                        errorNotification.BackgroundTransparency = 0.1
-                        errorNotification.Size = UDim2.new(0, 300, 0, 40)
-                        errorNotification.Position = UDim2.new(0, 20, 0, 69)
-                        errorNotification.ZIndex = 10
-                        errorNotification.Parent = ScreenGui
-                        
-                        local corner = Instance.new("UICorner")
-                        corner.CornerRadius = UDim.new(0, 15)
-                        corner.Parent = errorNotification
-                        
-                        errorSound:Play()
-                        
-                        -- Fade in
-                        errorNotification.BackgroundTransparency = 1
-                        errorNotification.TextTransparency = 1
-                        local fadeIn = TweenService:Create(errorNotification, TweenInfo.new(0.3), {
-                            BackgroundTransparency = 0.5,
-                            TextTransparency = 0
-                        })
-                        fadeIn:Play()
-                        
-                        -- Fade out after delay
-                        task.delay(3, function()
-                            local fadeOut = TweenService:Create(errorNotification, TweenInfo.new(0.3), {
-                                TextTransparency = 1,
-                                BackgroundTransparency = 1
-                            })
-                            fadeOut:Play()
-                            fadeOut.Completed:Connect(function()
-                                errorNotification:Destroy()
-                            end)
-                        end)
+                        showNotification("Command Error: "..tostring(result), true)
                     end
                 else
                     -- Handle regular command without inputs
-                    local success, message = pcall(command.exec)
+                    local success, result = pcall(command.exec)
                     if success then
                         if commandText == "cmds" then
                             createHelpWindow()
                         else
-                            -- Show success notification
-                            local notification = Instance.new("TextLabel")
-                            notification.Name = "Notification"
-                            notification.Text = message
-                            notification.Font = Enum.Font.Arcade
-                            notification.TextSize = 15
-                            notification.TextColor3 = Color3.fromRGB(0, 255, 0)
-                            notification.BackgroundColor3 = Color3.fromRGB(0, 0, 0)
-                            notification.BackgroundTransparency = 0.1
-                            notification.Size = UDim2.new(0, 200, 0, 40)
-                            notification.Position = UDim2.new(0, 20, 0, 69)
-                            notification.ZIndex = 10
-                            notification.Parent = ScreenGui
-                            
-                            local corner = Instance.new("UICorner")
-                            corner.CornerRadius = UDim.new(0, 15)
-                            corner.Parent = notification
-                            
-                            successSound:Play()
-                            
-                            -- Type out the text character by character
-                            local fullText = message
-                            notification.Text = ""
-                            
-                            local charIndex = 0
-                            local connection
-                            connection = RunService.Heartbeat:Connect(function()
-                                if charIndex < #fullText then
-                                    charIndex = charIndex + 1
-                                    notification.Text = string.sub(fullText, 1, charIndex)
-                                    if math.random() > 0.7 then
-                                        clickSound:Play()
-                                    end
-                                else
-                                    connection:Disconnect()
-                                end
-                            end)
-                            
-                            -- Fade in background
-                            notification.BackgroundTransparency = 1
-                            local bgFadeIn = TweenService:Create(notification, TweenInfo.new(0.3), {
-                                BackgroundTransparency = 0.5
-                            })
-                            bgFadeIn:Play()
-                            
-                            -- Fade out after delay
-                            task.delay(3, function()
-                                local fadeOut = TweenService:Create(notification, TweenInfo.new(0.3), {
-                                    TextTransparency = 1,
-                                    BackgroundTransparency = 1
-                                })
-                                fadeOut:Play()
-                                fadeOut.Completed:Connect(function()
-                                    notification:Destroy()
-                                end)
-                            end)
+                            showNotification(tostring(result), false)
                             
                             -- On PC, hide the GUI after command execution
                             if not isMobile() then
@@ -4470,89 +5065,12 @@ local function initializeGUI()
                             end
                         end
                     else
-                        -- Show error notification
-                        local errorNotification = Instance.new("TextLabel")
-                        errorNotification.Name = "Notification"
-                        errorNotification.Text = "Error: " .. message
-                        errorNotification.Font = Enum.Font.Arcade
-                        errorNotification.TextSize = 15
-                        errorNotification.TextColor3 = Color3.fromRGB(255, 0, 0)
-                        errorNotification.BackgroundColor3 = Color3.fromRGB(0, 0, 0)
-                        errorNotification.BackgroundTransparency = 0.1
-                        errorNotification.Size = UDim2.new(0, 300, 0, 40)
-                        errorNotification.Position = UDim2.new(0, 20, 0, 69)
-                        errorNotification.ZIndex = 10
-                        errorNotification.Parent = ScreenGui
-                        
-                        local corner = Instance.new("UICorner")
-                        corner.CornerRadius = UDim.new(0, 15)
-                        corner.Parent = errorNotification
-                        
-                        errorSound:Play()
-                        
-                        -- Fade in
-                        errorNotification.BackgroundTransparency = 1
-                        errorNotification.TextTransparency = 1
-                        local fadeIn = TweenService:Create(errorNotification, TweenInfo.new(0.3), {
-                            BackgroundTransparency = 0.5,
-                            TextTransparency = 0
-                        })
-                        fadeIn:Play()
-                        
-                        -- Fade out after delay
-                        task.delay(3, function()
-                            local fadeOut = TweenService:Create(errorNotification, TweenInfo.new(0.3), {
-                                TextTransparency = 1,
-                                BackgroundTransparency = 1
-                            })
-                            fadeOut:Play()
-                            fadeOut.Completed:Connect(function()
-                                errorNotification:Destroy()
-                            end)
-                        end)
+                        showNotification("Command Error: "..tostring(result), true)
                     end
                 end
             else
                 -- Unknown command
-                local unknownNotification = Instance.new("TextLabel")
-                unknownNotification.Name = "Notification"
-                unknownNotification.Text = "Unknown command: " .. commandText
-                unknownNotification.Font = Enum.Font.Arcade
-                unknownNotification.TextSize = 15
-                unknownNotification.TextColor3 = Color3.fromRGB(255, 0, 0)
-                unknownNotification.BackgroundColor3 = Color3.fromRGB(0, 0, 0)
-                unknownNotification.BackgroundTransparency = 0.1
-                unknownNotification.Size = UDim2.new(0, 200, 0, 40)
-                unknownNotification.Position = UDim2.new(0, 20, 0, 69)
-                unknownNotification.ZIndex = 10
-                unknownNotification.Parent = ScreenGui
-                
-                local corner = Instance.new("UICorner")
-                corner.CornerRadius = UDim.new(0, 15)
-                corner.Parent = unknownNotification
-                
-                errorSound:Play()
-                
-                -- Fade in
-                unknownNotification.BackgroundTransparency = 1
-                unknownNotification.TextTransparency = 1
-                local fadeIn = TweenService:Create(unknownNotification, TweenInfo.new(0.3), {
-                    BackgroundTransparency = 0.5,
-                    TextTransparency = 0
-                })
-                fadeIn:Play()
-                
-                -- Fade out after delay
-                task.delay(3, function()
-                    local fadeOut = TweenService:Create(unknownNotification, TweenInfo.new(0.3), {
-                        TextTransparency = 1,
-                        BackgroundTransparency = 1
-                    })
-                    fadeOut:Play()
-                    fadeOut.Completed:Connect(function()
-                        unknownNotification:Destroy()
-                    end)
-                end)
+                showNotification("Unknown command: "..commandText, true)
             end
         end
     end)
