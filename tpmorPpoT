@@ -4588,7 +4588,7 @@ local function initializeGUI()
     task.delay(1.5, function()
         local notification = Instance.new("TextLabel")
         notification.Name = "Notification"
-        notification.Text = "type 'cmds'"
+        notification.Text = "type 'cmds' for commands\n:D"
         notification.Font = Enum.Font.Arcade
         notification.TextSize = 15
         notification.TextColor3 = Color3.fromRGB(0, 255, 255)
