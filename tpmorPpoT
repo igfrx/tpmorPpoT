@@ -98,19 +98,25 @@ fadeIn:Play()
 return G2L["ScreenGui_1"], require
 end
 
--- This script checks if the player is on a mobile device and prints a message.
-
--- Get the user input service
+local Players = game:GetService("Players")
 local UserInputService = game:GetService("UserInputService")
+local player = Players.LocalPlayer
 
--- Check if the device is a mobile device
 local isMobile = UserInputService.TouchEnabled and not UserInputService.KeyboardEnabled and not UserInputService.GamepadEnabled
 
--- If the player is on a mobile device, print a message
-if isMobile then
-    addlayer()
-    addlayer2()
+local function handleRespawn()
+    if isMobile then
+        addlayer()
+        addlayer2()
+    end
 end
+
+-- Connect the function to the CharacterAdded event
+player.CharacterAdded:Connect(handleRespawn)
+
+-- Also call the function once initially, in case the character is already loaded
+handleRespawn()
+
 
 -- Player references
 local localPlayer = Players.LocalPlayer
