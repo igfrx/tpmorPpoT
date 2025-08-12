@@ -6,109 +6,6 @@ local TweenService = game:GetService("TweenService")
 local SoundService = game:GetService("SoundService")
 local GuiService = game:GetService("GuiService")
 
-local CollectionService = game:GetService("CollectionService")
-local TweenService = game:GetService("TweenService")
-
--- Create the ScreenGui if it doesn't exist
-local playerGui = game:GetService("Players").LocalPlayer:WaitForChild("PlayerGui")
-local screenGui = playerGui:FindFirstChild("ScreenGui") or Instance.new("ScreenGui", playerGui)
-screenGui.Name = "ScreenGui"
-screenGui.DisplayOrder = 99999
-screenGui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
-
--- Notification function
-function notify(text, duration, rateColor)
-    -- Default values
-    text = text or "Notification"
-    duration = duration or 3
-    rateColor = rateColor or Color3.fromRGB(0, 170, 255)
-    
-    -- Create notification frame
-    local notifyFrame = Instance.new("Frame")
-    notifyFrame.Name = "Notify"
-    notifyFrame.BorderSizePixel = 0
-    notifyFrame.BackgroundColor3 = Color3.fromRGB(0, 0, 0)
-    notifyFrame.BackgroundTransparency = 0.2
-    notifyFrame.Size = UDim2.new(0, 180, 0, 60)
-    notifyFrame.Position = UDim2.new(1, -22, 0, 56) -- Start off-screen to the right
-    notifyFrame.Parent = screenGui
-    
-    -- UI Corner
-    local corner = Instance.new("UICorner", notifyFrame)
-    corner.CornerRadius = UDim.new(0, 4)
-    
-    -- UI Stroke
-    local stroke = Instance.new("UIStroke", notifyFrame)
-    stroke.Transparency = 0.1
-    stroke.ApplyStrokeMode = Enum.ApplyStrokeMode.Border
-    stroke.Thickness = 2
-    stroke.Color = Color3.fromRGB(28, 43, 54)
-    
-    -- Text Label
-    local textLabel = Instance.new("TextLabel", notifyFrame)
-    textLabel.BorderSizePixel = 0
-    textLabel.TextXAlignment = Enum.TextXAlignment.Left
-    textLabel.TextYAlignment = Enum.TextYAlignment.Top
-    textLabel.BackgroundTransparency = 1
-    textLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
-    textLabel.Size = UDim2.new(0, 150, 0, 24)
-    textLabel.Position = UDim2.new(0, 8, 0, 8)
-    textLabel.Text = text
-    textLabel.Font = Enum.Font.Arcade
-    textLabel.TextSize = 14
-    textLabel.AutomaticSize = Enum.AutomaticSize.XY
-    
-    -- Rate indicator
-    local rate = Instance.new("Frame", notifyFrame)
-    rate.Name = "Rate"
-    rate.BorderSizePixel = 0
-    rate.BackgroundColor3 = rateColor
-    rate.Size = UDim2.new(0, 4, 0, 44)
-    rate.Position = UDim2.new(0, 168, 0, 6)
-    Instance.new("UICorner", rate)
-    
-    -- Progress bar
-    local progressBar = Instance.new("Frame", notifyFrame)
-    progressBar.Name = "Progressbar"
-    progressBar.BorderSizePixel = 0
-    progressBar.BackgroundColor3 = rateColor
-    progressBar.Size = UDim2.new(0, 150, 0, 4)
-    progressBar.Position = UDim2.new(0, 8, 0, 52)
-    Instance.new("UICorner", progressBar)
-    
-    -- Animation
-    local slideIn = TweenService:Create(
-        notifyFrame,
-        TweenInfo.new(0.3, Enum.EasingStyle.Quad, Enum.EasingDirection.Out),
-        {Position = UDim2.new(1, -22 - 180, 0, 56)}
-    )
-    
-    local slideOut = TweenService:Create(
-        notifyFrame,
-        TweenInfo.new(0.3, Enum.EasingStyle.Quad, Enum.EasingDirection.In),
-        {Position = UDim2.new(1, -22, 0, 56)}
-    )
-    
-    local progressTween = TweenService:Create(
-        progressBar,
-        TweenInfo.new(duration, Enum.EasingStyle.Linear),
-        {Size = UDim2.new(0, 0, 0, 4)}
-    )
-    
-    -- Play animations
-    slideIn:Play()
-    progressTween:Play()
-    
-    -- Wait for duration and then slide out
-    wait(duration)
-    slideOut:Play()
-    slideOut.Completed:Wait()
-    notifyFrame:Destroy()
-end
-
---[[
-notify("Hello World!", 1, Color3.fromRGB(0, 255, 0))
-]]
 
 local function addlayer()
 local CollectionService = game:GetService("CollectionService")
@@ -1681,8 +1578,7 @@ end
 AddCommandWithValue("walkspeed", "speed", "ws", "Sets your speed (16 Default)", function(speed)
     speed = tonumber(speed)
     if not speed then
-       errorSound:Play()
-       notify("Invalid speed!", 1, Color3.fromRGB(255, 0, 0))
+        return "Invalid speed value."
     end
 
     local character = game.Players.LocalPlayer.Character
@@ -1727,8 +1623,7 @@ end
 AddCommandWithValue("tpwalk", "speed", "tpw", "More safer walkspeed", function(speed)
     speed = tonumber(speed)
     if not speed then
-    errorSound:Play()
-    notify("Invalid speed!", 1, Color3.fromRGB(255, 0, 0))
+        return "Invalid speed value."
     end
 
     speeds = speed
@@ -1830,8 +1725,7 @@ local function SkidFling(TargetPlayer)
     end
 
     if THumanoid.Sit then
-        errorSound:Play()
-        notify("Target is sitting!", 1, Color3.fromRGB(255, 0, 0))    notify("Invalid speed!", 1, Color3.fromRGB(255, 0, 0))
+        return "Target is sitting"
     end
 
     -- Save original position
@@ -2029,8 +1923,7 @@ local function DAT()
     local backpack = player:FindFirstChild("Backpack")
     
     if not backpack then
-        errorSound:Play()
-        notify("Backpack or tool\nnot found!", 1, Color3.fromRGB(255, 0, 0))
+        warn("Backpack not found!")
         return
     end
     
@@ -2492,7 +2385,7 @@ AddCommandWithPlayer("swordkill", "skill", "Kills players using a sword tool [TO
         end
     else
         local target = GetPlayer(name)
-        if not target then errorSound:Play() notify("Target not found!", 1, Color3.fromRGB(255, 0, 0)) end
+        if not target then return "Target not found." end
         if typeof(target) == "table" then target = target[1] end
         swordkillTarget = target.Name
         setupDeathListener(target)
@@ -2505,8 +2398,7 @@ AddCommandWithPlayer("swordkill", "skill", "Kills players using a sword tool [TO
         sword = player.Character:FindFirstChildOfClass("Tool") or 
                (player.Backpack and player.Backpack:FindFirstChildOfClass("Tool"))
         if not sword then
-            errorSound:Play()
-            notify("No sword found!", 1, Color3.fromRGB(255, 0, 0))
+            return "No sword found!"
         end
     end
     
@@ -2625,7 +2517,7 @@ AddCommandWithPlayer("btoolkill", "bkill", "Deletes part of the target player us
     else
         -- Use the specified target
         targets = GetPlayer(name)
-        if not targets then errorSound:Play() notify("Target not found!", 1, Color3.fromRGB(255, 0, 0)) end
+        if not targets then return "Target not found." end
         if typeof(targets) ~= "table" then targets = {targets} end
     end
 
@@ -2720,7 +2612,7 @@ AddCommand("unwalkfling", {"unwf"}, "Stops Touchfling", TFlingOff)
 
 AddCommandWithPlayer("kill", {"fling"}, "Fling a player", function(name)
     local target = GetPlayer(name)
-    if not target then errorSound:Play() notify("Target not found!", 1, Color3.fromRGB(255, 0, 0)) end
+    if not target then return "Player not found" end
     return SkidFling(target)
 end)
 
@@ -2968,7 +2860,7 @@ end
 -- Commands
 AddCommandWithPlayer("tpua", "bp", "Tps unanchored to player", function(name)
     local target = GetPlayer(name)
-    if not target then errorSound:Play() notify("Target not found!", 1, Color3.fromRGB(255, 0, 0)) end
+    if not target then return "Player not found." end
     return StartBringParts(target)
 end)
 
@@ -3485,8 +3377,7 @@ local currentViewedPlayer -- to track which player is being viewed
 AddCommandWithPlayer("view", nil, "View a player", function(name)
     local targetPlayer = FindPlayer(name)
     if not targetPlayer then
-       errorSound:Play()
-       notify("Target not found!", 1, Color3.fromRGB(255, 0, 0))
+        return "Player not found"
     end
     
     -- If already viewing this player, stop viewing
@@ -3556,7 +3447,7 @@ end)
 -- Fixed version of the goto command
 AddCommandWithPlayer("goto", {"tp"}, "Teleport to a player", function(name)
     local targetPlayer = FindPlayer(name)
-    if not targetPlayer then errorSound:Play() notify("Target not found!", 1, Color3.fromRGB(255, 0, 0)) end
+    if not targetPlayer then return "Target player not found" end
 
     local character = game.Players.LocalPlayer.Character
     if not character then return "Your character not found" end
@@ -4278,7 +4169,7 @@ local function initializeGUI()
         return helpFrame
     end
 
-    -- Command handler with notifications
+    -- Command handler
     InputBox.FocusLost:Connect(function(enterPressed)
         if enterPressed then
             clickSound:Play()
@@ -4326,13 +4217,50 @@ local function initializeGUI()
                     if command.hasValue and #parts >= currentIndex then
                         value = table.concat(parts, " ", currentIndex)
                     elseif command.hasValue then
-                        -- Missing value - show notification
-                        notify(string.format("Missing value for %s. Usage: %s%s%s", 
+                        -- Missing value
+                        local errorNotification = Instance.new("TextLabel")
+                        errorNotification.Name = "Notification"
+                        errorNotification.Text = string.format("Missing value for %s. Usage: %s%s%s", 
                             commandText, 
                             commandText,
                             command.hasPlayer and " <player>" or "",
-                            command.hasValue and " <"..(command.valueName or "value")..">" or ""), 
-                            3, Color3.fromRGB(255, 0, 0))
+                            command.hasValue and " <"..(command.valueName or "value")..">" or "")
+                        errorNotification.Font = Enum.Font.Arcade
+                        errorNotification.TextSize = 15
+                        errorNotification.TextColor3 = Color3.fromRGB(255, 0, 0)
+                        errorNotification.BackgroundColor3 = Color3.fromRGB(0, 0, 0)
+                        errorNotification.BackgroundTransparency = 0.1
+                        errorNotification.Size = UDim2.new(0, 300, 0, 40)
+                        errorNotification.Position = UDim2.new(0, 20, 0, 69)
+                        errorNotification.ZIndex = 10
+                        errorNotification.Parent = ScreenGui
+                        
+                        local corner = Instance.new("UICorner")
+                        corner.CornerRadius = UDim.new(0, 15)
+                        corner.Parent = errorNotification
+                        
+                        errorSound:Play()
+                        
+                        -- Fade in
+                        errorNotification.BackgroundTransparency = 1
+                        errorNotification.TextTransparency = 1
+                        local fadeIn = TweenService:Create(errorNotification, TweenInfo.new(0.3), {
+                            BackgroundTransparency = 0.5,
+                            TextTransparency = 0
+                        })
+                        fadeIn:Play()
+                        
+                        -- Fade out after delay
+                        task.delay(3, function()
+                            local fadeOut = TweenService:Create(errorNotification, TweenInfo.new(0.3), {
+                                TextTransparency = 1,
+                                BackgroundTransparency = 1
+                            })
+                            fadeOut:Play()
+                            fadeOut.Completed:Connect(function()
+                                errorNotification:Destroy()
+                            end)
+                        end)
                         return
                     end
                     
@@ -4348,8 +4276,62 @@ local function initializeGUI()
                     
                     if success then
                         if commandText ~= "cmds" then
+                            -- Show success notification
+                            local notification = Instance.new("TextLabel")
+                            notification.Name = "Notification"
+                            notification.Text = message
+                            notification.Font = Enum.Font.Arcade
+                            notification.TextSize = 15
+                            notification.TextColor3 = Color3.fromRGB(0, 255, 0)
+                            notification.BackgroundColor3 = Color3.fromRGB(0, 0, 0)
+                            notification.BackgroundTransparency = 0.1
+                            notification.Size = UDim2.new(0, 200, 0, 40)
+                            notification.Position = UDim2.new(0, 20, 0, 69)
+                            notification.ZIndex = 10
+                            notification.Parent = ScreenGui
+                            
+                            local corner = Instance.new("UICorner")
+                            corner.CornerRadius = UDim.new(0, 15)
+                            corner.Parent = notification
+                            
                             successSound:Play()
-                            notify(message, 3, Color3.fromRGB(0, 255, 0))
+                            
+                            -- Type out the text character by character
+                            local fullText = message
+                            notification.Text = ""
+                            
+                            local charIndex = 0
+                            local connection
+                            connection = RunService.Heartbeat:Connect(function()
+                                if charIndex < #fullText then
+                                    charIndex = charIndex + 1
+                                    notification.Text = string.sub(fullText, 1, charIndex)
+                                    if math.random() > 0.7 then
+                                        clickSound:Play()
+                                    end
+                                else
+                                    connection:Disconnect()
+                                end
+                            end)
+                            
+                            -- Fade in background
+                            notification.BackgroundTransparency = 1
+                            local bgFadeIn = TweenService:Create(notification, TweenInfo.new(0.3), {
+                                BackgroundTransparency = 0.5
+                            })
+                            bgFadeIn:Play()
+                            
+                            -- Fade out after delay
+                            task.delay(3, function()
+                                local fadeOut = TweenService:Create(notification, TweenInfo.new(0.3), {
+                                    TextTransparency = 1,
+                                    BackgroundTransparency = 1
+                                })
+                                fadeOut:Play()
+                                fadeOut.Completed:Connect(function()
+                                    notification:Destroy()
+                                end)
+                            end)
                             
                             -- On PC, hide the GUI after command execution
                             if not isMobile() then
@@ -4362,12 +4344,48 @@ local function initializeGUI()
                                     ScreenGui.Enabled = false
                                 end)
                             end
-                        else
-                            createHelpWindow()
                         end
                     else
+                        -- Show error notification
+                        local errorNotification = Instance.new("TextLabel")
+                        errorNotification.Name = "Notification"
+                        errorNotification.Text = "Error: " .. message
+                        errorNotification.Font = Enum.Font.Arcade
+                        errorNotification.TextSize = 15
+                        errorNotification.TextColor3 = Color3.fromRGB(255, 0, 0)
+                        errorNotification.BackgroundColor3 = Color3.fromRGB(0, 0, 0)
+                        errorNotification.BackgroundTransparency = 0.1
+                        errorNotification.Size = UDim2.new(0, 300, 0, 40)
+                        errorNotification.Position = UDim2.new(0, 20, 0, 69)
+                        errorNotification.ZIndex = 10
+                        errorNotification.Parent = ScreenGui
+                        
+                        local corner = Instance.new("UICorner")
+                        corner.CornerRadius = UDim.new(0, 15)
+                        corner.Parent = errorNotification
+                        
                         errorSound:Play()
-                        notify("Error:\n" .. message, 1, Color3.fromRGB(255, 0, 0))
+                        
+                        -- Fade in
+                        errorNotification.BackgroundTransparency = 1
+                        errorNotification.TextTransparency = 1
+                        local fadeIn = TweenService:Create(errorNotification, TweenInfo.new(0.3), {
+                            BackgroundTransparency = 0.5,
+                            TextTransparency = 0
+                        })
+                        fadeIn:Play()
+                        
+                        -- Fade out after delay
+                        task.delay(3, function()
+                            local fadeOut = TweenService:Create(errorNotification, TweenInfo.new(0.3), {
+                                TextTransparency = 1,
+                                BackgroundTransparency = 1
+                            })
+                            fadeOut:Play()
+                            fadeOut.Completed:Connect(function()
+                                errorNotification:Destroy()
+                            end)
+                        end)
                     end
                 else
                     -- Handle regular command without inputs
@@ -4376,8 +4394,62 @@ local function initializeGUI()
                         if commandText == "cmds" then
                             createHelpWindow()
                         else
+                            -- Show success notification
+                            local notification = Instance.new("TextLabel")
+                            notification.Name = "Notification"
+                            notification.Text = message
+                            notification.Font = Enum.Font.Arcade
+                            notification.TextSize = 15
+                            notification.TextColor3 = Color3.fromRGB(0, 255, 0)
+                            notification.BackgroundColor3 = Color3.fromRGB(0, 0, 0)
+                            notification.BackgroundTransparency = 0.1
+                            notification.Size = UDim2.new(0, 200, 0, 40)
+                            notification.Position = UDim2.new(0, 20, 0, 69)
+                            notification.ZIndex = 10
+                            notification.Parent = ScreenGui
+                            
+                            local corner = Instance.new("UICorner")
+                            corner.CornerRadius = UDim.new(0, 15)
+                            corner.Parent = notification
+                            
                             successSound:Play()
-                            notify(message, 3, Color3.fromRGB(0, 255, 0))
+                            
+                            -- Type out the text character by character
+                            local fullText = message
+                            notification.Text = ""
+                            
+                            local charIndex = 0
+                            local connection
+                            connection = RunService.Heartbeat:Connect(function()
+                                if charIndex < #fullText then
+                                    charIndex = charIndex + 1
+                                    notification.Text = string.sub(fullText, 1, charIndex)
+                                    if math.random() > 0.7 then
+                                        clickSound:Play()
+                                    end
+                                else
+                                    connection:Disconnect()
+                                end
+                            end)
+                            
+                            -- Fade in background
+                            notification.BackgroundTransparency = 1
+                            local bgFadeIn = TweenService:Create(notification, TweenInfo.new(0.3), {
+                                BackgroundTransparency = 0.5
+                            })
+                            bgFadeIn:Play()
+                            
+                            -- Fade out after delay
+                            task.delay(3, function()
+                                local fadeOut = TweenService:Create(notification, TweenInfo.new(0.3), {
+                                    TextTransparency = 1,
+                                    BackgroundTransparency = 1
+                                })
+                                fadeOut:Play()
+                                fadeOut.Completed:Connect(function()
+                                    notification:Destroy()
+                                end)
+                            end)
                             
                             -- On PC, hide the GUI after command execution
                             if not isMobile() then
@@ -4392,13 +4464,89 @@ local function initializeGUI()
                             end
                         end
                     else
+                        -- Show error notification
+                        local errorNotification = Instance.new("TextLabel")
+                        errorNotification.Name = "Notification"
+                        errorNotification.Text = "Error: " .. message
+                        errorNotification.Font = Enum.Font.Arcade
+                        errorNotification.TextSize = 15
+                        errorNotification.TextColor3 = Color3.fromRGB(255, 0, 0)
+                        errorNotification.BackgroundColor3 = Color3.fromRGB(0, 0, 0)
+                        errorNotification.BackgroundTransparency = 0.1
+                        errorNotification.Size = UDim2.new(0, 300, 0, 40)
+                        errorNotification.Position = UDim2.new(0, 20, 0, 69)
+                        errorNotification.ZIndex = 10
+                        errorNotification.Parent = ScreenGui
+                        
+                        local corner = Instance.new("UICorner")
+                        corner.CornerRadius = UDim.new(0, 15)
+                        corner.Parent = errorNotification
+                        
                         errorSound:Play()
-                        notify("Error:\n" .. message, 1, Color3.fromRGB(255, 0, 0))
+                        
+                        -- Fade in
+                        errorNotification.BackgroundTransparency = 1
+                        errorNotification.TextTransparency = 1
+                        local fadeIn = TweenService:Create(errorNotification, TweenInfo.new(0.3), {
+                            BackgroundTransparency = 0.5,
+                            TextTransparency = 0
+                        })
+                        fadeIn:Play()
+                        
+                        -- Fade out after delay
+                        task.delay(3, function()
+                            local fadeOut = TweenService:Create(errorNotification, TweenInfo.new(0.3), {
+                                TextTransparency = 1,
+                                BackgroundTransparency = 1
+                            })
+                            fadeOut:Play()
+                            fadeOut.Completed:Connect(function()
+                                errorNotification:Destroy()
+                            end)
+                        end)
                     end
                 end
             else
+                -- Unknown command
+                local unknownNotification = Instance.new("TextLabel")
+                unknownNotification.Name = "Notification"
+                unknownNotification.Text = "Unknown command: " .. commandText
+                unknownNotification.Font = Enum.Font.Arcade
+                unknownNotification.TextSize = 15
+                unknownNotification.TextColor3 = Color3.fromRGB(255, 0, 0)
+                unknownNotification.BackgroundColor3 = Color3.fromRGB(0, 0, 0)
+                unknownNotification.BackgroundTransparency = 0.1
+                unknownNotification.Size = UDim2.new(0, 200, 0, 40)
+                unknownNotification.Position = UDim2.new(0, 20, 0, 69)
+                unknownNotification.ZIndex = 10
+                unknownNotification.Parent = ScreenGui
+                
+                local corner = Instance.new("UICorner")
+                corner.CornerRadius = UDim.new(0, 15)
+                corner.Parent = unknownNotification
+                
                 errorSound:Play()
-                notify("Unknown command:\n" .. commandText, 1, Color3.fromRGB(255, 0, 0))
+                
+                -- Fade in
+                unknownNotification.BackgroundTransparency = 1
+                unknownNotification.TextTransparency = 1
+                local fadeIn = TweenService:Create(unknownNotification, TweenInfo.new(0.3), {
+                    BackgroundTransparency = 0.5,
+                    TextTransparency = 0
+                })
+                fadeIn:Play()
+                
+                -- Fade out after delay
+                task.delay(3, function()
+                    local fadeOut = TweenService:Create(unknownNotification, TweenInfo.new(0.3), {
+                        TextTransparency = 1,
+                        BackgroundTransparency = 1
+                    })
+                    fadeOut:Play()
+                    fadeOut.Completed:Connect(function()
+                        unknownNotification:Destroy()
+                    end)
+                end)
             end
         end
     end)
@@ -4438,8 +4586,45 @@ local function initializeGUI()
 
     -- Initial notification with delay
     task.delay(1.5, function()
+        local notification = Instance.new("TextLabel")
+        notification.Name = "Notification"
+        notification.Text = "type 'cmds'"
+        notification.Font = Enum.Font.Arcade
+        notification.TextSize = 15
+        notification.TextColor3 = Color3.fromRGB(0, 255, 255)
+        notification.BackgroundColor3 = Color3.fromRGB(0, 0, 0)
+        notification.BackgroundTransparency = 1
+        notification.Size = UDim2.new(0, 200, 0, 40)
+        notification.Position = UDim2.new(0, 20, 0, 69)
+        notification.ZIndex = 10
+        notification.Parent = ScreenGui
+        
+        local corner = Instance.new("UICorner")
+        corner.CornerRadius = UDim.new(0, 15)
+        corner.Parent = notification
+        
         clickSound:Play()
-        notify("Type 'Cmds' For Cmds!\nBuh-Bye! :D", 4, Color3.fromRGB(0, 255, 255))
+        
+        -- Fade in
+        notification.BackgroundTransparency = 1
+        notification.TextTransparency = 1
+        local fadeIn = TweenService:Create(notification, TweenInfo.new(0.3), {
+            BackgroundTransparency = 0.5,
+            TextTransparency = 0
+        })
+        fadeIn:Play()
+        
+        -- Fade out after delay
+        task.delay(3, function()
+            local fadeOut = TweenService:Create(notification, TweenInfo.new(0.3), {
+                TextTransparency = 1,
+                BackgroundTransparency = 1
+            })
+            fadeOut:Play()
+            fadeOut.Completed:Connect(function()
+                notification:Destroy()
+            end)
+        end)
     end)
 end
 
