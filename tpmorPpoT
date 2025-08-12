@@ -6,6 +6,112 @@ local TweenService = game:GetService("TweenService")
 local SoundService = game:GetService("SoundService")
 local GuiService = game:GetService("GuiService")
 
+
+local function addlayer()
+local CollectionService = game:GetService("CollectionService")
+local TweenService = game:GetService("TweenService")
+
+local G2L = {}
+
+-- Players.hmmm5651.PlayerGui.ScreenGui
+G2L["ScreenGui_1"] = Instance.new("ScreenGui", game:GetService("Players").LocalPlayer:WaitForChild("PlayerGui"))
+G2L["ScreenGui_1"]["DisplayOrder"] = 1
+G2L["ScreenGui_1"]["ZIndexBehavior"] = Enum.ZIndexBehavior.Sibling
+
+-- Tags
+CollectionService:AddTag(G2L["ScreenGui_1"], [[main]])
+
+-- Players.hmmm5651.PlayerGui.ScreenGui.ImageLabel
+G2L["ImageLabel_2"] = Instance.new("ImageLabel", G2L["ScreenGui_1"])
+G2L["ImageLabel_2"]["BorderSizePixel"] = 0
+G2L["ImageLabel_2"]["BackgroundColor3"] = Color3.fromRGB(255, 255, 255)
+G2L["ImageLabel_2"]["Image"] = [[rbxassetid://118689412872595]]
+G2L["ImageLabel_2"]["Size"] = UDim2.new(0, 182, 0, 118)
+G2L["ImageLabel_2"]["BackgroundTransparency"] = 1
+G2L["ImageLabel_2"]["Position"] = UDim2.new(0, 20, 0, -32)
+
+-- Set initial transparency for fade in
+G2L["ImageLabel_2"].ImageTransparency = 1
+
+-- Fade in animation
+local fadeIn = TweenService:Create(
+    G2L["ImageLabel_2"],
+    TweenInfo.new(0.2, Enum.EasingStyle.Linear),
+    {ImageTransparency = 0.5}
+)
+
+-- Fade out animation (to use later if needed)
+local fadeOut = TweenService:Create(
+    G2L["ImageLabel_2"],
+    TweenInfo.new(0.2, Enum.EasingStyle.Linear),
+    {ImageTransparency = 1}
+)
+
+-- Play the fade in animation
+fadeIn:Play()
+
+-- Optional: If you want it to automatically fade out after fading in
+fadeIn.Completed:Connect(function()
+    wait(0.1) -- Wait 1 second before fading out
+    fadeOut:Play()
+end)
+
+return G2L["ScreenGui_1"], require
+end
+
+local function addlayer2()
+local CollectionService = game:GetService("CollectionService")
+local TweenService = game:GetService("TweenService")
+
+local G2L = {}
+
+-- Players.hmmm5651.PlayerGui.ScreenGui
+G2L["ScreenGui_1"] = Instance.new("ScreenGui", game:GetService("Players").LocalPlayer:WaitForChild("PlayerGui"))
+G2L["ScreenGui_1"]["DisplayOrder"] = 1
+G2L["ScreenGui_1"]["ZIndexBehavior"] = Enum.ZIndexBehavior.Sibling
+
+-- Tags
+CollectionService:AddTag(G2L["ScreenGui_1"], [[main]])
+
+-- Players.hmmm5651.PlayerGui.ScreenGui.ImageLabel
+G2L["ImageLabel_2"] = Instance.new("ImageLabel", G2L["ScreenGui_1"])
+G2L["ImageLabel_2"]["BorderSizePixel"] = 0
+G2L["ImageLabel_2"]["BackgroundColor3"] = Color3.fromRGB(255, 255, 255)
+G2L["ImageLabel_2"]["Image"] = [[rbxassetid://137150573919513]]
+G2L["ImageLabel_2"]["Size"] = UDim2.new(0, 156, 0, 158)
+G2L["ImageLabel_2"]["BackgroundTransparency"] = 1
+G2L["ImageLabel_2"]["Position"] = UDim2.new(0, 16, 0, -54)
+
+-- Set initial transparency for fade in
+G2L["ImageLabel_2"].ImageTransparency = 1
+
+-- Fade in animation
+local fadeIn = TweenService:Create(
+    G2L["ImageLabel_2"],
+    TweenInfo.new(3, Enum.EasingStyle.Linear),
+    {ImageTransparency = 0.1}
+)
+
+-- Play the fade in animation
+fadeIn:Play()
+
+return G2L["ScreenGui_1"], require
+end
+
+-- This script checks if the player is on a mobile device and prints a message.
+
+-- Get the user input service
+local UserInputService = game:GetService("UserInputService")
+
+-- Check if the device is a mobile device
+local isMobile = UserInputService.TouchEnabled and not UserInputService.KeyboardEnabled and not UserInputService.GamepadEnabled
+
+-- If the player is on a mobile device, print a message
+if isMobile then
+    addlayer()
+    addlayer2()
+end
+
 -- Player references
 local localPlayer = Players.LocalPlayer
 local character = localPlayer.Character or localPlayer.CharacterAdded:Wait()
@@ -164,6 +270,7 @@ local function enableFlight()
     return "Opening 'Fly' Window."
 end
 
+
 local function plrz()
 
 local Players = game:GetService("Players")
@@ -198,7 +305,7 @@ local shadow = Instance.new("ImageLabel")
 shadow.Name = "Shadow"
 shadow.Image = "rbxassetid://1316045217"
 shadow.ImageColor3 = Color3.new(0, 0, 0)
-shadow.ImageTransparency = 0.8
+shadow.ImageTransparency = 0.2
 shadow.ScaleType = Enum.ScaleType.Slice
 shadow.SliceCenter = Rect.new(10, 10, 118, 118)
 shadow.Size = UDim2.new(1, 10, 1, 10)
@@ -237,7 +344,7 @@ minimizeButton.Name = "MinimizeButton"
 minimizeButton.BackgroundTransparency = 1
 minimizeButton.Position = UDim2.new(0.7, 0, 0, 0)
 minimizeButton.Size = UDim2.new(0.15, 0, 1, 0)
-minimizeButton.Font = Enum.Font.GothamBold
+minimizeButton.Font = Enum.Font.Arcade
 minimizeButton.Text = "_"
 minimizeButton.TextColor3 = Color3.fromRGB(0, 255, 0)
 minimizeButton.TextSize = 16
@@ -249,7 +356,7 @@ closeButton.Name = "CloseButton"
 closeButton.BackgroundTransparency = 1
 closeButton.Position = UDim2.new(0.85, 0, 0, 0)
 closeButton.Size = UDim2.new(0.15, 0, 1, 0)
-closeButton.Font = Enum.Font.GothamBold
+closeButton.Font = Enum.Font.Arcade
 closeButton.Text = "X"
 closeButton.TextColor3 = Color3.fromRGB(255, 0, 0)
 closeButton.TextSize = 14
@@ -3770,7 +3877,7 @@ local function initializeGUI()
 
     local VersionLabel = Instance.new("TextLabel")
     VersionLabel.Name = "VersionLabel"
-    VersionLabel.Text = "V0.5"
+    VersionLabel.Text = "V0.6"
     VersionLabel.TextSize = 10
     VersionLabel.TextTransparency = 0.6
     VersionLabel.TextColor3 = Color3.fromRGB(0, 0, 0)
