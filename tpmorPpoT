@@ -4467,7 +4467,6 @@ local function initializeGUI()
     UICorner.CornerRadius = UDim.new(1, 0)
     UICorner.Parent = MainFrame
 
--- Store these at the top of your script (outside any functions)
 local currentNotification = nil
 
 -- Function to create or get the ScreenGui
@@ -4488,7 +4487,7 @@ end
 
 function notify(text, duration, rateColor, soundId)
     -- Default values
-    text = text or "Notification"
+    text = text
     duration = duration or 4
     rateColor = rateColor or Color3.fromRGB(0, 170, 255)
     
