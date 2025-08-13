@@ -7,7 +7,7 @@ local SoundService = game:GetService("SoundService")
 local GuiService = game:GetService("GuiService")
 
 --[[
-showNotification("Invalid speed!", true)
+notify("jsjsjes", 1.1, Color3.fromRGB(255, 0, 0), 138081500)
 ]]
 
 local function addlayer()
@@ -1294,7 +1294,7 @@ end)
 
 function invis2()
     if not currentCharacter or not currentCharacter:FindFirstChild("HumanoidRootPart") then
-        showNotification("Invisibility: FAILED!", true)
+        notify("Invisibility: FAILED!", 1.1, Color3.fromRGB(255, 0, 0), 138081500)
     end
     
     cleanupInvisibility() -- Clean up any existing invisibility
@@ -1905,7 +1905,7 @@ function antiafkoff()
         antiAFKConnection = nil
         return "Anti-AFK disabled"
     else
-        showNotification("Anti-AFK wasn't enabled!", true)
+        notify("Anti-AFK is already disabled!", 1.1, Color3.fromRGB(255, 0, 0), 138081500)
     end
 end
 
@@ -2218,7 +2218,7 @@ end
 AddCommandWithValue("walkspeed", "speed", "ws", "Sets your speed (16 Default)", function(speed)
     speed = tonumber(speed)
     if not speed then
-        showNotification("Invalid speed!", true)
+        notify("Invalid speed!", 1.1, Color3.fromRGB(255, 0, 0), 138081500)
     end
 
     local character = game.Players.LocalPlayer.Character
@@ -2226,7 +2226,7 @@ AddCommandWithValue("walkspeed", "speed", "ws", "Sets your speed (16 Default)", 
         character:FindFirstChildOfClass("Humanoid").WalkSpeed = speed
         return "WalkSpeed set to\n" .. speed
     else
-        return "Character or Humanoid not found."
+        notify("Character not found!", 1.1, Color3.fromRGB(255, 0, 0), 138081500)
     end
 end)
 
@@ -2263,7 +2263,7 @@ end
 AddCommandWithValue("tpwalk", "speed", "tpw", "More safer walkspeed", function(speed)
     speed = tonumber(speed)
     if not speed then
-        showNotification("Invalid speed!", true)
+        notify("Invalid speed!", 1.1, Color3.fromRGB(255, 0, 0), 138081500)
     end
 
     speeds = speed
@@ -2357,15 +2357,15 @@ local function SkidFling(TargetPlayer)
     local Handle = Accessory and Accessory:FindFirstChild("Handle")
 
     if not Character or not Humanoid or not RootPart then
-        showNotification("Character not found!", true)
+        notify("Character not found!", 1.1, Color3.fromRGB(255, 0, 0), 138081500)
     end
 
     if not TCharacter or not THumanoid then
-        showNotification("Target not found!", true)
+        notify("Target not found!", 1.1, Color3.fromRGB(255, 0, 0), 138081500)
     end
 
     if THumanoid.Sit then
-        showNotification("Target Is Sitting!", true)
+        notify("Target is Sitting!", 1.1, Color3.fromRGB(255, 0, 0), 138081500)
     end
 
     -- Save original position
@@ -2478,7 +2478,7 @@ local function SkidFling(TargetPlayer)
     else
         BV:Destroy()
         workspace.FallenPartsDestroyHeight = OldFPDH
-        return "Target is missing everything"
+        notify("Target is missing?", 1.1, Color3.fromRGB(255, 0, 0), 138081500)
     end
 
     -- Clean up
@@ -2504,7 +2504,7 @@ local function SkidFling(TargetPlayer)
 end
 
 local function credits()
-    return "Script Made By\nhmmm5650.."
+    return "Script made by hmmm5650! :D"
 end
 
 local function cmdl()
@@ -2552,7 +2552,7 @@ local function sit()
         character.Humanoid.Sit = true
         return "Sitting.."
     else
-        showNotification("Failed to sit!", true)
+        notify("Failed to sit!", 1.1, Color3.fromRGB(255, 0, 0), 138081500)
     end
 end
 
@@ -2563,7 +2563,7 @@ local function DAT()
     local backpack = player:FindFirstChild("Backpack")
     
     if not backpack then
-        showNotification("Backpack not found!", true)
+        notify("Backpack not found!", 1.1, Color3.fromRGB(255, 0, 0), 138081500)
         return
     end
     
@@ -2660,8 +2660,8 @@ function VoidProtectionOn()
         inVoid = false
         bounceForce = 100 -- Reset force when turning on
         checkVoidPosition()
-        return "Void Protection: ON"
     end
+return "Void Protection: ON"
 end
 
 function VoidProtectionOff()
@@ -3025,7 +3025,7 @@ AddCommandWithPlayer("swordkill", "skill", "Kills players using a sword tool [TO
         end
     else
         local target = GetPlayer(name)
-        if not target then showNotification("Target not found!", true) end
+        if not target then notify("Target not found!", 1.1, Color3.fromRGB(255, 0, 0), 138081500) end
         if typeof(target) == "table" then target = target[1] end
         swordkillTarget = target.Name
         setupDeathListener(target)
@@ -3038,7 +3038,7 @@ AddCommandWithPlayer("swordkill", "skill", "Kills players using a sword tool [TO
         sword = player.Character:FindFirstChildOfClass("Tool") or 
                (player.Backpack and player.Backpack:FindFirstChildOfClass("Tool"))
         if not sword then
-            return "No sword found!"
+            notify("Sword not found!", 1.1, Color3.fromRGB(255, 0, 0), 138081500)
         end
     end
     
@@ -3157,7 +3157,7 @@ AddCommandWithPlayer("btoolkill", "bkill", "Deletes part of the target player us
     else
         -- Use the specified target
         targets = GetPlayer(name)
-        if not targets then showNotification("Target not found!", true) end
+        if not targets then notify("Target not found!", 1.1, Color3.fromRGB(255, 0, 0), 138081500) end
         if typeof(targets) ~= "table" then targets = {targets} end
     end
 
@@ -3252,7 +3252,7 @@ AddCommand("unwalkfling", {"unwf"}, "Stops Touchfling", TFlingOff)
 
 AddCommandWithPlayer("kill", {"fling"}, "Fling a player", function(name)
     local target = GetPlayer(name)
-    if not target then showNotification("Target not found!", true) end
+    if not target then notify("Target not found!", 1.1, Color3.fromRGB(255, 0, 0), 138081500) end
     return SkidFling(target)
 end)
 
@@ -3500,7 +3500,7 @@ end
 -- Commands
 AddCommandWithPlayer("tpua", "bp", "Tps unanchored to player", function(name)
     local target = GetPlayer(name)
-    if not target then showNotification("Target not found!", true) end
+    if not target then notify("Target not found!", 1.1, Color3.fromRGB(255, 0, 0), 138081500) end
     return StartBringParts(target)
 end)
 
@@ -3606,7 +3606,7 @@ end
 -- Main command
 AddCommandWithValue("hitbox", "amount", "reach", "Changes other players hitbox size (0 to reset)", function(size)
     local sizeNum = tonumber(size)
-    if not sizeNum then return "Invalid size value" end
+    if not sizeNum then notify("Invalid amount!", 1.1, Color3.fromRGB(255, 0, 0), 138081500) end
     
     -- Clean up if resetting
     if sizeNum == 0 then
@@ -3652,19 +3652,19 @@ game:GetService("Players").LocalPlayer.CharacterRemoving:Connect(cleanup)
 
 AddCommandWithValue("jumppower", "amount", "jp", "Sets your jump power", function(power)
     local num = tonumber(power)
-    if not num then return "Invalid number" end
+    if not num then notify("Invalid amount!", 1.1, Color3.fromRGB(255, 0, 0), 138081500) end
     
     local humanoid = game.Players.LocalPlayer.Character:FindFirstChildOfClass("Humanoid")
     if humanoid then
         humanoid.JumpPower = num
         return "Jump power set to "..num
     end
-    return "Humanoid not found"
+    notify("Character not found!", 1.1, Color3.fromRGB(255, 0, 0), 138081500)
 end)
 
 AddCommandWithValue("gravity", "value", "grav", "Sets workspace gravity", function(value)
     local num = tonumber(value)
-    if not num then return "Invalid number" end
+    if not num then notify("Invalid value!", 1.1, Color3.fromRGB(255, 0, 0), 138081500) end
     
     workspace.Gravity = num
     return "Gravity set to\n"..num
@@ -3672,14 +3672,14 @@ end)
 
 AddCommandWithValue("hipheight", "amount", "hh", "Sets your hip height", function(height)
     local num = tonumber(height)
-    if not num then return "Invalid number" end
+    if not num then notify("Invalid amount!", 1.1, Color3.fromRGB(255, 0, 0), 138081500) end
     
     local humanoid = game.Players.LocalPlayer.Character:FindFirstChildOfClass("Humanoid")
     if humanoid then
         humanoid.HipHeight = num
         return "Hip height set to\n"..num
     end
-    return "Humanoid not found"
+    notify("Character not found!", 1.1, Color3.fromRGB(255, 0, 0), 138081500)
 end)
 
 local RunService = game:GetService("RunService")
@@ -3689,17 +3689,17 @@ local spinning = nil -- connection holder
 AddCommandWithValue("spin", "speed", nil, "Spin your character at the given speed", function(value)
     local speed = tonumber(value)
     if not speed then
-        return "Invalid spin speed"
+        notify("Invalid speed!", 1.1, Color3.fromRGB(255, 0, 0), 138081500)
     end
 
     local character = game.Players.LocalPlayer.Character
     if not character then
-        return "Character not found"
+        notify("Character not found!", 1.1, Color3.fromRGB(255, 0, 0), 138081500)
     end
 
     local hrp = character:FindFirstChild("HumanoidRootPart")
     if not hrp then
-        return "HumanoidRootPart not found"
+        notify("HRP not found!", 1.1, Color3.fromRGB(255, 0, 0), 138081500)
     end
 
     -- Stop previous spin if active
@@ -3837,17 +3837,17 @@ AddCommand("serverhop", {"sh"}, "Joins a random server", function()
         end
     end
     
-    return "No available\nservers found"
+    notify("No available servers!", 1.1, Color3.fromRGB(255, 0, 0), 138081500)
 end)
 
 -- Copy Position command
 AddCommand("copypos", {"cp"}, "Copies your current position to clipboard", function()
     local player = game.Players.LocalPlayer
     local character = player.Character
-    if not character then return "Character not found" end
+    if not character then notify("Character not found!", 1.1, Color3.fromRGB(255, 0, 0), 138081500) end
     
     local hrp = character:FindFirstChild("HumanoidRootPart")
-    if not hrp then return "HumanoidRootPart not found" end
+    if not hrp then notify("HRP not found!", 1.1, Color3.fromRGB(255, 0, 0), 138081500) end
     
     local position = hrp.Position
     local text = string.format("Vector3.new(%d, %d, %d)", position.X, position.Y, position.Z)
@@ -3859,10 +3859,10 @@ end)
 -- Size command
 AddCommandWithValue("size", "amount", "scale", "Scales your character size", function(scale)
     local num = tonumber(scale)
-    if not num or num <= 0 or num > 10 then return "Invalid scale (0.1-10)" end
+    if not num or num <= 0 or num > 10 then notify("Invalid amount!", 1.1, Color3.fromRGB(255, 0, 0), 138081500) end
     
     local character = game.Players.LocalPlayer.Character
-    if not character then return "Character not found" end
+    if not character then notify("Character not found!", 1.1, Color3.fromRGB(255, 0, 0), 138081500) end
     
     for _, part in ipairs(character:GetDescendants()) do
         if part:IsA("BasePart") then
@@ -3931,14 +3931,14 @@ AddCommand("unfakelag", "unflag", "Disables fakelag", function()
         end
         return "Fakelag disabled"
     else
-        return "Fakelag was not active"
+        notify("Fakelag was never enabled!", 1.1, Color3.fromRGB(255, 0, 0), 138081500)
     end
 end)
 
 AddCommandWithValue("animspeed", "value", "as", "Sets animation speed (1 = default)", function(value)
     local speed = tonumber(value)
     if not speed or speed <= 0 or speed > 10 then
-        return "Invalid animation speed (must be between 0.1 and 10)"
+        notify("Invalid value!", 1.1, Color3.fromRGB(255, 0, 0), 138081500)
     end
 
     local player = game.Players.LocalPlayer
@@ -3972,7 +3972,7 @@ end)
 AddCommandWithValue("zoom", "value", "z", "Sets max camera zoom distance", function(value)
     local num = tonumber(value)
     if not num or num < 0 then
-        return "Invalid zoom value"
+        notify("Invalid value!", 1.1, Color3.fromRGB(255, 0, 0), 138081500)
     end
 
     local player = game.Players.LocalPlayer
@@ -4017,7 +4017,7 @@ local currentViewedPlayer -- to track which player is being viewed
 AddCommandWithPlayer("view", nil, "View a player", function(name)
     local targetPlayer = FindPlayer(name)
     if not targetPlayer then
-        showNotification("Target not found!", true)
+        notify("Target not found!", 1.1, Color3.fromRGB(255, 0, 0), 138081500)
     end
     
     -- If already viewing this player, stop viewing
@@ -4087,19 +4087,19 @@ end)
 -- Fixed version of the goto command
 AddCommandWithPlayer("goto", {"tp"}, "Teleport to a player", function(name)
     local targetPlayer = FindPlayer(name)
-    if not targetPlayer then showNotification("Target not found!", true) end
+    if not targetPlayer then notify("Target not found!", 1.1, Color3.fromRGB(255, 0, 0), 138081500) end
 
     local character = game.Players.LocalPlayer.Character
-    if not character then return "Your character not found" end
+    if not character then notify("Character not found!", 1.1, Color3.fromRGB(255, 0, 0), 138081500) end
 
     local humanoidRootPart = character:FindFirstChild("HumanoidRootPart")
-    if not humanoidRootPart then return "Your HumanoidRootPart not found" end
+    if not humanoidRootPart then notify("HRP not found!", 1.1, Color3.fromRGB(255, 0, 0), 138081500) end
 
     local targetCharacter = targetPlayer.Character
-    if not targetCharacter then return "Target character not found" end
+    if not targetCharacter then notify("Target not found!", 1.1, Color3.fromRGB(255, 0, 0), 138081500) end
 
     local targetHRP = targetCharacter:FindFirstChild("HumanoidRootPart")
-    if not targetHRP then return "Target HumanoidRootPart not found" end
+    if not targetHRP then notify("Target's Character not found!", 1.1, Color3.fromRGB(255, 0, 0), 138081500) end
 
     -- Offset behind the target
     local offset = CFrame.new(0, 0, 5)
@@ -4116,7 +4116,7 @@ AddCommand("aat", {"activatealltools"}, "Activates all tools in your inventory",
     local backpack = player:FindFirstChild("Backpack")
     local character = player.Character
     
-    if not backpack and not character then showNotification("Tools not found!", true) end
+    if not backpack and not character then notify("Backpack or Tools not found!", 1.1, Color3.fromRGB(255, 0, 0), 138081500) end
     
     local tools = {}
     
@@ -4138,7 +4138,7 @@ AddCommand("aat", {"activatealltools"}, "Activates all tools in your inventory",
         end
     end
     
-    if #tools == 0 then showNotification("Tools not found!", true) end
+    if #tools == 0 then notify("Tools not found!", 1.1, Color3.fromRGB(255, 0, 0), 138081500) end
     
     -- Equip and activate all tools
     for _, tool in ipairs(tools) do
@@ -4229,7 +4229,7 @@ local function removeESP(player)
 end
 
 AddCommand("esp", nil, "Highlights all players with distance", function()
-    if espEnabled then return "ESP is already enabled" end
+    if espEnabled then notify("ESP is already enabled!", 1.1, Color3.fromRGB(255, 0, 0), 138081500) end
     
     espEnabled = true
     
@@ -4266,7 +4266,7 @@ AddCommand("esp", nil, "Highlights all players with distance", function()
 end)
 
 AddCommand("unesp", nil, "Removes all ESP highlights", function()
-    if not espEnabled then return "ESP is not enabled" end
+    if not espEnabled then notify("ESP was never enabled!", 1.1, Color3.fromRGB(255, 0, 0), 138081500) end
     
     espEnabled = false
     
@@ -4392,7 +4392,7 @@ local function scanForTools()
 end
 
 AddCommand("partesp", {"pesp"}, "Esps everything [LAG]", function()
-    if toolEspEnabled then return "Part ESP is already enabled" end
+    if toolEspEnabled then notify("Partesp already enabled!", 1.1, Color3.fromRGB(255, 0, 0), 138081500) end
     
     toolEspEnabled = true
     
@@ -4410,7 +4410,7 @@ AddCommand("partesp", {"pesp"}, "Esps everything [LAG]", function()
 end)
 
 AddCommand("unpartesp", {"unpesp"}, "Removes all part ESP [WIP]", function()
-    if not toolEspEnabled then return "Part ESP is not enabled" end
+    if not toolEspEnabled then notify("Partesp was never enabled!", 1.1, Color3.fromRGB(255, 0, 0), 138081500) end
     
     toolEspEnabled = false
     
@@ -4467,150 +4467,169 @@ local function initializeGUI()
     UICorner.CornerRadius = UDim.new(1, 0)
     UICorner.Parent = MainFrame
 
-    -- Enhanced Notification System with Typewriter Effect
-    local function showNotification(message, isError)
-        -- Create sleek notification frame
-        local notification = Instance.new("Frame")
-        notification.Name = "Notification"
-        notification.BackgroundColor3 = isError and Color3.fromRGB(40, 20, 20) or Color3.fromRGB(20, 30, 20)
-        notification.BackgroundTransparency = 0.2
-        notification.BorderSizePixel = 0
-        notification.Size = UDim2.new(0, 250, 0, 30)  -- Smaller size
-        notification.Position = UDim2.new(0, 20, 0, 69)
-        notification.ZIndex = 10
-        notification.Parent = ScreenGui
-        
-        -- Add smooth corner rounding
-        local corner = Instance.new("UICorner")
-        corner.CornerRadius = UDim.new(0, 6)
-        corner.Parent = notification
-        
-        -- Add subtle shadow effect
-        local shadow = Instance.new("ImageLabel")
-        shadow.Name = "Shadow"
-        shadow.Image = "rbxassetid://1316045217"
-        shadow.ImageColor3 = Color3.new(0, 0, 0)
-        shadow.ImageTransparency = 0.8
-        shadow.ScaleType = Enum.ScaleType.Slice
-        shadow.SliceCenter = Rect.new(10, 10, 118, 118)
-        shadow.BackgroundTransparency = 1
-        shadow.Size = UDim2.new(1, 10, 1, 10)
-        shadow.Position = UDim2.new(0, -5, 0, -5)
-        shadow.ZIndex = 9
-        shadow.Parent = notification
-        
-        -- Add modern text label
-        local label = Instance.new("TextLabel")
-        label.Name = "Text"
-        label.Text = ""
-        label.Font = Enum.Font.Arcade
-        label.TextSize = 13
-        label.TextColor3 = isError and Color3.fromRGB(255, 120, 120) or Color3.fromRGB(180, 255, 180)
-        label.BackgroundTransparency = 1
-        label.Size = UDim2.new(1, -20, 1, 0)
-        label.Position = UDim2.new(0, 15, 0, 0)
-        label.TextXAlignment = Enum.TextXAlignment.Left
-        label.TextYAlignment = Enum.TextYAlignment.Center
-        label.TextWrapped = false
-        label.Parent = notification
-        
-        -- Add accent bar
-        local accent = Instance.new("Frame")
-        accent.Name = "Accent"
-        accent.BackgroundColor3 = isError and Color3.fromRGB(255, 80, 80) or Color3.fromRGB(100, 255, 100)
-        accent.BorderSizePixel = 0
-        accent.Size = UDim2.new(0, 3, 0.7, 0)
-        accent.Position = UDim2.new(0, 5, 0.15, 0)
-        accent.ZIndex = 11
-        accent.Parent = notification
-        
-        -- Round accent corners
-        local accentCorner = Instance.new("UICorner")
-        accentCorner.CornerRadius = UDim.new(1, 0)
-        accentCorner.Parent = accent
-        
-        -- Play notification sound
-        if clickSound then
-            clickSound:Play() -- Play click sound when notification appears
-        end
-        
-        -- Play error/success sound if defined
-        if isError and errorSound then
-            errorSound:Play()
-        elseif successSound then
-            successSound:Play()
-        end
-        
-        -- Animation sequence
-        notification.Size = UDim2.new(0, 0, 0, 30)
-        notification.Position = UDim2.new(0, 20, 0, 69)
-        
-        -- Smooth expand animation
-        local expand = TweenService:Create(notification, TweenInfo.new(0.2, Enum.EasingStyle.Quint), {
-            Size = UDim2.new(0, 250, 0, 30)
-        })
-        expand:Play()
-        
-        -- Typewriter effect with click sounds
-        local fullText = message
-        local currentText = ""
-        local charIndex = 0
-        local typewriterConnection
-        
-        local function updateText()
-            charIndex = charIndex + 1
-            if charIndex <= #fullText then
-                currentText = string.sub(fullText, 1, charIndex)
-                label.Text = currentText
-                
-                -- Play click sound randomly during typing (60% chance per character)
-                if clickSound and math.random() < 0.6 then
-                    clickSound:Play()
-                end
-            else
-                -- Stop the typewriter effect when done
-                if typewriterConnection then
-                    typewriterConnection:Disconnect()
-                end
-            end
-        end
-        
-        -- Start typewriter effect (15ms per character)
-        typewriterConnection = RunService.Heartbeat:Connect(function()
-            updateText()
-            task.wait(0.015) -- Adjust this value to change typing speed
-        end)
-        
-        -- Auto-close after shorter delay (3s for success, 4s for error)
-        task.delay(isError and 4 or 3, function()
-            -- Disconnect typewriter if still running
-            if typewriterConnection then
-                typewriterConnection:Disconnect()
-            end
-            
-            local fadeOut = TweenService:Create(notification, TweenInfo.new(0.2, Enum.EasingStyle.Quint), {
-                BackgroundTransparency = 1,
-                Size = UDim2.new(0, 0, 0, 30)
-            })
-            fadeOut:Play()
-            
-            local textFade = TweenService:Create(label, TweenInfo.new(0.2), {
-                TextTransparency = 1
-            })
-            textFade:Play()
-            
-            local accentFade = TweenService:Create(accent, TweenInfo.new(0.2), {
-                BackgroundTransparency = 1
-            })
-            accentFade:Play()
-            
-            fadeOut.Completed:Connect(function()
-                notification:Destroy()
-            end)
-        end)
-        
-        return notification
+-- Store these at the top of your script (outside any functions)
+local currentNotification = nil
+
+-- Function to create or get the ScreenGui
+local function getScreenGui()
+    local playerGui = game:GetService("Players").LocalPlayer:WaitForChild("PlayerGui")
+    local gui = playerGui:FindFirstChild("NotificationGui")
+    
+    if not gui then
+        gui = Instance.new("ScreenGui")
+        gui.Name = "NotificationGui"
+        gui.ResetOnSpawn = false -- This is important!
+        gui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
+        gui.Parent = playerGui
     end
+    
+    return gui
+end
+
+function notify(text, duration, rateColor, soundId)
+    -- Default values
+    text = text or "Notification"
+    duration = duration or 4
+    rateColor = rateColor or Color3.fromRGB(0, 170, 255)
+    
+    -- Get the ScreenGui (will create if doesn't exist)
+    local screenGui = getScreenGui()
+    
+    -- Destroy previous notification if it exists
+    if currentNotification and currentNotification.Parent then
+        currentNotification:Destroy()
+        currentNotification = nil
+    end
+    
+    -- Play sound immediately if soundId is provided
+    if soundId then
+        local sound = Instance.new("Sound")
+        sound.SoundId = "rbxassetid://" .. soundId
+        sound.Parent = game:GetService("SoundService")
+        sound:Play()
+        sound.Ended:Connect(function()
+            sound:Destroy()
+        end)
+    end
+    
+    -- Create notification frame
+    local notify = Instance.new("Frame")
+    notify.Name = "Notification"
+    notify.BackgroundColor3 = Color3.fromRGB(0, 0, 0)
+    notify.BackgroundTransparency = 0.3
+    notify.BorderSizePixel = 0
+    notify.Size = UDim2.new(0, 0, 0, 30)
+    notify.Position = UDim2.new(0, 20, 0, 69)
+    notify.ZIndex = 10
+    notify.Parent = screenGui
+    
+    -- Store the current notification
+    currentNotification = notify
+    
+    local corner = Instance.new("UICorner")
+    corner.CornerRadius = UDim.new(0, 10)
+    corner.Parent = notify
+    
+    -- Add subtle shadow effect
+    local shadow = Instance.new("ImageLabel")
+    shadow.Name = "Shadow"
+    shadow.Image = "rbxassetid://1316045217"
+    shadow.ImageColor3 = Color3.new(0, 0, 0)
+    shadow.ImageTransparency = 0.8
+    shadow.ScaleType = Enum.ScaleType.Slice
+    shadow.SliceCenter = Rect.new(10, 10, 118, 118)
+    shadow.BackgroundTransparency = 1
+    shadow.Size = UDim2.new(1, 10, 1, 10)
+    shadow.Position = UDim2.new(0, -5, 0, -5)
+    shadow.ZIndex = 9
+    shadow.Parent = notify
+    
+    -- Add accent bar
+    local accent = Instance.new("Frame")
+    accent.Name = "Accent"
+    accent.BackgroundColor3 = rateColor
+    accent.BorderSizePixel = 0
+    accent.Size = UDim2.new(0, 3, 0.7, 0)
+    accent.Position = UDim2.new(0, 5, 0.13, 0)
+    accent.ZIndex = 11
+    accent.Parent = notify
+    
+    -- Round accent corners
+    local accentCorner = Instance.new("UICorner")
+    accentCorner.CornerRadius = UDim.new(1, 0)
+    accentCorner.Parent = accent
+    
+    -- Add modern text label
+    local label = Instance.new("TextLabel")
+    label.Name = "Text"
+    label.Text = ""
+    label.Font = Enum.Font.Arcade
+    label.TextSize = 13
+    label.TextColor3 = Color3.fromRGB(255, 255, 255)
+    label.BackgroundTransparency = 1
+    label.Size = UDim2.new(1, -20, 1, 0)
+    label.Position = UDim2.new(0, 15, 0, 0)
+    label.TextXAlignment = Enum.TextXAlignment.Left
+    label.TextYAlignment = Enum.TextYAlignment.Center
+    label.TextWrapped = false
+    label.Parent = notify
+    
+    -- Smooth expand animation
+    local expand = game:GetService("TweenService"):Create(notify, TweenInfo.new(0.2, Enum.EasingStyle.Quint), {
+        Size = UDim2.new(0, 250, 0, 30)
+    })
+    expand:Play()
+    
+    -- Typewriter effect
+    local displayText = ""
+    local fullText = text
+    local typingSpeed = 0.0001
+    
+    for i = 1, #fullText do
+        if not notify.Parent then break end
+        
+        displayText = string.sub(fullText, 1, i)
+        label.Text = displayText
+        
+        if string.sub(fullText, i, i) ~= " " then
+            clickSound:Play()
+        end
+        
+        wait(typingSpeed)
+    end
+    
+    -- Auto-close after delay
+    task.delay(duration, function()
+        if not notify.Parent then return end
+        
+        local fadeOut = game:GetService("TweenService"):Create(notify, TweenInfo.new(0.2, Enum.EasingStyle.Quint), {
+            BackgroundTransparency = 1,
+            Size = UDim2.new(0, 0, 0, 30)
+        })
+        fadeOut:Play()
+        
+        local textFade = game:GetService("TweenService"):Create(label, TweenInfo.new(0.2), {
+            TextTransparency = 1
+        })
+        textFade:Play()
+        
+        local accentFade = game:GetService("TweenService"):Create(accent, TweenInfo.new(0.2), {
+            BackgroundTransparency = 1
+        })
+        accentFade:Play()
+        
+        fadeOut.Completed:Connect(function()
+            if notify.Parent then
+                notify:Destroy()
+                if currentNotification == notify then
+                    currentNotification = nil
+                end
+            end
+        end)
+    end)
+    
+    return notify
+end
     
     local Arrow = Instance.new("TextLabel")
     Arrow.Name = "Arrow"
@@ -5002,29 +5021,30 @@ local function initializeGUI()
                     if command.hasValue and #parts >= currentIndex then
                         value = table.concat(parts, " ", currentIndex)
                     elseif command.hasValue then
-                        -- Missing value
-                        showNotification(string.format("Missing value for %s. Usage: %s%s%s", 
+                        errorSound:Play()
+                        notify(string.format("Missing value for %s. Usage: %s%s%s", 
                             commandText, 
                             commandText,
                             command.hasPlayer and " <player>" or "",
-                            command.hasValue and " <"..(command.valueName or "value")..">" or ""), true)
+                            command.hasValue and " <"..(command.valueName or "value")..">" or ""), 
+                            3, Color3.fromRGB(255, 0, 0))
                         return
                     end
                     
                     -- Execute command with inputs
-                    local success, result = pcall(function()
-                        if command.hasPlayer and command.hasValue then
-                            return command.exec(playerName, value)
-                        elseif command.hasPlayer then
-                            return command.exec(playerName)
-                        elseif command.hasValue then
-                            return command.exec(value)
-                        end
-                    end)
+                    local success, message
+                    if command.hasPlayer and command.hasValue then
+                        success, message = pcall(function() return command.exec(playerName, value) end)
+                    elseif command.hasPlayer then
+                        success, message = pcall(function() return command.exec(playerName) end)
+                    elseif command.hasValue then
+                        success, message = pcall(function() return command.exec(value) end)
+                    end
                     
                     if success then
                         if commandText ~= "cmds" then
-                            showNotification(tostring(result), false)
+                            successSound:Play()
+                            notify(message, 1.1, Color3.fromRGB(0, 255, 0), nil)
                             
                             -- On PC, hide the GUI after command execution
                             if not isMobile() then
@@ -5041,16 +5061,17 @@ local function initializeGUI()
                             createHelpWindow()
                         end
                     else
-                        showNotification("Command Error: "..tostring(result), true)
+                        errorSound:Play()
                     end
                 else
                     -- Handle regular command without inputs
-                    local success, result = pcall(command.exec)
+                    local success, message = pcall(command.exec)
                     if success then
                         if commandText == "cmds" then
                             createHelpWindow()
                         else
-                            showNotification(tostring(result), false)
+                            successSound:Play()
+                            notify(message, 1.2, Color3.fromRGB(0, 255, 0), nil)
                             
                             -- On PC, hide the GUI after command execution
                             if not isMobile() then
@@ -5065,12 +5086,12 @@ local function initializeGUI()
                             end
                         end
                     else
-                        showNotification("Command Error: "..tostring(result), true)
+                        errorSound:Play()
                     end
                 end
             else
-                -- Unknown command
-                showNotification("Unknown command: "..commandText, true)
+                errorSound:Play()
+                notify("Unknown command:\n" .. commandText, 1.1, Color3.fromRGB(255, 0, 0), nil)
             end
         end
     end)
@@ -5128,3 +5149,5 @@ end)
 
 -- Initial parent assignment
 ScreenGui.Parent = localPlayer:WaitForChild("PlayerGui")
+
+notify("Type 'cmds' for commands! :D", 3, Color3.fromRGB(0, 255, 255), 12221831)
