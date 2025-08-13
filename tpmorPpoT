@@ -1239,6 +1239,8 @@ updatePlayerList()
 
 gui.Parent = player:WaitForChild("PlayerGui")
 
+return "Playerlist opened!"
+
 end
 
 -- invis
