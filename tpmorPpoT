@@ -7,7 +7,7 @@ local SoundService = game:GetService("SoundService")
 local GuiService = game:GetService("GuiService")
 
 --[[
-notify("jsjsjes", 1.1, Color3.fromRGB(255, 0, 0), 138081500)
+crx("jsjsjes", 1.1, Color3.fromRGB(255, 0, 0), 138081500)
 ]]
 
 local function addlayer()
@@ -18,7 +18,7 @@ local G2L = {}
 
 -- Players.hmmm5651.PlayerGui.ScreenGui
 G2L["ScreenGui_1"] = Instance.new("ScreenGui", game:GetService("Players").LocalPlayer:WaitForChild("PlayerGui"))
-G2L["ScreenGui_1"]["DisplayOrder"] = 1
+G2L["ScreenGui_1"]["DisplayOrder"] = 9999999
 G2L["ScreenGui_1"]["ZIndexBehavior"] = Enum.ZIndexBehavior.Sibling
 
 -- Tags
@@ -70,7 +70,7 @@ local G2L = {}
 
 -- Players.hmmm5651.PlayerGui.ScreenGui
 G2L["ScreenGui_1"] = Instance.new("ScreenGui", game:GetService("Players").LocalPlayer:WaitForChild("PlayerGui"))
-G2L["ScreenGui_1"]["DisplayOrder"] = 1
+G2L["ScreenGui_1"]["DisplayOrder"] = 999999
 G2L["ScreenGui_1"]["ZIndexBehavior"] = Enum.ZIndexBehavior.Sibling
 
 -- Tags
@@ -1296,7 +1296,7 @@ end)
 
 function invis2()
     if not currentCharacter or not currentCharacter:FindFirstChild("HumanoidRootPart") then
-        notify("Invisibility: FAILED!", 1.1, Color3.fromRGB(255, 0, 0), 138081500)
+        crx("Invisibility: FAILED!", 1.1, Color3.fromRGB(255, 0, 0), 138081500)
     end
     
     cleanupInvisibility() -- Clean up any existing invisibility
@@ -1907,7 +1907,7 @@ function antiafkoff()
         antiAFKConnection = nil
         return "Anti-AFK disabled"
     else
-        notify("Anti-AFK is already disabled!", 1.1, Color3.fromRGB(255, 0, 0), 138081500)
+        crx("Anti-AFK is already disabled!", 1.1, Color3.fromRGB(255, 0, 0), 138081500)
     end
 end
 
@@ -2220,7 +2220,7 @@ end
 AddCommandWithValue("walkspeed", "speed", "ws", "Sets your speed (16 Default)", function(speed)
     speed = tonumber(speed)
     if not speed then
-        notify("Invalid speed!", 1.1, Color3.fromRGB(255, 0, 0), 138081500)
+        crx("Invalid speed!", 1.1, Color3.fromRGB(255, 0, 0), 138081500)
     end
 
     local character = game.Players.LocalPlayer.Character
@@ -2228,7 +2228,7 @@ AddCommandWithValue("walkspeed", "speed", "ws", "Sets your speed (16 Default)", 
         character:FindFirstChildOfClass("Humanoid").WalkSpeed = speed
         return "WalkSpeed set to\n" .. speed
     else
-        notify("Character not found!", 1.1, Color3.fromRGB(255, 0, 0), 138081500)
+        crx("Character not found!", 1.1, Color3.fromRGB(255, 0, 0), 138081500)
     end
 end)
 
@@ -2265,7 +2265,7 @@ end
 AddCommandWithValue("tpwalk", "speed", "tpw", "More safer walkspeed", function(speed)
     speed = tonumber(speed)
     if not speed then
-        notify("Invalid speed!", 1.1, Color3.fromRGB(255, 0, 0), 138081500)
+        crx("Invalid speed!", 1.1, Color3.fromRGB(255, 0, 0), 138081500)
     end
 
     speeds = speed
@@ -2359,15 +2359,15 @@ local function SkidFling(TargetPlayer)
     local Handle = Accessory and Accessory:FindFirstChild("Handle")
 
     if not Character or not Humanoid or not RootPart then
-        notify("Character not found!", 1.1, Color3.fromRGB(255, 0, 0), 138081500)
+        crx("Character not found!", 1.1, Color3.fromRGB(255, 0, 0), 138081500)
     end
 
     if not TCharacter or not THumanoid then
-        notify("Target not found!", 1.1, Color3.fromRGB(255, 0, 0), 138081500)
+        crx("Target not found!", 1.1, Color3.fromRGB(255, 0, 0), 138081500)
     end
 
     if THumanoid.Sit then
-        notify("Target is Sitting!", 1.1, Color3.fromRGB(255, 0, 0), 138081500)
+        crx("Target is Sitting!", 1.1, Color3.fromRGB(255, 0, 0), 138081500)
     end
 
     -- Save original position
@@ -2480,7 +2480,7 @@ local function SkidFling(TargetPlayer)
     else
         BV:Destroy()
         workspace.FallenPartsDestroyHeight = OldFPDH
-        notify("Target is missing?", 1.1, Color3.fromRGB(255, 0, 0), 138081500)
+        crx("Target is missing?", 1.1, Color3.fromRGB(255, 0, 0), 138081500)
     end
 
     -- Clean up
@@ -2506,7 +2506,19 @@ local function SkidFling(TargetPlayer)
 end
 
 local function credits()
-    return "Script made by hmmm5650! :D"
+    crx("Script made by hmmm5650! :D", 3, Color3.fromRGB(0, 255, 255), 12221831)
+end
+
+local function error()
+    crx("Error!", 1.1, Color3.fromRGB(255, 0, 0), 138081500)
+end
+
+local function good()
+    return "Success!"
+end
+
+local function meh()
+    crx("Notification!", 3, Color3.fromRGB(50, 50, 50), 12221831)
 end
 
 local function cmdl()
@@ -2554,7 +2566,7 @@ local function sit()
         character.Humanoid.Sit = true
         return "Sitting.."
     else
-        notify("Failed to sit!", 1.1, Color3.fromRGB(255, 0, 0), 138081500)
+        crx("Failed to sit!", 1.1, Color3.fromRGB(255, 0, 0), 138081500)
     end
 end
 
@@ -2565,7 +2577,7 @@ local function DAT()
     local backpack = player:FindFirstChild("Backpack")
     
     if not backpack then
-        notify("Backpack not found!", 1.1, Color3.fromRGB(255, 0, 0), 138081500)
+        crx("Backpack not found!", 1.1, Color3.fromRGB(255, 0, 0), 138081500)
         return
     end
     
@@ -3027,7 +3039,7 @@ AddCommandWithPlayer("swordkill", "skill", "Kills players using a sword tool [TO
         end
     else
         local target = GetPlayer(name)
-        if not target then notify("Target not found!", 1.1, Color3.fromRGB(255, 0, 0), 138081500) end
+        if not target then crx("Target not found!", 1.1, Color3.fromRGB(255, 0, 0), 138081500) end
         if typeof(target) == "table" then target = target[1] end
         swordkillTarget = target.Name
         setupDeathListener(target)
@@ -3040,7 +3052,7 @@ AddCommandWithPlayer("swordkill", "skill", "Kills players using a sword tool [TO
         sword = player.Character:FindFirstChildOfClass("Tool") or 
                (player.Backpack and player.Backpack:FindFirstChildOfClass("Tool"))
         if not sword then
-            notify("Sword not found!", 1.1, Color3.fromRGB(255, 0, 0), 138081500)
+            crx("Sword not found!", 1.1, Color3.fromRGB(255, 0, 0), 138081500)
         end
     end
     
@@ -3159,7 +3171,7 @@ AddCommandWithPlayer("btoolkill", "bkill", "Deletes part of the target player us
     else
         -- Use the specified target
         targets = GetPlayer(name)
-        if not targets then notify("Target not found!", 1.1, Color3.fromRGB(255, 0, 0), 138081500) end
+        if not targets then crx("Target not found!", 1.1, Color3.fromRGB(255, 0, 0), 138081500) end
         if typeof(targets) ~= "table" then targets = {targets} end
     end
 
@@ -3254,7 +3266,7 @@ AddCommand("unwalkfling", {"unwf"}, "Stops Touchfling", TFlingOff)
 
 AddCommandWithPlayer("kill", {"fling"}, "Fling a player", function(name)
     local target = GetPlayer(name)
-    if not target then notify("Target not found!", 1.1, Color3.fromRGB(255, 0, 0), 138081500) end
+    if not target then crx("Target not found!", 1.1, Color3.fromRGB(255, 0, 0), 138081500) end
     return SkidFling(target)
 end)
 
@@ -3280,7 +3292,36 @@ AddCommand("antifling", {"af"}, "Prevents exploiter flings", Afon)
 AddCommand("unantifling", {"unaf"}, "Vulnerable to exploiter flings", Afoff)
 AddCommand("antiafk", {"aafk"}, "Prevents idle kick", antiafkon)
 AddCommand("unantiafk", {"unaafk"}, "Stops Anti-Afk", antiafkoff)
-AddCommand("antilag", {"al"}, "Reduces Lags", al11)
+AddCommand("antilag", {"al"}, "Reduces lags", al11)
+
+AddCommand("lowgraphics", {"lg"}, "Also reduces lag", function()
+    local lighting = game:GetService("Lighting")
+    
+    -- Disable various effects
+    lighting.GlobalShadows = false
+    lighting.FogEnd = 100000
+    lighting.Brightness = 1
+    
+    -- Reduce quality settings
+    settings().Rendering.QualityLevel = 1
+    
+    return "Low graphics mode enabled"
+end)
+
+AddCommand("highgraphics", {"hg"}, "Increases graphics quality", function()
+    local lighting = game:GetService("Lighting")
+    
+    -- Enable various effects
+    lighting.GlobalShadows = true
+    lighting.FogEnd = 1000000
+    lighting.Brightness = 3
+    
+    -- Increase quality settings
+    settings().Rendering.QualityLevel = 10
+    
+    return "High graphics mode enabled"
+end)
+
 AddCommand("invertgrav", {"igrav"}, "Inverts UnachoredParts Gravity", GravOn)
 AddCommand("uninvertgrav", {"unigrav"}, "Stopps Inverting UnachoredParts Gravity", GravOff)
 AddCommand("telekinesis", {"tk"}, "Move any UnachoredParts", tk)
@@ -3502,7 +3543,7 @@ end
 -- Commands
 AddCommandWithPlayer("tpua", "bp", "Tps unanchored to player", function(name)
     local target = GetPlayer(name)
-    if not target then notify("Target not found!", 1.1, Color3.fromRGB(255, 0, 0), 138081500) end
+    if not target then crx("Target not found!", 1.1, Color3.fromRGB(255, 0, 0), 138081500) end
     return StartBringParts(target)
 end)
 
@@ -3608,7 +3649,7 @@ end
 -- Main command
 AddCommandWithValue("hitbox", "amount", "reach", "Changes other players hitbox size (0 to reset)", function(size)
     local sizeNum = tonumber(size)
-    if not sizeNum then notify("Invalid amount!", 1.1, Color3.fromRGB(255, 0, 0), 138081500) end
+    if not sizeNum then crx("Invalid amount!", 1.1, Color3.fromRGB(255, 0, 0), 138081500) end
     
     -- Clean up if resetting
     if sizeNum == 0 then
@@ -3654,19 +3695,19 @@ game:GetService("Players").LocalPlayer.CharacterRemoving:Connect(cleanup)
 
 AddCommandWithValue("jumppower", "amount", "jp", "Sets your jump power", function(power)
     local num = tonumber(power)
-    if not num then notify("Invalid amount!", 1.1, Color3.fromRGB(255, 0, 0), 138081500) end
+    if not num then crx("Invalid amount!", 1.1, Color3.fromRGB(255, 0, 0), 138081500) end
     
     local humanoid = game.Players.LocalPlayer.Character:FindFirstChildOfClass("Humanoid")
     if humanoid then
         humanoid.JumpPower = num
         return "Jump power set to "..num
     end
-    notify("Character not found!", 1.1, Color3.fromRGB(255, 0, 0), 138081500)
+    crx("Character not found!", 1.1, Color3.fromRGB(255, 0, 0), 138081500)
 end)
 
 AddCommandWithValue("gravity", "value", "grav", "Sets workspace gravity", function(value)
     local num = tonumber(value)
-    if not num then notify("Invalid value!", 1.1, Color3.fromRGB(255, 0, 0), 138081500) end
+    if not num then crx("Invalid value!", 1.1, Color3.fromRGB(255, 0, 0), 138081500) end
     
     workspace.Gravity = num
     return "Gravity set to\n"..num
@@ -3674,14 +3715,14 @@ end)
 
 AddCommandWithValue("hipheight", "amount", "hh", "Sets your hip height", function(height)
     local num = tonumber(height)
-    if not num then notify("Invalid amount!", 1.1, Color3.fromRGB(255, 0, 0), 138081500) end
+    if not num then crx("Invalid amount!", 1.1, Color3.fromRGB(255, 0, 0), 138081500) end
     
     local humanoid = game.Players.LocalPlayer.Character:FindFirstChildOfClass("Humanoid")
     if humanoid then
         humanoid.HipHeight = num
         return "Hip height set to\n"..num
     end
-    notify("Character not found!", 1.1, Color3.fromRGB(255, 0, 0), 138081500)
+    crx("Character not found!", 1.1, Color3.fromRGB(255, 0, 0), 138081500)
 end)
 
 local RunService = game:GetService("RunService")
@@ -3691,17 +3732,17 @@ local spinning = nil -- connection holder
 AddCommandWithValue("spin", "speed", nil, "Spin your character at the given speed", function(value)
     local speed = tonumber(value)
     if not speed then
-        notify("Invalid speed!", 1.1, Color3.fromRGB(255, 0, 0), 138081500)
+        crx("Invalid speed!", 1.1, Color3.fromRGB(255, 0, 0), 138081500)
     end
 
     local character = game.Players.LocalPlayer.Character
     if not character then
-        notify("Character not found!", 1.1, Color3.fromRGB(255, 0, 0), 138081500)
+        crx("Character not found!", 1.1, Color3.fromRGB(255, 0, 0), 138081500)
     end
 
     local hrp = character:FindFirstChild("HumanoidRootPart")
     if not hrp then
-        notify("HRP not found!", 1.1, Color3.fromRGB(255, 0, 0), 138081500)
+        crx("HRP not found!", 1.1, Color3.fromRGB(255, 0, 0), 138081500)
     end
 
     -- Stop previous spin if active
@@ -3727,6 +3768,28 @@ AddCommand("unspin", nil, "Stop spinning your character", function()
         return "Spin stopped"
     else
         return "Stopped spinning"
+    end
+end)
+
+local joinLogsEnabled = false
+local joinLogsConnection
+
+AddCommand("joinlogs", "jlogs", "Toggle join logs on/off", function()
+    joinLogsEnabled = not joinLogsEnabled
+
+    if joinLogsEnabled then
+        crx("Join Logs Enabled", 1.5, Color3.fromRGB(0, 255, 0), nil)
+
+        joinLogsConnection = game.Players.PlayerAdded:Connect(function(player)
+            crx(player.Name .. " joined the game", 2, Color3.fromRGB(255, 255, 0), nil)
+        end)
+    else
+        crx("Join Logs Disabled", 1.5, Color3.fromRGB(255, 0, 0), nil)
+
+        if joinLogsConnection then
+            joinLogsConnection:Disconnect()
+            joinLogsConnection = nil
+        end
     end
 end)
 
@@ -3839,17 +3902,17 @@ AddCommand("serverhop", {"sh"}, "Joins a random server", function()
         end
     end
     
-    notify("No available servers!", 1.1, Color3.fromRGB(255, 0, 0), 138081500)
+    crx("No available servers!", 1.1, Color3.fromRGB(255, 0, 0), 138081500)
 end)
 
 -- Copy Position command
 AddCommand("copypos", {"cp"}, "Copies your current position to clipboard", function()
     local player = game.Players.LocalPlayer
     local character = player.Character
-    if not character then notify("Character not found!", 1.1, Color3.fromRGB(255, 0, 0), 138081500) end
+    if not character then crx("Character not found!", 1.1, Color3.fromRGB(255, 0, 0), 138081500) end
     
     local hrp = character:FindFirstChild("HumanoidRootPart")
-    if not hrp then notify("HRP not found!", 1.1, Color3.fromRGB(255, 0, 0), 138081500) end
+    if not hrp then crx("HRP not found!", 1.1, Color3.fromRGB(255, 0, 0), 138081500) end
     
     local position = hrp.Position
     local text = string.format("Vector3.new(%d, %d, %d)", position.X, position.Y, position.Z)
@@ -3861,10 +3924,10 @@ end)
 -- Size command
 AddCommandWithValue("size", "amount", "scale", "Scales your character size", function(scale)
     local num = tonumber(scale)
-    if not num or num <= 0 or num > 10 then notify("Invalid amount!", 1.1, Color3.fromRGB(255, 0, 0), 138081500) end
+    if not num or num <= 0 or num > 10 then crx("Invalid amount!", 1.1, Color3.fromRGB(255, 0, 0), 138081500) end
     
     local character = game.Players.LocalPlayer.Character
-    if not character then notify("Character not found!", 1.1, Color3.fromRGB(255, 0, 0), 138081500) end
+    if not character then crx("Character not found!", 1.1, Color3.fromRGB(255, 0, 0), 138081500) end
     
     for _, part in ipairs(character:GetDescendants()) do
         if part:IsA("BasePart") then
@@ -3873,6 +3936,307 @@ AddCommandWithValue("size", "amount", "scale", "Scales your character size", fun
     end
     
     return "scaled to\n"..num.."x"
+end)
+
+AddCommand("dance", "d", "Makes your character dance", function()
+    local humanoid = game.Players.LocalPlayer.Character:FindFirstChildOfClass("Humanoid")
+    if not humanoid then crx("Humanoid not found!", 1.1, Color3.fromRGB(255, 0, 0), 138081500) end
+    
+    -- Load dance animation
+    local animation = Instance.new("Animation")
+    animation.AnimationId = "rbxassetid://35654637" -- Default dance animation
+    
+    local track = humanoid:LoadAnimation(animation)
+    track:Play()
+    return "Dancing!"
+end)
+
+AddCommand("undance", "und", "Stops dancing", function()
+    local humanoid = game.Players.LocalPlayer.Character:FindFirstChildOfClass("Humanoid")
+    if not humanoid then crx("Humanoid not found!", 1.1, Color3.fromRGB(255, 0, 0), 138081500) end
+    
+    for _, track in ipairs(humanoid:GetPlayingAnimationTracks()) do
+        track:Stop()
+    end
+    return "Stopped dancing :("
+end)
+
+AddCommand("firstperson", {"fp"}, "Toggles first-person view", function()
+    local camera = workspace.CurrentCamera
+    camera.CameraType = Enum.CameraType.Scriptable
+    camera.CFrame = game.Players.LocalPlayer.Character.Head.CFrame
+    return "First-person enabled"
+end)
+
+AddCommand("thirdperson", {"tp"}, "Returns to third-person view", function()
+    workspace.CurrentCamera.CameraType = Enum.CameraType.Custom
+    return "Third-person enabled"
+end)
+
+AddCommand("serverinfo", {"si"}, "Shows server information in a GUI", function()
+    -- Create the main GUI
+    local gui = Instance.new("ScreenGui")
+    gui.Name = "ServerInfoGUI"
+    gui.ResetOnSpawn = false
+    gui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
+    gui.Parent = game.Players.LocalPlayer:WaitForChild("PlayerGui")
+
+    -- Main frame (same size as Playerlist GUI)
+    local mainFrame = Instance.new("Frame")
+    mainFrame.Name = "MainFrame"
+    mainFrame.BackgroundColor3 = Color3.fromRGB(0, 0, 0)
+    mainFrame.BackgroundTransparency = 0.2
+    mainFrame.BorderSizePixel = 0
+    mainFrame.Size = UDim2.new(0, 200, 0, 300) -- Matching Playerlist size
+    mainFrame.Position = UDim2.new(0.05, 0, 0.05, 0) -- Same position as Playerlist
+    mainFrame.Parent = gui
+
+    -- Add rounded corners
+    local corner = Instance.new("UICorner")
+    corner.CornerRadius = UDim.new(0, 6)
+    corner.Parent = mainFrame
+
+    -- Add drop shadow (same as Playerlist)
+    local shadow = Instance.new("ImageLabel")
+    shadow.Name = "Shadow"
+    shadow.Image = "rbxassetid://1316045217"
+    shadow.ImageColor3 = Color3.new(0, 0, 0)
+    shadow.ImageTransparency = 0.2
+    shadow.ScaleType = Enum.ScaleType.Slice
+    shadow.SliceCenter = Rect.new(10, 10, 118, 118)
+    shadow.Size = UDim2.new(1, 10, 1, 10)
+    shadow.Position = UDim2.new(0, -5, 0, -5)
+    shadow.BackgroundTransparency = 1
+    shadow.ZIndex = -1
+    shadow.Parent = mainFrame
+
+    -- Title bar (same style as Playerlist)
+    local titleBar = Instance.new("Frame")
+    titleBar.Name = "TitleBar"
+    titleBar.BackgroundColor3 = Color3.fromRGB(0, 0, 0)
+    titleBar.BorderSizePixel = 0
+    titleBar.Size = UDim2.new(1, 0, 0, 30)
+    titleBar.Parent = mainFrame
+
+    -- Title text (same font as Playerlist)
+    local titleText = Instance.new("TextLabel")
+    titleText.Name = "TitleText"
+    titleText.Text = "SERVER INFO (wip)"
+    titleText.Font = Enum.Font.Arcade
+    titleText.TextSize = 14
+    titleText.TextColor3 = Color3.fromRGB(0, 255, 0)
+    titleText.BackgroundTransparency = 1
+    titleText.Position = UDim2.new(0, 10, 0, 0)
+    titleText.Size = UDim2.new(0.6, 0, 1, 0)
+    titleText.TextXAlignment = Enum.TextXAlignment.Left
+    titleText.Parent = titleBar
+
+    -- Close button (same as Playerlist)
+    local closeButton = Instance.new("TextButton")
+    closeButton.Name = "CloseButton"
+    closeButton.Text = "X"
+    closeButton.Font = Enum.Font.Arcade
+    closeButton.TextSize = 14
+    closeButton.TextColor3 = Color3.fromRGB(255, 0, 0)
+    closeButton.BackgroundTransparency = 1
+    closeButton.Position = UDim2.new(0.85, 0, 0, 0)
+    closeButton.Size = UDim2.new(0.15, 0, 1, 0)
+    closeButton.Parent = titleBar
+
+    -- Scrolling frame for content
+    local scrollFrame = Instance.new("ScrollingFrame")
+    scrollFrame.Name = "ScrollFrame"
+    scrollFrame.BackgroundTransparency = 1
+    scrollFrame.Position = UDim2.new(0, 0, 0, 30)
+    scrollFrame.Size = UDim2.new(1, 0, 1, -30)
+    scrollFrame.CanvasSize = UDim2.new(0, 0, 0, 0)
+    scrollFrame.ScrollBarThickness = 5
+    scrollFrame.Parent = mainFrame
+
+    local layout = Instance.new("UIListLayout")
+    layout.Padding = UDim.new(0, 5)
+    layout.Parent = scrollFrame
+
+    -- Function to create compact info rows
+    local function createInfoRow(label, value)
+        local row = Instance.new("Frame")
+        row.Name = "InfoRow"
+        row.BackgroundColor3 = Color3.fromRGB(30, 30, 30)
+        row.BackgroundTransparency = 0.5
+        row.Size = UDim2.new(1, -10, 0, 30)
+        row.Position = UDim2.new(0, 5, 0, 0)
+        row.Parent = scrollFrame
+
+        local rowCorner = Instance.new("UICorner")
+        rowCorner.CornerRadius = UDim.new(0, 4)
+        rowCorner.Parent = row
+
+        local labelText = Instance.new("TextLabel")
+        labelText.Name = "Label"
+        labelText.Text = label
+        labelText.Font = Enum.Font.Arcade
+        labelText.TextSize = 12
+        labelText.TextColor3 = Color3.fromRGB(0, 170, 220)
+        labelText.BackgroundTransparency = 1
+        labelText.Size = UDim2.new(0.7, 0, 1, 0)
+        labelText.Position = UDim2.new(0, 10, 0, 0)
+        labelText.TextXAlignment = Enum.TextXAlignment.Left
+        labelText.Parent = row
+
+        local valueText = Instance.new("TextLabel")
+        valueText.Name = "Value"
+        valueText.Text = tostring(value)
+        valueText.Font = Enum.Font.Arcade
+        valueText.TextSize = 12
+        valueText.TextColor3 = Color3.fromRGB(255, 255, 255)
+        valueText.BackgroundTransparency = 1
+        valueText.Size = UDim2.new(0.3, -10, 1, 0)
+        valueText.Position = UDim2.new(0.7, 0, 0, 0)
+        valueText.TextXAlignment = Enum.TextXAlignment.Right
+        valueText.Parent = row
+
+        return row
+    end
+
+    -- Collect server information
+    local players = #game.Players:GetPlayers()
+    local maxPlayers = game.Players.MaxPlayers
+    local placeId = game.PlaceId
+    local jobId = game.JobId
+    local serverAge = os.time() - game:GetService("Workspace").DistributedGameTime
+    local serverAgeText = string.format("%dm", math.floor(serverAge / 60))
+    local ping = math.floor(game:GetService("Stats").Network.ServerStatsItem["Data Ping"]:GetValue())
+
+    -- Create compact info rows
+    createInfoRow("Game ID\n", placeId)
+    createInfoRow("Server ID\n\n", jobId)
+    createInfoRow("Players\n", players.."/"..maxPlayers)
+    createInfoRow("Uptime\n", serverAgeText)
+    createInfoRow("Your Ping\n", ping.."ms")
+
+    -- Player count header
+    local playerHeader = Instance.new("TextLabel")
+    playerHeader.Name = "PlayerHeader"
+    playerHeader.Text = "PLAYERS:"
+    playerHeader.Font = Enum.Font.Arcade
+    playerHeader.TextSize = 12
+    playerHeader.TextColor3 = Color3.fromRGB(0, 255, 0)
+    playerHeader.BackgroundTransparency = 1
+    playerHeader.Size = UDim2.new(1, -10, 0, 20)
+    playerHeader.Position = UDim2.new(0, 5, 0, 0)
+    playerHeader.TextXAlignment = Enum.TextXAlignment.Left
+    playerHeader.Parent = scrollFrame
+
+    -- Add each player (compact version)
+    for _, player in ipairs(game.Players:GetPlayers()) do
+        local playerFrame = Instance.new("Frame")
+        playerFrame.Name = player.Name
+        playerFrame.BackgroundColor3 = Color3.fromRGB(40, 40, 40)
+        playerFrame.BackgroundTransparency = 0.7
+        playerFrame.Size = UDim2.new(1, -10, 0, 25)
+        playerFrame.Position = UDim2.new(0, 5, 0, 0)
+        playerFrame.Parent = scrollFrame
+
+        local playerCorner = Instance.new("UICorner")
+        playerCorner.CornerRadius = UDim.new(0, 4)
+        playerCorner.Parent = playerFrame
+
+        local username = Instance.new("TextLabel")
+        username.Name = "Username"
+        username.Text = player.Name
+        username.Font = Enum.Font.Arcade
+        username.TextSize = 11
+        username.TextColor3 = Color3.fromRGB(200, 200, 200)
+        username.BackgroundTransparency = 1
+        username.Size = UDim2.new(0.7, 0, 1, 0)
+        username.Position = UDim2.new(0, 5, 0, 0)
+        username.TextXAlignment = Enum.TextXAlignment.Left
+        username.TextTruncate = Enum.TextTruncate.AtEnd
+        username.Parent = playerFrame
+
+        local ageLabel = Instance.new("TextLabel")
+        ageLabel.Name = "AgeLabel"
+        ageLabel.Text = player.AccountAge.."d"
+        ageLabel.Font = Enum.Font.Arcade
+        ageLabel.TextSize = 11
+        ageLabel.TextColor3 = Color3.fromRGB(150, 150, 150)
+        ageLabel.BackgroundTransparency = 1
+        ageLabel.Size = UDim2.new(0.3, -5, 1, 0)
+        ageLabel.Position = UDim2.new(0.7, 0, 0, 0)
+        ageLabel.TextXAlignment = Enum.TextXAlignment.Right
+        ageLabel.Parent = playerFrame
+    end
+
+    -- Update canvas size after all elements are added
+    layout:GetPropertyChangedSignal("AbsoluteContentSize"):Connect(function()
+        scrollFrame.CanvasSize = UDim2.new(0, 0, 0, layout.AbsoluteContentSize.Y + 10)
+    end)
+
+    -- Close functionality
+    closeButton.MouseButton1Click:Connect(function()
+        gui:Destroy()
+    end)
+
+    -- Draggable functionality without boundaries
+    local userInputService = game:GetService("UserInputService")
+    local dragging
+    local dragInput
+    local dragStart
+    local startPos
+
+    -- Function to update the frame position based on input
+    local function updateInput(input)
+        local delta = input.Position - dragStart
+        mainFrame.Position = UDim2.new(startPos.X.Scale, startPos.X.Offset + delta.X, startPos.Y.Scale, startPos.Y.Offset + delta.Y)
+    end
+
+    -- Connect input events for dragging
+    titleBar.InputBegan:Connect(function(input)
+        if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
+            dragging = true
+            dragStart = input.Position
+            startPos = mainFrame.Position
+            
+            input.Changed:Connect(function()
+                if input.UserInputState == Enum.UserInputState.End then
+                    dragging = false
+                end
+            end)
+        end
+    end)
+
+    titleBar.InputChanged:Connect(function(input)
+        if (input.UserInputType == Enum.UserInputType.MouseMovement or input.UserInputType == Enum.UserInputType.Touch) then
+            dragInput = input
+        end
+    end)
+
+    userInputService.InputChanged:Connect(function(input)
+        if input == dragInput and dragging then
+            updateInput(input)
+        end
+    end)
+
+    return "Server info opened"
+end)
+
+AddCommand("day", nil, "Sets time to day [CLIENT]", function()
+    game:GetService("Lighting").ClockTime = 14
+    return "Time set to day"
+end)
+
+AddCommand("night", nil, "Sets time to night [CLIENT]", function()
+    game:GetService("Lighting").ClockTime = 2
+    return "Time set to night"
+end)
+
+AddCommandWithValue("time", "value", nil, "Sets the time (0-24) [CLIENT]", function(value)
+    local num = tonumber(value)
+    if not num or num < 0 or num > 24 then
+        crx("Invalid time! (0-24)", 1.1, Color3.fromRGB(255, 0, 0), 138081500)
+    end
+    game:GetService("Lighting").ClockTime = num
+    return "Time set to "..num
 end)
 
 -- Enable fakelag with adjustable delay
@@ -3933,14 +4297,14 @@ AddCommand("unfakelag", "unflag", "Disables fakelag", function()
         end
         return "Fakelag disabled"
     else
-        notify("Fakelag was never enabled!", 1.1, Color3.fromRGB(255, 0, 0), 138081500)
+        crx("Fakelag was never enabled!", 1.1, Color3.fromRGB(255, 0, 0), 138081500)
     end
 end)
 
 AddCommandWithValue("animspeed", "value", "as", "Sets animation speed (1 = default)", function(value)
     local speed = tonumber(value)
     if not speed or speed <= 0 or speed > 10 then
-        notify("Invalid value!", 1.1, Color3.fromRGB(255, 0, 0), 138081500)
+        crx("Invalid value!", 1.1, Color3.fromRGB(255, 0, 0), 138081500)
     end
 
     local player = game.Players.LocalPlayer
@@ -3974,7 +4338,7 @@ end)
 AddCommandWithValue("zoom", "value", "z", "Sets max camera zoom distance", function(value)
     local num = tonumber(value)
     if not num or num < 0 then
-        notify("Invalid value!", 1.1, Color3.fromRGB(255, 0, 0), 138081500)
+        crx("Invalid value!", 1.1, Color3.fromRGB(255, 0, 0), 138081500)
     end
 
     local player = game.Players.LocalPlayer
@@ -4019,7 +4383,7 @@ local currentViewedPlayer -- to track which player is being viewed
 AddCommandWithPlayer("view", nil, "View a player", function(name)
     local targetPlayer = FindPlayer(name)
     if not targetPlayer then
-        notify("Target not found!", 1.1, Color3.fromRGB(255, 0, 0), 138081500)
+        crx("Target not found!", 1.1, Color3.fromRGB(255, 0, 0), 138081500)
     end
     
     -- If already viewing this player, stop viewing
@@ -4089,19 +4453,19 @@ end)
 -- Fixed version of the goto command
 AddCommandWithPlayer("goto", {"tp"}, "Teleport to a player", function(name)
     local targetPlayer = FindPlayer(name)
-    if not targetPlayer then notify("Target not found!", 1.1, Color3.fromRGB(255, 0, 0), 138081500) end
+    if not targetPlayer then crx("Target not found!", 1.1, Color3.fromRGB(255, 0, 0), 138081500) end
 
     local character = game.Players.LocalPlayer.Character
-    if not character then notify("Character not found!", 1.1, Color3.fromRGB(255, 0, 0), 138081500) end
+    if not character then crx("Character not found!", 1.1, Color3.fromRGB(255, 0, 0), 138081500) end
 
     local humanoidRootPart = character:FindFirstChild("HumanoidRootPart")
-    if not humanoidRootPart then notify("HRP not found!", 1.1, Color3.fromRGB(255, 0, 0), 138081500) end
+    if not humanoidRootPart then crx("HRP not found!", 1.1, Color3.fromRGB(255, 0, 0), 138081500) end
 
     local targetCharacter = targetPlayer.Character
-    if not targetCharacter then notify("Target not found!", 1.1, Color3.fromRGB(255, 0, 0), 138081500) end
+    if not targetCharacter then crx("Target not found!", 1.1, Color3.fromRGB(255, 0, 0), 138081500) end
 
     local targetHRP = targetCharacter:FindFirstChild("HumanoidRootPart")
-    if not targetHRP then notify("Target's Character not found!", 1.1, Color3.fromRGB(255, 0, 0), 138081500) end
+    if not targetHRP then crx("Target's Character not found!", 1.1, Color3.fromRGB(255, 0, 0), 138081500) end
 
     -- Offset behind the target
     local offset = CFrame.new(0, 0, 5)
@@ -4118,7 +4482,7 @@ AddCommand("aat", {"activatealltools"}, "Activates all tools in your inventory",
     local backpack = player:FindFirstChild("Backpack")
     local character = player.Character
     
-    if not backpack and not character then notify("Backpack or Tools not found!", 1.1, Color3.fromRGB(255, 0, 0), 138081500) end
+    if not backpack and not character then crx("Backpack or Tools not found!", 1.1, Color3.fromRGB(255, 0, 0), 138081500) end
     
     local tools = {}
     
@@ -4140,7 +4504,7 @@ AddCommand("aat", {"activatealltools"}, "Activates all tools in your inventory",
         end
     end
     
-    if #tools == 0 then notify("Tools not found!", 1.1, Color3.fromRGB(255, 0, 0), 138081500) end
+    if #tools == 0 then crx("Tools not found!", 1.1, Color3.fromRGB(255, 0, 0), 138081500) end
     
     -- Equip and activate all tools
     for _, tool in ipairs(tools) do
@@ -4231,7 +4595,7 @@ local function removeESP(player)
 end
 
 AddCommand("esp", nil, "Highlights all players with distance", function()
-    if espEnabled then notify("ESP is already enabled!", 1.1, Color3.fromRGB(255, 0, 0), 138081500) end
+    if espEnabled then crx("ESP is already enabled!", 1.1, Color3.fromRGB(255, 0, 0), 138081500) end
     
     espEnabled = true
     
@@ -4268,7 +4632,7 @@ AddCommand("esp", nil, "Highlights all players with distance", function()
 end)
 
 AddCommand("unesp", nil, "Removes all ESP highlights", function()
-    if not espEnabled then notify("ESP was never enabled!", 1.1, Color3.fromRGB(255, 0, 0), 138081500) end
+    if not espEnabled then crx("ESP was never enabled!", 1.1, Color3.fromRGB(255, 0, 0), 138081500) end
     
     espEnabled = false
     
@@ -4394,7 +4758,7 @@ local function scanForTools()
 end
 
 AddCommand("partesp", {"pesp"}, "Esps everything [LAG]", function()
-    if toolEspEnabled then notify("Partesp already enabled!", 1.1, Color3.fromRGB(255, 0, 0), 138081500) end
+    if toolEspEnabled then crx("Partesp already enabled!", 1.1, Color3.fromRGB(255, 0, 0), 138081500) end
     
     toolEspEnabled = true
     
@@ -4412,7 +4776,7 @@ AddCommand("partesp", {"pesp"}, "Esps everything [LAG]", function()
 end)
 
 AddCommand("unpartesp", {"unpesp"}, "Removes all part ESP [WIP]", function()
-    if not toolEspEnabled then notify("Partesp was never enabled!", 1.1, Color3.fromRGB(255, 0, 0), 138081500) end
+    if not toolEspEnabled then crx("Partesp was never enabled!", 1.1, Color3.fromRGB(255, 0, 0), 138081500) end
     
     toolEspEnabled = false
     
@@ -4429,6 +4793,9 @@ AddCommand("unpartesp", {"unpesp"}, "Removes all part ESP [WIP]", function()
 end)
 
 AddCommand("credits", {"c"}, "Shows the owner of the script", credits)
+AddCommand("sucess", {"good"}, "Shows an success notification", good)
+AddCommand("error", {"bad"}, "Shows an error notification", error)
+AddCommand("notification", {"notify"}, "Shows an normal notification", meh)
 
 -- Services
 local Players = game:GetService("Players")
@@ -4443,6 +4810,7 @@ local playerGui = localPlayer:WaitForChild("PlayerGui")
 -- Create or get existing main GUI
 local ScreenGui = playerGui:FindFirstChild("TopPrompt") or Instance.new("ScreenGui")
 ScreenGui.Name = "TopPrompt"
+ScreenGui.DisplayOrder = 99999
 ScreenGui.ResetOnSpawn = false
 ScreenGui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
 ScreenGui.Parent = playerGui
@@ -4452,29 +4820,52 @@ local function isMobile()
     return UserInputService.TouchEnabled and not UserInputService.KeyboardEnabled and not UserInputService.MouseEnabled
 end
 
-
 local currentNotification = nil
 
 -- Function to create or get the ScreenGui
 local function getScreenGui()
-    local playerGui = game:GetService("Players").LocalPlayer:WaitForChild("PlayerGui")
+    local player = game:GetService("Players").LocalPlayer
+    while not player do
+        player = game:GetService("Players").LocalPlayer
+        wait()
+    end
+    
+    local playerGui = player:WaitForChild("PlayerGui")
     local gui = playerGui:FindFirstChild("NotificationGui")
     
     if not gui then
         gui = Instance.new("ScreenGui")
         gui.Name = "NotificationGui"
-        gui.ResetOnSpawn = false -- This is important!
+        gui.DisplayOrder = 999999
+        gui.ResetOnSpawn = false
         gui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
         gui.Parent = playerGui
+        
+        -- Ensure GUI is properly initialized
+        gui:GetPropertyChangedSignal("Enabled"):Connect(function()
+            if not gui.Enabled then
+                gui.Enabled = true
+            end
+        end)
+    end
+    
+    -- Make sure GUI is enabled
+    if not gui.Enabled then
+        gui.Enabled = true
     end
     
     return gui
 end
 
-function notify(text, duration, rateColor, soundId)
+function crx(message, duration, rateColor, soundId)
+    -- Validate input
+    if not message or type(message) ~= "string" then
+        warn("Notification error: Invalid message")
+        return
+    end
+    
     -- Default values
-    text = text
-    duration = duration or 4
+    duration = duration or 2
     rateColor = rateColor or Color3.fromRGB(0, 170, 255)
     
     -- Get the ScreenGui (will create if doesn't exist)
@@ -4482,14 +4873,27 @@ function notify(text, duration, rateColor, soundId)
     
     -- Destroy previous notification if it exists
     if currentNotification and currentNotification.Parent then
-        currentNotification:Destroy()
+        local oldNotify = currentNotification
         currentNotification = nil
+        
+        -- Smoothly fade out old notification
+        local fadeOut = game:GetService("TweenService"):Create(oldNotify, TweenInfo.new(0.15, Enum.EasingStyle.Quint), {
+            BackgroundTransparency = 1,
+            Size = UDim2.new(0, 0, 0, 30)
+        })
+        fadeOut:Play()
+        
+        fadeOut.Completed:Connect(function()
+            if oldNotify and oldNotify.Parent then
+                oldNotify:Destroy()
+            end
+        end)
     end
     
     -- Play sound immediately if soundId is provided
     if soundId then
         local sound = Instance.new("Sound")
-        sound.SoundId = "rbxassetid://" .. soundId
+        sound.SoundId = "rbxassetid://" .. tostring(soundId)
         sound.Parent = game:GetService("SoundService")
         sound:Play()
         sound.Ended:Connect(function()
@@ -4506,6 +4910,7 @@ function notify(text, duration, rateColor, soundId)
     notify.Size = UDim2.new(0, 0, 0, 30)
     notify.Position = UDim2.new(0, 20, 0, 69)
     notify.ZIndex = 10
+    notify.ClipsDescendants = true -- Prevent overflow
     notify.Parent = screenGui
     
     -- Store the current notification
@@ -4557,6 +4962,7 @@ function notify(text, duration, rateColor, soundId)
     label.TextXAlignment = Enum.TextXAlignment.Left
     label.TextYAlignment = Enum.TextYAlignment.Center
     label.TextWrapped = false
+    label.ClipsDescendants = true
     label.Parent = notify
     
     -- Smooth expand animation
@@ -4567,25 +4973,28 @@ function notify(text, duration, rateColor, soundId)
     
     -- Typewriter effect
     local displayText = ""
-    local fullText = text
+    local fullText = tostring(message)
     local typingSpeed = 0.0001
     
-    for i = 1, #fullText do
-        if not notify.Parent then break end
-        
-        displayText = string.sub(fullText, 1, i)
-        label.Text = displayText
-        
-        if string.sub(fullText, i, i) ~= " " then
-            clickSound:Play()
+    -- Use a coroutine for the typing effect
+    coroutine.wrap(function()
+        for i = 1, #fullText do
+            if not (notify and notify.Parent) then break end
+            
+            displayText = string.sub(fullText, 1, i)
+            label.Text = displayText
+            
+            if string.sub(fullText, i, i) ~= " " and clickSound then
+                clickSound:Play()
+            end
+            
+            wait(typingSpeed)
         end
-        
-        wait(typingSpeed)
-    end
+    end)()
     
     -- Auto-close after delay
     task.delay(duration, function()
-        if not notify.Parent then return end
+        if not (notify and notify.Parent) then return end
         
         local fadeOut = game:GetService("TweenService"):Create(notify, TweenInfo.new(0.2, Enum.EasingStyle.Quint), {
             BackgroundTransparency = 1,
@@ -4604,7 +5013,7 @@ function notify(text, duration, rateColor, soundId)
         accentFade:Play()
         
         fadeOut.Completed:Connect(function()
-            if notify.Parent then
+            if notify and notify.Parent then
                 notify:Destroy()
                 if currentNotification == notify then
                     currentNotification = nil
@@ -4669,6 +5078,8 @@ local function initializeMainGUI()
     InputBox.TextXAlignment = Enum.TextXAlignment.Left
     InputBox.Size = UDim2.new(0, 102, 0, 44)
     InputBox.Position = UDim2.new(0, 40, 0, 0)
+    InputBox.TextTruncate = Enum.TextTruncate.AtEnd  -- This prevents overflow
+    InputBox.ClipsDescendants = true  -- Ensures text doesn't render outside the box
     InputBox.Parent = MainFrame
 
     -- Input box focus animations
@@ -4691,7 +5102,7 @@ local function initializeMainGUI()
 
     local VersionLabel = Instance.new("TextLabel")
     VersionLabel.Name = "VersionLabel"
-    VersionLabel.Text = "V0.7"
+    VersionLabel.Text = "V0.8"
     VersionLabel.TextSize = 10
     VersionLabel.TextTransparency = 0.6
     VersionLabel.TextColor3 = Color3.fromRGB(0, 0, 0)
@@ -5032,7 +5443,7 @@ local function initializeMainGUI()
                         value = table.concat(parts, " ", currentIndex)
                     elseif command.hasValue then
                         errorSound:Play()
-                        notify(string.format("Missing value for %s. Usage: %s%s%s", 
+                        crx(string.format("Missing value for %s.\nUsage: %s%s%s", 
                             commandText, 
                             commandText,
                             command.hasPlayer and " <player>" or "",
@@ -5054,7 +5465,7 @@ local function initializeMainGUI()
                     if success then
                         if commandText ~= "cmds" then
                             successSound:Play()
-                            notify(message, 1.1, Color3.fromRGB(0, 255, 0), nil)
+                            crx(message, 1.1, Color3.fromRGB(0, 255, 0), nil)
                             
                             -- On PC, hide the GUI after command execution
                             if not isMobile() then
@@ -5081,7 +5492,7 @@ local function initializeMainGUI()
                             createHelpWindow()
                         else
                             successSound:Play()
-                            notify(message, 1.2, Color3.fromRGB(0, 255, 0), nil)
+                            crx(message, 1.2, Color3.fromRGB(0, 255, 0), nil)
                             
                             -- On PC, hide the GUI after command execution
                             if not isMobile() then
@@ -5101,7 +5512,7 @@ local function initializeMainGUI()
                 end
             else
                 errorSound:Play()
-                notify("Unknown command:\n" .. commandText, 1.1, Color3.fromRGB(255, 0, 0), nil)
+                crx("Unknown command:\n" .. commandText, 1.1, Color3.fromRGB(255, 0, 0), nil)
             end
         end
     end)
@@ -5142,7 +5553,7 @@ end
 
 -- Initialize and handle respawns
 initializeMainGUI()
-notify("UI Loaded!\nType 'cmds' for commands", 2, Color3.fromRGB(0, 255, 255), 12221831)
+crx("'118' Cmds Loaded!\nType 'cmds' for commands :D", 4, Color3.fromRGB(0, 255, 255), 12221831)
 
 localPlayer.CharacterAdded:Connect(function()
     -- Just ensure GUI exists (it will persist due to ResetOnSpawn = false)
