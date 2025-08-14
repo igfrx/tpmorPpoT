@@ -4430,24 +4430,167 @@ end)
 
 AddCommand("credits", {"c"}, "Shows the owner of the script", credits)
 
+-- Services
+local Players = game:GetService("Players")
+local UserInputService = game:GetService("UserInputService")
+local TweenService = game:GetService("TweenService")
+local SoundService = game:GetService("SoundService")
 
--- Create the main GUI
-local ScreenGui = Instance.new("ScreenGui")
+-- Player references
+local localPlayer = Players.LocalPlayer
+local playerGui = localPlayer:WaitForChild("PlayerGui")
+
+-- Create or get existing main GUI
+local ScreenGui = playerGui:FindFirstChild("TopPrompt") or Instance.new("ScreenGui")
 ScreenGui.Name = "TopPrompt"
 ScreenGui.ResetOnSpawn = false
 ScreenGui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
+ScreenGui.Parent = playerGui
 
--- Function to detect if the player is on mobile
+-- Mobile detection
 local function isMobile()
     return UserInputService.TouchEnabled and not UserInputService.KeyboardEnabled and not UserInputService.MouseEnabled
 end
 
--- Function to initialize the GUI
-local function initializeGUI()
-    -- Clear any existing GUI elements
-    for _, child in ipairs(ScreenGui:GetChildren()) do
-        child:Destroy()
+-- Notification system with persistence
+local currentNotification = nil
+
+local function getNotificationGui()
+    local notificationGui = playerGui:FindFirstChild("NotificationGui")
+    if not notificationGui then
+        notificationGui = Instance.new("ScreenGui")
+        notificationGui.Name = "NotificationGui"
+        notificationGui.ResetOnSpawn = false
+        notificationGui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
+        notificationGui.Parent = playerGui
     end
+    return notificationGui
+end
+
+local function notify(text, duration, rateColor, soundId)
+    -- Default values
+    duration = duration or 4
+    rateColor = rateColor or Color3.fromRGB(0, 170, 255)
+    
+    -- Get the ScreenGui
+    local screenGui = getNotificationGui()
+    
+    -- Clear previous notification
+    if currentNotification then
+        currentNotification:Destroy()
+    end
+    
+    -- Play sound if provided
+    if soundId then
+        local sound = Instance.new("Sound")
+        sound.SoundId = "rbxassetid://" .. soundId
+        sound.Parent = SoundService
+        sound:Play()
+        sound.Ended:Connect(function()
+            sound:Destroy()
+        end)
+    end
+    
+    -- Create notification
+    local notifyFrame = Instance.new("Frame")
+    notifyFrame.Name = "Notification"
+    notifyFrame.BackgroundColor3 = Color3.fromRGB(0, 0, 0)
+    notifyFrame.BackgroundTransparency = 0.3
+    notifyFrame.BorderSizePixel = 0
+    notifyFrame.Size = UDim2.new(0, 0, 0, 30)
+    notifyFrame.Position = UDim2.new(0, 20, 0, 69)
+    notifyFrame.ZIndex = 10
+    notifyFrame.Parent = screenGui
+    
+    currentNotification = notifyFrame
+    
+    -- UI elements (corners, shadow, accent, etc.)
+    local corner = Instance.new("UICorner")
+    corner.CornerRadius = UDim.new(0, 10)
+    corner.Parent = notifyFrame
+    
+    local shadow = Instance.new("ImageLabel")
+    shadow.Name = "Shadow"
+    shadow.Image = "rbxassetid://1316045217"
+    shadow.ImageColor3 = Color3.new(0, 0, 0)
+    shadow.ImageTransparency = 0.8
+    shadow.ScaleType = Enum.ScaleType.Slice
+    shadow.SliceCenter = Rect.new(10, 10, 118, 118)
+    shadow.BackgroundTransparency = 1
+    shadow.Size = UDim2.new(1, 10, 1, 10)
+    shadow.Position = UDim2.new(0, -5, 0, -5)
+    shadow.ZIndex = 9
+    shadow.Parent = notifyFrame
+    
+    local accent = Instance.new("Frame")
+    accent.Name = "Accent"
+    accent.BackgroundColor3 = rateColor
+    accent.BorderSizePixel = 0
+    accent.Size = UDim2.new(0, 3, 0.7, 0)
+    accent.Position = UDim2.new(0, 5, 0.13, 0)
+    accent.ZIndex = 11
+    accent.Parent = notifyFrame
+    
+    local accentCorner = Instance.new("UICorner")
+    accentCorner.CornerRadius = UDim.new(1, 0)
+    accentCorner.Parent = accent
+    
+    local label = Instance.new("TextLabel")
+    label.Name = "Text"
+    label.Text = ""
+    label.Font = Enum.Font.Arcade
+    label.TextSize = 13
+    label.TextColor3 = Color3.fromRGB(255, 255, 255)
+    label.BackgroundTransparency = 1
+    label.Size = UDim2.new(1, -20, 1, 0)
+    label.Position = UDim2.new(0, 15, 0, 0)
+    label.TextXAlignment = Enum.TextXAlignment.Left
+    label.TextYAlignment = Enum.TextYAlignment.Center
+    label.Parent = notifyFrame
+    
+    -- Animation
+    TweenService:Create(notifyFrame, TweenInfo.new(0.2, Enum.EasingStyle.Quint), {
+        Size = UDim2.new(0, 250, 0, 30)
+    }):Play()
+    
+    -- Typewriter effect
+    for i = 1, #text do
+        if not notifyFrame.Parent then break end
+        label.Text = string.sub(text, 1, i)
+        if string.sub(text, i, i) ~= " " then
+            clickSound:Play()
+        end
+        task.wait(0.0001)
+    end
+    
+    -- Auto-close
+    task.delay(duration, function()
+        if not notifyFrame.Parent then return end
+        TweenService:Create(notifyFrame, TweenInfo.new(0.2, Enum.EasingStyle.Quint), {
+            BackgroundTransparency = 1,
+            Size = UDim2.new(0, 0, 0, 30)
+        }):Play()
+        
+        TweenService:Create(label, TweenInfo.new(0.2), {
+            TextTransparency = 1
+        }):Play()
+        
+        TweenService:Create(accent, TweenInfo.new(0.2), {
+            BackgroundTransparency = 1
+        }):Play()
+        
+        task.wait(0.2)
+        notifyFrame:Destroy()
+        if currentNotification == notifyFrame then
+            currentNotification = nil
+        end
+    end)
+end
+
+-- Main GUI initialization
+local function initializeMainGUI()
+    local MainFrame = ScreenGui:FindFirstChild("MainFrame")
+    
 
     local MainFrame = Instance.new("Frame")
     MainFrame.Name = "MainFrame"
@@ -4468,169 +4611,6 @@ local function initializeGUI()
     local UICorner = Instance.new("UICorner")
     UICorner.CornerRadius = UDim.new(1, 0)
     UICorner.Parent = MainFrame
-
-local currentNotification = nil
-
--- Function to create or get the ScreenGui
-local function getScreenGui()
-    local playerGui = game:GetService("Players").LocalPlayer:WaitForChild("PlayerGui")
-    local gui = playerGui:FindFirstChild("NotificationGui")
-    
-    if not gui then
-        gui = Instance.new("ScreenGui")
-        gui.Name = "NotificationGui"
-        gui.ResetOnSpawn = false -- This is important!
-        gui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
-        gui.Parent = playerGui
-    end
-    
-    return gui
-end
-
-function notify(text, duration, rateColor, soundId)
-    -- Default values
-    text = text
-    duration = duration or 4
-    rateColor = rateColor or Color3.fromRGB(0, 170, 255)
-    
-    -- Get the ScreenGui (will create if doesn't exist)
-    local screenGui = getScreenGui()
-    
-    -- Destroy previous notification if it exists
-    if currentNotification and currentNotification.Parent then
-        currentNotification:Destroy()
-        currentNotification = nil
-    end
-    
-    -- Play sound immediately if soundId is provided
-    if soundId then
-        local sound = Instance.new("Sound")
-        sound.SoundId = "rbxassetid://" .. soundId
-        sound.Parent = game:GetService("SoundService")
-        sound:Play()
-        sound.Ended:Connect(function()
-            sound:Destroy()
-        end)
-    end
-    
-    -- Create notification frame
-    local notify = Instance.new("Frame")
-    notify.Name = "Notification"
-    notify.BackgroundColor3 = Color3.fromRGB(0, 0, 0)
-    notify.BackgroundTransparency = 0.3
-    notify.BorderSizePixel = 0
-    notify.Size = UDim2.new(0, 0, 0, 30)
-    notify.Position = UDim2.new(0, 20, 0, 69)
-    notify.ZIndex = 10
-    notify.Parent = screenGui
-    
-    -- Store the current notification
-    currentNotification = notify
-    
-    local corner = Instance.new("UICorner")
-    corner.CornerRadius = UDim.new(0, 10)
-    corner.Parent = notify
-    
-    -- Add subtle shadow effect
-    local shadow = Instance.new("ImageLabel")
-    shadow.Name = "Shadow"
-    shadow.Image = "rbxassetid://1316045217"
-    shadow.ImageColor3 = Color3.new(0, 0, 0)
-    shadow.ImageTransparency = 0.8
-    shadow.ScaleType = Enum.ScaleType.Slice
-    shadow.SliceCenter = Rect.new(10, 10, 118, 118)
-    shadow.BackgroundTransparency = 1
-    shadow.Size = UDim2.new(1, 10, 1, 10)
-    shadow.Position = UDim2.new(0, -5, 0, -5)
-    shadow.ZIndex = 9
-    shadow.Parent = notify
-    
-    -- Add accent bar
-    local accent = Instance.new("Frame")
-    accent.Name = "Accent"
-    accent.BackgroundColor3 = rateColor
-    accent.BorderSizePixel = 0
-    accent.Size = UDim2.new(0, 3, 0.7, 0)
-    accent.Position = UDim2.new(0, 5, 0.13, 0)
-    accent.ZIndex = 11
-    accent.Parent = notify
-    
-    -- Round accent corners
-    local accentCorner = Instance.new("UICorner")
-    accentCorner.CornerRadius = UDim.new(1, 0)
-    accentCorner.Parent = accent
-    
-    -- Add modern text label
-    local label = Instance.new("TextLabel")
-    label.Name = "Text"
-    label.Text = ""
-    label.Font = Enum.Font.Arcade
-    label.TextSize = 13
-    label.TextColor3 = Color3.fromRGB(255, 255, 255)
-    label.BackgroundTransparency = 1
-    label.Size = UDim2.new(1, -20, 1, 0)
-    label.Position = UDim2.new(0, 15, 0, 0)
-    label.TextXAlignment = Enum.TextXAlignment.Left
-    label.TextYAlignment = Enum.TextYAlignment.Center
-    label.TextWrapped = false
-    label.Parent = notify
-    
-    -- Smooth expand animation
-    local expand = game:GetService("TweenService"):Create(notify, TweenInfo.new(0.2, Enum.EasingStyle.Quint), {
-        Size = UDim2.new(0, 250, 0, 30)
-    })
-    expand:Play()
-    
-    -- Typewriter effect
-    local displayText = ""
-    local fullText = text
-    local typingSpeed = 0.0001
-    
-    for i = 1, #fullText do
-        if not notify.Parent then break end
-        
-        displayText = string.sub(fullText, 1, i)
-        label.Text = displayText
-        
-        if string.sub(fullText, i, i) ~= " " then
-            clickSound:Play()
-        end
-        
-        wait(typingSpeed)
-    end
-    
-    -- Auto-close after delay
-    task.delay(duration, function()
-        if not notify.Parent then return end
-        
-        local fadeOut = game:GetService("TweenService"):Create(notify, TweenInfo.new(0.2, Enum.EasingStyle.Quint), {
-            BackgroundTransparency = 1,
-            Size = UDim2.new(0, 0, 0, 30)
-        })
-        fadeOut:Play()
-        
-        local textFade = game:GetService("TweenService"):Create(label, TweenInfo.new(0.2), {
-            TextTransparency = 1
-        })
-        textFade:Play()
-        
-        local accentFade = game:GetService("TweenService"):Create(accent, TweenInfo.new(0.2), {
-            BackgroundTransparency = 1
-        })
-        accentFade:Play()
-        
-        fadeOut.Completed:Connect(function()
-            if notify.Parent then
-                notify:Destroy()
-                if currentNotification == notify then
-                    currentNotification = nil
-                end
-            end
-        end)
-    end)
-    
-    return notify
-end
     
     local Arrow = Instance.new("TextLabel")
     Arrow.Name = "Arrow"
@@ -5131,24 +5111,13 @@ end
     end
 end
 
--- Initialize the GUI
-initializeGUI()
+-- Initialize and handle respawns
+initializeMainGUI()
+notify("UI Loaded!\nType 'cmds' for commands", 2, Color3.fromRGB(0, 255, 255), 12221831)
 
--- Handle character respawns
-localPlayer.CharacterAdded:Connect(function(newCharacter)
-    character = newCharacter
-    humanoid = character:WaitForChild("Humanoid")
-    
-    -- Make sure the GUI is properly parented after respawn
+localPlayer.CharacterAdded:Connect(function()
+    -- Just ensure GUI exists (it will persist due to ResetOnSpawn = false)
     if not ScreenGui.Parent then
-        ScreenGui.Parent = localPlayer:WaitForChild("PlayerGui")
+        ScreenGui.Parent = playerGui
     end
-    
-    -- Reinitialize the GUI to ensure all connections are fresh
-    initializeGUI()
 end)
-
--- Initial parent assignment
-ScreenGui.Parent = localPlayer:WaitForChild("PlayerGui")
-
-notify("Type 'cmds' for commands! :D", 3, Color3.fromRGB(0, 255, 255), 12221831)
