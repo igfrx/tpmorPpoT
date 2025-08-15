@@ -3314,7 +3314,7 @@ end
 -- Command to start killing (all or specific player)
 AddCommandWithPlayer("bkill", {"bk"}, "Deletes parts of target player(s) using Building Tools", function(name)
     if Bkill.Active then
-        return "Bkill is already active! Use 'unbkill' to stop."
+        crx("Bkill already active!", 1.1, Color3.fromRGB(255, 0, 0), 138081500)
     end
 
     Bkill.Active = true
@@ -3324,22 +3324,22 @@ AddCommandWithPlayer("bkill", {"bk"}, "Deletes parts of target player(s) using B
     if not name or string.lower(name) == "all" then
         Bkill.TargetAll = true
         coroutine.wrap(ExecuteBkill)()
-        return "Bkill activated against ALL players"
+        return "Bkilling all players"
     else
         Bkill.TargetAll = false
         if not Bkill.CurrentTarget then
             Bkill.Active = false
-            return "Target player not found!"
+            crx("Target not found!", 1.1, Color3.fromRGB(255, 0, 0), 138081500)
         end
         coroutine.wrap(ExecuteBkill)()
-        return "Bkill activated against "..Bkill.CurrentTarget.Name
+        return "Bkilling "..Bkill.CurrentTarget.Name
     end
 end)
 
 -- Command to stop killing
 AddCommand("unbkill", {"unbk"}, "Stops the bkill process", function()
     if not Bkill.Active then
-        return "Bkill wasn't active"
+        crx("Bkill isn't active!", 1.1, Color3.fromRGB(255, 0, 0), 138081500)
     end
     
     Bkill.Active = false
