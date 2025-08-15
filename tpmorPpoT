@@ -5,6 +5,8 @@ local RunService = game:GetService("RunService")
 local TweenService = game:GetService("TweenService")
 local SoundService = game:GetService("SoundService")
 local GuiService = game:GetService("GuiService")
+local Workspace = game:GetService("Workspace")
+local CollectionService = game:GetService("CollectionService")
 
 --[[
 crx("jsjsjes", 1.1, Color3.fromRGB(255, 0, 0), 138081500)
@@ -101,7 +103,6 @@ fadeIn:Play()
 return G2L["ScreenGui_1"], require
 end
 
-local Players = game:GetService("Players")
 local UserInputService = game:GetService("UserInputService")
 local player = Players.LocalPlayer
 
@@ -109,10 +110,11 @@ local isMobile = UserInputService.TouchEnabled and not UserInputService.Keyboard
 
 local function handleRespawn()
     if isMobile then
-        addlayer()
         addlayer2()
     end
 end
+
+addlayer()
 
 -- Connect the function to the CharacterAdded event
 player.CharacterAdded:Connect(handleRespawn)
@@ -265,9 +267,194 @@ function AddCmd(name, description, ...)
     end
 end
 
+local TextChatService = game:GetService("TextChatService")
+local Players = game:GetService("Players")
+
+-- Command prefix (change this if you want a different prefix)
+local COMMAND_PREFIX = "!"
+
+-- Track if we've already processed a message to prevent double execution
+local messageProcessed = {}
+
+-- Modified chatbox command handler
+local function handleChatMessage(message, speaker)
+    -- Check if message starts with command prefix
+    if string.sub(message, 1, 1) == COMMAND_PREFIX then
+        -- Create a unique identifier for this message to prevent double processing
+        local messageId = speaker.UserId..tostring(message)
+        
+        -- If we've already processed this message, skip it
+        if messageProcessed[messageId] then
+            return
+        end
+        
+        -- Mark this message as processed
+        messageProcessed[messageId] = true
+        
+        -- Remove the mark after a short delay (cleanup)
+        task.delay(1, function()
+            messageProcessed[messageId] = nil
+        end)
+        
+        -- Rest of your existing handleChatMessage function...
+        -- Remove the prefix
+        local commandText = string.sub(message, 2)
+        
+        -- Split command and arguments
+        local parts = {}
+        for part in string.gmatch(commandText, "%S+") do
+            table.insert(parts, part:lower())
+        end
+        
+        if #parts == 0 then return end
+        
+        local command = Commands[parts[1]]
+        
+        if command then
+            -- Check if command expects inputs
+            if command.hasValue or command.hasPlayer then
+                local playerName, value
+                local currentIndex = 2
+                
+                -- First check for player name if command expects it
+                if command.hasPlayer and #parts >= currentIndex then
+                    playerName = parts[currentIndex]
+                    currentIndex = currentIndex + 1
+                end
+                
+                -- Then check for value if command expects it
+                if command.hasValue and #parts >= currentIndex then
+                    value = table.concat(parts, " ", currentIndex)
+                elseif command.hasValue then
+                    speaker:SetAttribute("ChatCommandError", string.format("Missing value for %s.\nUsage: %s%s%s", 
+                        parts[1], 
+                        parts[1],
+                        command.hasPlayer and " <player>" or "",
+                        command.hasValue and " <"..(command.valueName or "value")..">" or ""))
+                    return
+                end
+                
+                -- Execute command with inputs
+                local success, message
+                if command.hasPlayer and command.hasValue then
+                    success, message = pcall(function() return command.exec(playerName, value) end)
+                elseif command.hasPlayer then
+                    success, message = pcall(function() return command.exec(playerName) end)
+                elseif command.hasValue then
+                    success, message = pcall(function() return command.exec(value) end)
+                end
+                
+                if success then
+                    if parts[1] ~= "cmds" then
+                        successSound:Play()
+                        crx(message, 1.1, Color3.fromRGB(0, 255, 0), nil)
+                    else
+                        -- Handle help command
+                        speaker:SetAttribute("ChatCommandResult", message)
+                    end
+                else
+                    errorSound:Play()
+                end
+            else
+                -- Handle regular command without inputs
+                local success, message = pcall(command.exec)
+                if success then
+                    if parts[1] == "cmds" then
+                        -- Handle help command
+                        speaker:SetAttribute("ChatCommandResult", message)
+                    else
+                        successSound:Play()
+                        crx(message, 1.2, Color3.fromRGB(0, 255, 0), nil)
+                    end
+                else
+                    errorSound:Play()
+                end
+            end
+        else
+            errorSound:Play()
+            speaker:SetAttribute("ChatCommandError", "Unknown command: " .. parts[1])
+        end
+    end
+end
+
+-- Connect to chat events (both systems but with duplicate prevention)
+local chatConnected = false
+
+local function connectChatEvents()
+    if chatConnected then return end
+    chatConnected = true
+    
+    if TextChatService then
+        -- For new TextChatService system
+        TextChatService.OnIncomingMessage = function(message)
+            if message.TextSource then
+                local speaker = Players:GetPlayerByUserId(message.TextSource.UserId)
+                if speaker then
+                    handleChatMessage(message.Text, speaker)
+                end
+            end
+        end
+    else
+        -- Fallback for old chat system
+        Players.PlayerChatted:Connect(function(chatType, speaker, message)
+            if chatType == Enum.PlayerChatType.All then
+                handleChatMessage(message, speaker)
+            end
+        end)
+    end
+end
+
+-- Initial connection
+connectChatEvents()
+
+-- Reconnect if chat service becomes available later
+if not TextChatService then
+    game:GetService("ContentProvider"):GetPreloadAsync({game:GetService("TextChatService")})
+    game:GetService("TextChatService"):GetPropertyChangedSignal("OnIncomingMessage"):Wait()
+    connectChatEvents()
+end
+
+-- settings cmds
+
 AddCommand("cmds", nil, "Shows all commands", function() return "Opening cmds window..." end)
 
--- command functionality 
+-- Add this command to your existing command system
+AddCommandWithValue("setprefix", "new_prefix", "setp", "Changes the command prefix", function(newPrefix)
+    -- Validate the new prefix
+    if type(newPrefix) ~= "string" or #newPrefix ~= 1 then
+        errorSound:Play()
+        crx("Prefix must be a single character!", 1.5, Color3.fromRGB(255, 0, 0), 138081500)
+        return
+    end
+    
+    -- Special characters that might cause issues
+    local invalidChars = {"e"}
+    for _, char in ipairs(invalidChars) do
+        if newPrefix == char then
+            errorSound:Play()
+            crx("Cannot use whitespace as prefix!", 1.5, Color3.fromRGB(255, 0, 0), 138081500)
+            return
+        end
+    end
+    
+    -- Change the prefix
+    local oldPrefix = COMMAND_PREFIX
+    COMMAND_PREFIX = newPrefix
+    
+    -- Play success sound and show confirmation
+    successSound:Play()
+    crx(string.format("Prefix changed from '%s' to '%s'", oldPrefix, newPrefix), 
+        2, Color3.fromRGB(0, 255, 0), 6026984224)
+    
+    return "Prefix updated"
+end)
+
+-- Also add an alias for checking current prefix
+AddCommand("prefix", "p", "Shows curren command prefix", function()
+    return "Current prefix: '"..COMMAND_PREFIX.."'"
+end)
+
+-- command 
 
 local function Con()
     game:GetService("StarterGui"):SetCore("DevConsoleVisible",true)
@@ -544,7 +731,6 @@ end)
 -- IMPROVED DRAGGING IMPLEMENTATION
 -- =============================================
 
-local UserInputService = game:GetService("UserInputService")
 local dragging, dragInput, dragStart, startPos
 
 local function update(input)
@@ -913,9 +1099,6 @@ end
 
 local function plrz()
 
-local Players = game:GetService("Players")
-local TweenService = game:GetService("TweenService")
-local UserInputService = game:GetService("UserInputService")
 local player = game.Players.LocalPlayer
 
 local gui = Instance.new("ScreenGui")
@@ -1349,8 +1532,6 @@ local TeleportTime = 0.2
 local AutoStopTime = 5 -- seconds to run before auto-stopping
 
 local Players = game:GetService("Players")
-local RunService = game:GetService("RunService")
-local TweenService = game:GetService("TweenService")
 
 local localPlayer = Players.LocalPlayer
 
@@ -1538,10 +1719,6 @@ end
 local function R1()
 
 pcall(function()
-local Players = game:GetService("Players")
-local RunService = game:GetService("RunService")
-local UserInputService = game:GetService("UserInputService")
-local CollectionService = game:GetService("CollectionService")
 local LocalPlayer = Players.LocalPlayer
 local Workspace = game:GetService("Workspace")
 
@@ -2603,86 +2780,6 @@ local function DAT()
     return "Dropped:\n" .. #tools .. " tools"
 end
 
--- VoidProtection Variable
-local player = game.Players.LocalPlayer
-local character = player.Character or player.CharacterAdded:Wait()
-local humanoidRootPart = character:WaitForChild("HumanoidRootPart")
-local voidYLevel = -100 -- Adjust based on your game's void height
-local protectionEnabled = false
-local bounceForce = 10000   -- Initial upward force
-local maxBounceForce = 999e999
-local platformCheckRaycast = 5 -- Raycast distance to check for platforms below
-local inVoid = false -- Track if player is in void
-
-local function checkPlatformBelow()
-    if not humanoidRootPart then return false end
-    
-    local rayOrigin = humanoidRootPart.Position
-    local rayDirection = Vector3.new(0, -platformCheckRaycast, 0)
-    local raycastParams = RaycastParams.new()
-    raycastParams.FilterDescendantsInstances = {character}
-    raycastParams.FilterType = Enum.RaycastFilterType.Blacklist
-    
-    local raycastResult = workspace:Raycast(rayOrigin, rayDirection, raycastParams)
-    return raycastResult and raycastResult.Instance
-end
-
-local function applyBounce()
-    if not humanoidRootPart or not protectionEnabled then return end
-    
-    -- Apply upward velocity (like a bounce)
-    humanoidRootPart.AssemblyLinearVelocity = Vector3.new(0, bounceForce, 0)
-    
-    -- Increase bounce force for next time (capped at maxBounceForce)
-    bounceForce = math.min(bounceForce + 100, maxBounceForce)
-    
-    print("Bouncing with force:", bounceForce) -- Debug output
-end
-
-local function checkVoidPosition()
-    while protectionEnabled and humanoidRootPart do
-        local isInVoidNow = humanoidRootPart.Position.Y < voidYLevel
-        
-        -- Check for platform below regardless of void state
-        local onPlatform = checkPlatformBelow()
-        
-        if onPlatform then
-            -- Player landed on something, reset bounce force
-            bounceForce = 100
-            inVoid = false
-        elseif isInVoidNow then
-            -- Player is in void, apply bounce
-            if not inVoid then
-                -- First time entering void
-                bounceForce = 100
-                inVoid = true
-            else
-                -- Continuous bouncing in void
-                applyBounce()
-            end
-        else
-            inVoid = false
-        end
-        
-        task.wait(0.1) -- More efficient than wait()
-    end
-end
-
-function VoidProtectionOn()
-    if not protectionEnabled then
-        protectionEnabled = true
-        inVoid = false
-        bounceForce = 100 -- Reset force when turning on
-        checkVoidPosition()
-    end
-return "Void Protection: ON"
-end
-
-function VoidProtectionOff()
-    protectionEnabled = false
-    return "Void Protection: OFF"
-end
-
 local function kfw()
     loadstring(game:HttpGet("https://raw.githubusercontent.com/hm5650/Killerfish/refs/heads/main/KFW", true))()
     return "Numero Loaded.."
@@ -3151,114 +3248,104 @@ game:GetService("Players").PlayerAdded:Connect(function(player)
     end
 end)
 
-local bkillall = false  -- Default to targeting specific players
-local bkillActive = false
+local Bkill = {
+    Active = false,
+    TargetAll = false,
+    Players = game:GetService("Players"),
+    LocalPlayer = game:GetService("Players").LocalPlayer
+}
 
-AddCommandWithPlayer("btoolkill", "bkill", "Deletes part of the target player using Building Tools [TOOL]", function(name)
-    local Players = game:GetService("Players")
-    local player = Players.LocalPlayer
-    bkillActive = true
+-- Main killing function
+local function ExecuteBkill()
+    while Bkill.Active do
+        local character = Bkill.LocalPlayer.Character
+        if not character then task.wait(0.1) continue end
 
-    local targets
-    if bkillall then
-        -- Get all players except local player
-        targets = {}
-        for _, p in ipairs(Players:GetPlayers()) do
-            if p ~= player then
-                table.insert(targets, p)
-            end
-        end
-    else
-        -- Use the specified target
-        targets = GetPlayer(name)
-        if not targets then crx("Target not found!", 1.1, Color3.fromRGB(255, 0, 0), 138081500) end
-        if typeof(targets) ~= "table" then targets = {targets} end
-    end
+        local rootPart = character:FindFirstChild("HumanoidRootPart")
+        if not rootPart then task.wait(0.1) continue end
 
-    -- Death listener
-    local function setupDeathListener(character)
-        local humanoid = character:FindFirstChildOfClass("Humanoid")
-        if humanoid then
-            humanoid.Died:Connect(function()
-                bkillActive = false
-            end)
-        end
-    end
-
-    if player.Character then
-        setupDeathListener(player.Character)
-    end
-
-    player.CharacterAdded:Connect(function(character)
-        if not bkillActive then return end
-        setupDeathListener(character)
-    end)
-
-    -- Start bkill loop
-    coroutine.wrap(function()
-        while bkillActive do
-            local character = player.Character
-            if not character then task.wait(0.1) continue end
-
-            local rootPart = character:FindFirstChild("HumanoidRootPart")
-            if not rootPart then task.wait(0.1) continue end
-
-            -- Using name call to find tools more efficiently
-            local btools = player:FindFirstChild("Backpack") and player.Backpack:FindFirstChild("Building Tools") or nil
-            if not btools then 
-                btools = player.Character:FindFirstChild("Building Tools") or nil
-                if not btools then 
-                    task.wait(0.1) 
-                    continue 
-                end
-            end
-
-            local syncAPI = btools:FindFirstChild("SyncAPI")
-            if not syncAPI then task.wait(0.1) continue end
-
-            local serverEndpoint = syncAPI:FindFirstChild("ServerEndpoint")
-            if not serverEndpoint then task.wait(0.1) continue end
-
-            for _, target in ipairs(targets) do
-                if target ~= player and target.Character then
-                    local otherRoot = target.Character:FindFirstChild("HumanoidRootPart")
-                    if otherRoot then
-                        local torso = target.Character:FindFirstChild("Torso") or target.Character:FindFirstChild("UpperTorso")
-                        if torso then
-                            local args = {
-                                "Remove",
-                                {
-                                    torso
-                                }
-                            }
-                            pcall(function()
-                                serverEndpoint:InvokeServer(unpack(args))
-                            end)
-                        end
-                    end
-                end
-            end
-
+        -- Find Building Tools
+        local btools = Bkill.LocalPlayer:FindFirstChild("Backpack") and 
+                      Bkill.LocalPlayer.Backpack:FindFirstChild("Building Tools") or
+                      character:FindFirstChild("Btools")
+        
+        if not btools then 
             task.wait(0.1)
+            continue 
         end
-    end)()
 
-    return "Bkilled\n" .. (bkillall and "players" or "target(s)")
+        local syncAPI = btools:FindFirstChild("SyncAPI")
+        local serverEndpoint = syncAPI and syncAPI:FindFirstChild("ServerEndpoint")
+        if not serverEndpoint then task.wait(0.1) continue end
+
+        -- Determine targets
+        local targets = {}
+        if Bkill.TargetAll then
+            -- Get all players except yourself
+            for _, player in ipairs(Bkill.Players:GetPlayers()) do
+                if player ~= Bkill.LocalPlayer then
+                    table.insert(targets, player)
+                end
+            end
+        else
+            -- Get current target (if specified)
+            if Bkill.CurrentTarget then
+                table.insert(targets, Bkill.CurrentTarget)
+            end
+        end
+
+        -- Execute kill on targets
+        for _, target in ipairs(targets) do
+            if target and target.Character then
+                local torso = target.Character:FindFirstChild("Torso") or 
+                             target.Character:FindFirstChild("UpperTorso")
+                if torso then
+                    pcall(function()
+                        serverEndpoint:InvokeServer("Remove", {torso})
+                    end)
+                end
+            end
+        end
+
+        task.wait(0.1)
+    end
+end
+
+-- Command to start killing (all or specific player)
+AddCommandWithPlayer("bkill", {"bk"}, "Deletes parts of target player(s) using Building Tools", function(name)
+    if Bkill.Active then
+        return "Bkill is already active! Use 'unbkill' to stop."
+    end
+
+    Bkill.Active = true
+    Bkill.CurrentTarget = GetPlayer(name) -- nil if "all" is used
+    
+    -- Check if targeting all players
+    if not name or string.lower(name) == "all" then
+        Bkill.TargetAll = true
+        coroutine.wrap(ExecuteBkill)()
+        return "Bkill activated against ALL players"
+    else
+        Bkill.TargetAll = false
+        if not Bkill.CurrentTarget then
+            Bkill.Active = false
+            return "Target player not found!"
+        end
+        coroutine.wrap(ExecuteBkill)()
+        return "Bkill activated against "..Bkill.CurrentTarget.Name
+    end
 end)
 
-AddCommand("unbtoolkill", "unbkill", "Stops the bkill process", function()
-    bkillActive = false
+-- Command to stop killing
+AddCommand("unbkill", {"unbk"}, "Stops the bkill process", function()
+    if not Bkill.Active then
+        return "Bkill wasn't active"
+    end
+    
+    Bkill.Active = false
+    Bkill.TargetAll = false
+    Bkill.CurrentTarget = nil
     return "Bkill stopped"
-end)
-
-AddCommand("btoolkillall", "bkillall", "Enable killing everyone except yourself", function()
-    bkillall = true
-    return "BKill all enabled"
-end)
-
-AddCommand("unbtoolkillall", "unbkillall", "Disable killing everyone except yourself", function()
-    bkillall = false
-    return "BKill all disabled"
 end)
 
 AddCommand("walkfling", {"wf"}, "Starts Touchfling", TFlingOn)
@@ -3562,14 +3649,147 @@ AddCommand("f3x", {"fex"}, "Loads Btools (CLIENT)", fex)
 AddCommand("f3xpanel", {"fexp"}, "Loads Btools panel [TOOL]", fexpanel)
 AddCommand("sit", nil, "Makes you sit", sit)
 AddCommand("cmdlooper", {"cmdl"}, "CmdLooper for HD Admin", cmdl)
-AddCommand("voidprotection", {"voidp"}, "Protects you from the void", VoidProtectionOn)
-AddCommand("unvoidprotection", {"unvoidp"}, "Stops VoidProtection", VoidProtectionOff)
 AddCommand("dropalltools", {"dat"}, "Drops all your tools", DAT)
 AddCommand("unvcban", {"vban"}, "Removes VoiceChat Ban", Vcban)
 AddCommand("toolcontrol", {"tc"}, "Control any tool [Tool]", tc)
 
 -- New commands with aliases
 
+local Players = game:GetService("Players")
+
+-- WallHop System Variables
+local WallHop = {
+    Enabled = false,
+    Debounce = true,
+    RaycastParams = RaycastParams.new()
+}
+
+-- Initialize raycast parameters
+WallHop.RaycastParams.FilterType = Enum.RaycastFilterType.Blacklist
+
+-- Precise wall detection function
+local function GetWallRaycastResult()
+    local character = Players.LocalPlayer.Character
+    if not character then return nil end
+    local rootPart = character:FindFirstChild("HumanoidRootPart")
+    if not rootPart then return nil end
+
+    WallHop.RaycastParams.FilterDescendantsInstances = {character}
+
+    local directions = {
+        rootPart.CFrame.LookVector,
+        -rootPart.CFrame.LookVector,
+        rootPart.CFrame.RightVector,
+        -rootPart.CFrame.RightVector
+    }
+    local detectionDistance = 2
+    local closestHit = nil
+    local minDistance = detectionDistance + 1
+
+    for _, direction in pairs(directions) do
+        local ray = Workspace:Raycast(
+            rootPart.Position,
+            direction * detectionDistance,
+            WallHop.RaycastParams
+        )
+        if ray and ray.Instance then
+            if ray.Distance < minDistance then
+                minDistance = ray.Distance
+                closestHit = ray
+            end
+        end
+    end
+    return closestHit
+end
+
+-- Core WallHop functionality
+local function SetupWallHop()
+    UserInputService.JumpRequest:Connect(function()
+        if not WallHop.Enabled or not WallHop.Debounce then return end
+
+        local player = Players.LocalPlayer
+        local character = player.Character
+        local humanoid = character and character:FindFirstChildOfClass("Humanoid")
+        local rootPart = character and character:FindFirstChild("HumanoidRootPart")
+        local camera = Workspace.CurrentCamera
+
+        if not (humanoid and rootPart and camera) then return end
+
+        local wallRayResult = GetWallRaycastResult()
+
+        if wallRayResult then
+            WallHop.Debounce = false
+
+            -- Calculate directions
+            local wallNormal = wallRayResult.Normal
+            local horizontalWallNormal = Vector3.new(wallNormal.X, 0, wallNormal.Z).Unit
+            if horizontalWallNormal.Magnitude < 0.1 then
+                horizontalWallNormal = (rootPart.CFrame.LookVector * Vector3.new(1,0,1)).Unit
+                if horizontalWallNormal.Magnitude < 0.1 then 
+                    horizontalWallNormal = Vector3.new(0,0,-1) 
+                end
+            end
+            
+            local baseDirection = horizontalWallNormal
+            local cameraLook = camera.CFrame.LookVector
+            local horizontalCameraLook = Vector3.new(cameraLook.X, 0, cameraLook.Z).Unit
+            if horizontalCameraLook.Magnitude < 0.1 then 
+                horizontalCameraLook = baseDirection 
+            end
+
+            -- Calculate rotation
+            local maxAngle = math.rad(40)
+            local dot = math.clamp(baseDirection:Dot(horizontalCameraLook), -1, 1)
+            local angle = math.acos(dot)
+            local cross = baseDirection:Cross(horizontalCameraLook)
+            local rotationSign = math.sign(cross.Y)
+            if rotationSign == 0 then angle = 0 end
+            local actualAngle = math.min(angle, maxAngle)
+            local adjustment = CFrame.Angles(0, actualAngle * rotationSign, 0)
+            local targetDirection = adjustment * baseDirection
+
+            -- Apply initial rotation
+            rootPart.CFrame = CFrame.lookAt(rootPart.Position, rootPart.Position + targetDirection)
+            RunService.Heartbeat:Wait()
+
+            -- Execute jump
+            local didJump = false
+            if humanoid:GetState() ~= Enum.HumanoidStateType.Dead then
+                humanoid:ChangeState(Enum.HumanoidStateType.Jumping)
+                didJump = true
+            end
+
+            -- Rotate back towards wall
+            if didJump then
+                rootPart.CFrame = CFrame.lookAt(rootPart.Position, rootPart.Position + -baseDirection)
+            end
+
+            -- Cooldown
+            task.wait(0.15)
+            WallHop.Debounce = true
+        end
+    end)
+end
+
+-- Commands
+AddCommand("autowallhop", {"awh"}, "Enables automatic wall hopping", function()
+    if WallHop.Enabled then
+        return "AutoWallHop is already enabled"
+    end
+    
+    WallHop.Enabled = true
+    SetupWallHop()
+    return "AutoWallHop enabled"
+end)
+
+AddCommand("unautowallhop", {"unawh"}, "Disables automatic wall hopping", function()
+    if not WallHop.Enabled then
+        return "AutoWallHop wasn't active"
+    end
+    
+    WallHop.Enabled = false
+    return "AutoWallHop disabled"
+end)
 
 -- Hitbox command
 local originalSizes = {} -- Stores original sizes of HRPs
@@ -5102,7 +5322,7 @@ local function initializeMainGUI()
 
     local VersionLabel = Instance.new("TextLabel")
     VersionLabel.Name = "VersionLabel"
-    VersionLabel.Text = "V0.8"
+    VersionLabel.Text = "V0.9"
     VersionLabel.TextSize = 10
     VersionLabel.TextTransparency = 0.6
     VersionLabel.TextColor3 = Color3.fromRGB(0, 0, 0)
@@ -5343,14 +5563,14 @@ local function initializeMainGUI()
                     frame.MouseEnter:Connect(function()
                         TweenService:Create(frame:FindFirstChild("CmdText"), TweenInfo.new(0.2), {
                             TextColor3 = Color3.fromRGB(0, 255, 255),
-                            TextSize = 17
+                            TextSize = 13
                         }):Play()
                     end)
                     
                     frame.MouseLeave:Connect(function()
                         TweenService:Create(frame:FindFirstChild("CmdText"), TweenInfo.new(0.2), {
                             TextColor3 = Color3.fromRGB(0, 255, 200),
-                            TextSize = 16
+                            TextSize = 13
                         }):Play()
                     end)
                 end)
