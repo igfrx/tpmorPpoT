@@ -4181,19 +4181,7 @@ AddCommand("undance", "und", "Stops dancing", function()
     return "Stopped dancing :("
 end)
 
-AddCommand("firstperson", {"fp"}, "Toggles first-person view", function()
-    local camera = workspace.CurrentCamera
-    camera.CameraType = Enum.CameraType.Scriptable
-    camera.CFrame = game.Players.LocalPlayer.Character.Head.CFrame
-    return "First-person enabled"
-end)
-
-AddCommand("thirdperson", {"tp"}, "Returns to third-person view", function()
-    workspace.CurrentCamera.CameraType = Enum.CameraType.Custom
-    return "Third-person enabled"
-end)
-
-AddCommand("serverinfo", {"si"}, "Shows server information in a GUI", function()
+AddCommand("serverinfo", {"si"}, "Shows server information in a GUI [WIP]", function()
     -- Create the main GUI
     local gui = Instance.new("ScreenGui")
     gui.Name = "ServerInfoGUI"
