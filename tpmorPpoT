@@ -12,117 +12,6 @@ local CollectionService = game:GetService("CollectionService")
 crx("jsjsjes", 1.1, Color3.fromRGB(255, 0, 0), 138081500)
 ]]
 
-local function addlayer()
-local CollectionService = game:GetService("CollectionService")
-local TweenService = game:GetService("TweenService")
-
-local G2L = {}
-
--- Players.hmmm5651.PlayerGui.ScreenGui
-G2L["ScreenGui_1"] = Instance.new("ScreenGui", game:GetService("Players").LocalPlayer:WaitForChild("PlayerGui"))
-G2L["ScreenGui_1"]["DisplayOrder"] = 9999999
-G2L["ScreenGui_1"]["ZIndexBehavior"] = Enum.ZIndexBehavior.Sibling
-
--- Tags
-CollectionService:AddTag(G2L["ScreenGui_1"], [[main]])
-
--- Players.hmmm5651.PlayerGui.ScreenGui.ImageLabel
-G2L["ImageLabel_2"] = Instance.new("ImageLabel", G2L["ScreenGui_1"])
-G2L["ImageLabel_2"]["BorderSizePixel"] = 0
-G2L["ImageLabel_2"]["BackgroundColor3"] = Color3.fromRGB(255, 255, 255)
-G2L["ImageLabel_2"]["Image"] = [[rbxassetid://118689412872595]]
-G2L["ImageLabel_2"]["Size"] = UDim2.new(0, 182, 0, 118)
-G2L["ImageLabel_2"]["BackgroundTransparency"] = 1
-G2L["ImageLabel_2"]["Position"] = UDim2.new(0, 20, 0, -32)
-
--- Set initial transparency for fade in
-G2L["ImageLabel_2"].ImageTransparency = 1
-
--- Fade in animation
-local fadeIn = TweenService:Create(
-    G2L["ImageLabel_2"],
-    TweenInfo.new(0.2, Enum.EasingStyle.Linear),
-    {ImageTransparency = 0.5}
-)
-
--- Fade out animation (to use later if needed)
-local fadeOut = TweenService:Create(
-    G2L["ImageLabel_2"],
-    TweenInfo.new(0.2, Enum.EasingStyle.Linear),
-    {ImageTransparency = 1}
-)
-
--- Play the fade in animation
-fadeIn:Play()
-
--- Optional: If you want it to automatically fade out after fading in
-fadeIn.Completed:Connect(function()
-    wait(0.1) -- Wait 1 second before fading out
-    fadeOut:Play()
-end)
-
-return G2L["ScreenGui_1"], require
-end
-
-local function addlayer2()
-local CollectionService = game:GetService("CollectionService")
-local TweenService = game:GetService("TweenService")
-
-local G2L = {}
-
--- Players.hmmm5651.PlayerGui.ScreenGui
-G2L["ScreenGui_1"] = Instance.new("ScreenGui", game:GetService("Players").LocalPlayer:WaitForChild("PlayerGui"))
-G2L["ScreenGui_1"]["DisplayOrder"] = 999999
-G2L["ScreenGui_1"]["ZIndexBehavior"] = Enum.ZIndexBehavior.Sibling
-
--- Tags
-CollectionService:AddTag(G2L["ScreenGui_1"], [[main]])
-
--- Players.hmmm5651.PlayerGui.ScreenGui.ImageLabel
-G2L["ImageLabel_2"] = Instance.new("ImageLabel", G2L["ScreenGui_1"])
-G2L["ImageLabel_2"]["BorderSizePixel"] = 0
-G2L["ImageLabel_2"]["BackgroundColor3"] = Color3.fromRGB(255, 255, 255)
-G2L["ImageLabel_2"]["Image"] = [[rbxassetid://137150573919513]]
-G2L["ImageLabel_2"]["Size"] = UDim2.new(0, 156, 0, 158)
-G2L["ImageLabel_2"]["BackgroundTransparency"] = 1
-G2L["ImageLabel_2"]["Position"] = UDim2.new(0, 16, 0, -54)
-
--- Set initial transparency for fade in
-G2L["ImageLabel_2"].ImageTransparency = 1
-
--- Fade in animation
-local fadeIn = TweenService:Create(
-    G2L["ImageLabel_2"],
-    TweenInfo.new(3, Enum.EasingStyle.Linear),
-    {ImageTransparency = 0.1}
-)
-
--- Play the fade in animation
-fadeIn:Play()
-
-return G2L["ScreenGui_1"], require
-end
-
-local UserInputService = game:GetService("UserInputService")
-local player = Players.LocalPlayer
-
-local isMobile = UserInputService.TouchEnabled and not UserInputService.KeyboardEnabled and not UserInputService.GamepadEnabled
-
-local function handleRespawn()
-    if isMobile then
-        addlayer2()
-    end
-end
-
-addlayer()
-
--- Connect the function to the CharacterAdded event
-player.CharacterAdded:Connect(handleRespawn)
-
--- Also call the function once initially, in case the character is already loaded
-handleRespawn()
-
-
 -- Player references
 local localPlayer = Players.LocalPlayer
 local character = localPlayer.Character or localPlayer.CharacterAdded:Wait()
@@ -5009,28 +4898,41 @@ AddCommand("sucess", {"good"}, "Shows an success notification", good)
 AddCommand("error", {"bad"}, "Shows an error notification", error)
 AddCommand("notification", {"notify"}, "Shows an normal notification", meh)
 
--- Services
-local Players = game:GetService("Players")
-local UserInputService = game:GetService("UserInputService")
-local TweenService = game:GetService("TweenService")
-local SoundService = game:GetService("SoundService")
+-- Function to destroy existing TopPrompt GUI if it exists
+local function destroyExistingTopPrompt()
+    local playerGui = Players.LocalPlayer:FindFirstChild("PlayerGui")
+    if playerGui then
+        local existingGui = playerGui:FindFirstChild("TopPrompt")
+        if existingGui then
+            existingGui:Destroy()
+        end
+    end
+end
 
 -- Player references
 local localPlayer = Players.LocalPlayer
 local playerGui = localPlayer:WaitForChild("PlayerGui")
 
--- Create or get existing main GUI
-local ScreenGui = playerGui:FindFirstChild("TopPrompt") or Instance.new("ScreenGui")
-ScreenGui.Name = "TopPrompt"
-ScreenGui.DisplayOrder = 99999
-ScreenGui.ResetOnSpawn = false
-ScreenGui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
-ScreenGui.Parent = playerGui
+local function initializeMainGUI()
+    -- Destroy any existing TopPrompt GUI first
+    destroyExistingTopPrompt()
+    
+    -- Rest of your existing GUI initialization code...
+    local playerGui = Players.LocalPlayer:WaitForChild("PlayerGui")
+    
+    -- Create or get existing main GUI
+    local ScreenGui = Instance.new("ScreenGui")
+    ScreenGui.Name = "TopPrompt"
+    ScreenGui.DisplayOrder = 99999
+    ScreenGui.ResetOnSpawn = false
+    ScreenGui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
+    ScreenGui.Parent = playerGui
 
--- Mobile detection
-local function isMobile()
-    return UserInputService.TouchEnabled and not UserInputService.KeyboardEnabled and not UserInputService.MouseEnabled
-end
+    -- Mobile detection
+    local function isMobile()
+        return UserInputService.TouchEnabled and not UserInputService.KeyboardEnabled and not UserInputService.MouseEnabled
+    end
+
 
 local currentNotification = nil
 
@@ -5237,8 +5139,6 @@ function crx(message, duration, rateColor, soundId)
     return notify
 end
 
--- Main GUI initialization
-local function initializeMainGUI()
     local MainFrame = ScreenGui:FindFirstChild("MainFrame")
     
 
@@ -5764,12 +5664,17 @@ local function initializeMainGUI()
 end
 
 -- Initialize and handle respawns
-initializeMainGUI()
+local mainGUI = initializeMainGUI()
 crx("'118' Cmds Loaded!\nType 'cmds' for commands :D", 4, Color3.fromRGB(0, 255, 255), 12221831)
 
-localPlayer.CharacterAdded:Connect(function()
-    -- Just ensure GUI exists (it will persist due to ResetOnSpawn = false)
-    if not ScreenGui.Parent then
-        ScreenGui.Parent = playerGui
+Players.LocalPlayer.CharacterAdded:Connect(function()
+    if ScreenGui and not ScreenGui.Parent then
+        local playerGui = Players.LocalPlayer:FindFirstChild("PlayerGui")
+        if playerGui then
+            ScreenGui.Parent = playerGui
+        else
+            playerGui = Players.LocalPlayer:WaitForChild("PlayerGui")
+            ScreenGui.Parent = playerGui
+        end
     end
 end)
