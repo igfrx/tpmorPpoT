@@ -1,0 +1,92 @@
+local function orbitp(target)
+    local Players = game:GetService("Players")
+    local LocalPlayer = Players.LocalPlayer
+    local RunService = game:GetService("RunService")
+    
+    -- Orbit variables
+    local orbitRadius = 5
+    local orbitSpeed = 6
+    local orbitAngles = {}
+    local connection = nil
+    
+    local function makeCharacterInvisible(character)
+        if not character then return end
+        
+        for _, part in pairs(character:GetDescendants()) do
+            if part:IsA("BasePart") then
+                part.Transparency = 1
+            elseif part:IsA("ParticleEmitter") or part:IsA("Trail") then
+                part.Enabled = false
+            end
+        end
+    end
+    
+    local function orbitPlayer(player, angle)
+        if not player.Character then return end
+        
+        local humanoidRootPart = player.Character:FindFirstChild("HumanoidRootPart")
+        local localRootPart = LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("HumanoidRootPart")
+        
+        if humanoidRootPart and localRootPart then
+            local x = math.cos(angle) * orbitRadius
+            local z = math.sin(angle) * orbitRadius
+            local position = localRootPart.Position + Vector3.new(x, 0, z)
+            
+            humanoidRootPart.CFrame = CFrame.new(position)
+            humanoidRootPart.Velocity = Vector3.new(0, 0, 0)
+            humanoidRootPart.RotVelocity = Vector3.new(0, 0, 0)
+        end
+    end
+    
+    local function startOrbit()
+        if connection then return end
+        
+        local targetLower = target:lower()
+        
+        connection = RunService.Heartbeat:Connect(function()
+            if targetLower == "all" then
+                for _, player in ipairs(Players:GetPlayers()) do
+                    if player ~= LocalPlayer then
+                        if orbitAngles[player] == nil then
+                            orbitAngles[player] = 0
+                            makeCharacterInvisible(player.Character)
+                        end
+                        
+                        orbitAngles[player] = orbitAngles[player] + orbitSpeed * 0.01
+                        orbitPlayer(player, orbitAngles[player])
+                    end
+                end
+            else
+                for _, player in ipairs(Players:GetPlayers()) do
+                    if player ~= LocalPlayer and player.Name:lower():find(targetLower) then
+                        if orbitAngles[player] == nil then
+                            orbitAngles[player] = 0
+                            makeCharacterInvisible(player.Character)
+                        end
+                        
+                        orbitAngles[player] = orbitAngles[player] + orbitSpeed * 0.01
+                        orbitPlayer(player, orbitAngles[player])
+                        break
+                    end
+                end
+            end
+        end)
+    end
+    
+    local function stopOrbit()
+        if connection then
+            connection:Disconnect()
+            connection = nil
+        end
+        orbitAngles = {}
+    end
+    
+    -- Start the orbit
+    startOrbit()
+    
+    -- Return a function to stop the orbit
+    return stopOrbit
+end
+
+-- Make it globally accessible
+getgenv().orbitp = orbitp
