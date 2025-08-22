@@ -9,6 +9,28 @@ local function orbitp(target)
     local orbitAngles = {}
     local connection = nil
     
+    -- Store original positions
+    local originalPositions = {}
+    
+    local function saveOriginalPosition(player)
+        if not player.Character then return end
+        
+        local humanoidRootPart = player.Character:FindFirstChild("HumanoidRootPart")
+        if humanoidRootPart then
+            originalPositions[player] = humanoidRootPart.CFrame
+        end
+    end
+    
+    local function restoreOriginalPosition(player)
+        if originalPositions[player] and player.Character then
+            local humanoidRootPart = player.Character:FindFirstChild("HumanoidRootPart")
+            if humanoidRootPart then
+                humanoidRootPart.CFrame = originalPositions[player]
+            end
+        end
+        originalPositions[player] = nil
+    end
+    
     local function orbitPlayer(player, angle)
         if not player.Character then return end
         
@@ -37,6 +59,7 @@ local function orbitp(target)
                     if player ~= LocalPlayer then
                         if orbitAngles[player] == nil then
                             orbitAngles[player] = 0
+                            saveOriginalPosition(player)
                         end
                         
                         orbitAngles[player] = orbitAngles[player] + orbitSpeed * 0.01
@@ -48,6 +71,7 @@ local function orbitp(target)
                     if player ~= LocalPlayer and player.Name:lower():find(targetLower) then
                         if orbitAngles[player] == nil then
                             orbitAngles[player] = 0
+                            saveOriginalPosition(player)
                         end
                         
                         orbitAngles[player] = orbitAngles[player] + orbitSpeed * 0.01
@@ -64,6 +88,12 @@ local function orbitp(target)
             connection:Disconnect()
             connection = nil
         end
+        
+        -- Restore all players to their original positions
+        for player, _ in pairs(originalPositions) do
+            restoreOriginalPosition(player)
+        end
+        
         orbitAngles = {}
     end
     
