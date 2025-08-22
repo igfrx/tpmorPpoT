@@ -2174,11 +2174,6 @@ end
 
 -- Black Hole Script Function
 local function blackHoleScript()
-    local Players = game:GetService("Players")
-    local RunService = game:GetService("RunService")
-    local LocalPlayer = Players.LocalPlayer
-    local Workspace = game:GetService("Workspace")
-
     local character = LocalPlayer.Character or LocalPlayer.CharacterAdded:Wait()
     local humanoidRootPart = character:WaitForChild("HumanoidRootPart")
 
@@ -2611,7 +2606,36 @@ local function Vcban()
     return "Removed VCBan.."
 end
 
+local originalPos = nil
+
 local function re()
+    -- Save the current position before death
+    originalPos = game.Players.LocalPlayer.Character.HumanoidRootPart.CFrame
+    crx("Resetting Character\nPlease Wait", 1.1, Color3.fromRGB(0, 255, 0), nil)
+    
+    local h = game.Players.LocalPlayer.Character.HumanoidRootPart
+    local cam = workspace.CurrentCamera
+
+    if replicatesignal then
+        replicatesignal(game.Players.LocalPlayer.ConnectDiedSignalBackend)
+    else
+        crx("Unable to do FastRespawn\nExecutor may not be supported!", 1.1, Color3.fromRGB(255, 0, 0), 138081500)
+        game.Players.LocalPlayer.Character.Head:Destroy()
+    end
+
+    wait(game.Players.RespawnTime - .165)
+    game.Players.LocalPlayer.Character:FindFirstChildOfClass("Humanoid"):ChangeState(15)
+
+    wait(0.5)
+    
+    -- Teleport back to the saved position if it exists
+    if originalPos then
+        game.Players.LocalPlayer.Character.HumanoidRootPart.CFrame = originalPos
+        workspace.CurrentCamera = cam
+    end
+end
+
+local function res()
     game.Players.LocalPlayer.Character.Head:Destroy()
     return "Resetting Character.."
 end
@@ -2898,7 +2922,8 @@ local function stopdestroyer()
     end
 end
 
-AddCommand("reset", {"re"}, "Resets you", re)
+AddCommand("respawn", {"res"}, "Respawns your character", re)
+AddCommand("reset", {"re"}, "FastResets Your character", re)
 AddCommand("fly", {"f"}, "Opens FLYGUI", function() return enableFlight() end)
 AddCommand("noclip", {"nc"}, "Walk thru walls", ModeOn)
 AddCommand("clip", {"noc"}, "Stops Noclip", ModeOff)
@@ -3312,9 +3337,6 @@ AddCommand("ringparts", "rp", "Loads The Ringparts Gui", R1)
 AddCommand("tpuaall", "bpall", "Tps unachored to everyone", StartDestroyer)
 AddCommand("untpuaall", "unbpall", "Stops Tpuaall", stopdestroyer)
 
-local Players = game:GetService("Players")
-local RunService = game:GetService("RunService")
-local Workspace = game:GetService("Workspace")
 local LocalPlayer = Players.LocalPlayer
 
 -- Blackhole system (only initialized when needed)
@@ -3546,9 +3568,144 @@ AddCommand("dropalltools", {"dat"}, "Drops all your tools", DAT)
 AddCommand("unvcban", {"vban"}, "Removes VoiceChat Ban", Vcban)
 AddCommand("toolcontrol", {"tc"}, "Control any tool [Tool]", tc)
 
--- New commands with aliases
+-- stuffness
 
-local Players = game:GetService("Players")
+local Orbit = {
+    Active = false,
+    Connection = nil,
+    Radius = 5,
+    Speed = 6,
+    Angles = {},
+    OriginalPositions = {},
+    Players = game:GetService("Players"),
+    RunService = game:GetService("RunService"),
+    LocalPlayer = game:GetService("Players").LocalPlayer
+}
+
+-- Save original position of a player
+local function SaveOriginalPosition(player)
+    if not player.Character then return end
+    local rootPart = player.Character:FindFirstChild("HumanoidRootPart")
+    if rootPart then
+        Orbit.OriginalPositions[player] = rootPart.CFrame
+    end
+end
+
+-- Restore original position of a player
+local function RestoreOriginalPosition(player)
+    if Orbit.OriginalPositions[player] and player.Character then
+        local rootPart = player.Character:FindFirstChild("HumanoidRootPart")
+        if rootPart then
+            rootPart.CFrame = Orbit.OriginalPositions[player]
+        end
+    end
+    Orbit.OriginalPositions[player] = nil
+end
+
+-- Orbit a specific player
+local function OrbitPlayer(player, angle)
+    if not player.Character then return end
+    
+    local targetRoot = player.Character:FindFirstChild("HumanoidRootPart")
+    local localRoot = Orbit.LocalPlayer.Character and Orbit.LocalPlayer.Character:FindFirstChild("HumanoidRootPart")
+    
+    if targetRoot and localRoot then
+        local x = math.cos(angle) * Orbit.Radius
+        local z = math.sin(angle) * Orbit.Radius
+        local position = localRoot.Position + Vector3.new(x, 0, z)
+        
+        targetRoot.CFrame = CFrame.new(position)
+        targetRoot.Velocity = Vector3.new(0, 0, 0)
+        targetRoot.RotVelocity = Vector3.new(0, 0, 0)
+    end
+end
+
+-- Start orbiting
+local function StartOrbit(target)
+    if Orbit.Connection then
+        Orbit.Connection:Disconnect()
+    end
+    
+    Orbit.Connection = Orbit.RunService.Heartbeat:Connect(function()
+        if not Orbit.Active then return end
+        
+        if target == "all" then
+            -- Orbit all players
+            for _, player in ipairs(Orbit.Players:GetPlayers()) do
+                if player ~= Orbit.LocalPlayer then
+                    if Orbit.Angles[player] == nil then
+                        Orbit.Angles[player] = 0
+                        SaveOriginalPosition(player)
+                    end
+                    
+                    Orbit.Angles[player] = Orbit.Angles[player] + Orbit.Speed * 0.01
+                    OrbitPlayer(player, Orbit.Angles[player])
+                end
+            end
+        else
+            -- Orbit specific player
+            if Orbit.Angles[target] == nil then
+                Orbit.Angles[target] = 0
+                SaveOriginalPosition(target)
+            end
+            
+            Orbit.Angles[target] = Orbit.Angles[target] + Orbit.Speed * 0.01
+            OrbitPlayer(target, Orbit.Angles[target])
+        end
+    end)
+end
+
+-- Stop orbiting and clean up
+local function StopOrbit()
+    Orbit.Active = false
+    
+    if Orbit.Connection then
+        Orbit.Connection:Disconnect()
+        Orbit.Connection = nil
+    end
+    
+    -- Restore all players to original positions
+    for player, _ in pairs(Orbit.OriginalPositions) do
+        RestoreOriginalPosition(player)
+    end
+    
+    -- Clear tables
+    Orbit.Angles = {}
+    Orbit.OriginalPositions = {}
+end
+
+-- Main orbit command (handles both specific player and "all")
+AddCommandWithPlayer("plrorbit", {"porb"}, "Makes player(s) orbit around you. Use 'all' for everyone", function(name)
+    if Orbit.Active then
+        StopOrbit()
+    end
+    
+    -- Check if targeting all players
+    if not name or string.lower(name) == "all" then
+        Orbit.Active = true
+        StartOrbit("all")
+        return "All players are now orbiting you"
+    else
+        local target = GetPlayer(name)
+        if not target then
+            return "Player not found!"
+        end
+        
+        Orbit.Active = true
+        StartOrbit(target)
+        return target.Name .. " is now orbiting you"
+    end
+end)
+
+-- Stop orbit command
+AddCommand("unplrorbit", {"unporb"}, "Stops all orbiting and restores players", function()
+    if not Orbit.Active then
+        return "Orbit wasn't active"
+    end
+    
+    StopOrbit()
+    return "Stopped orbiting"
+end)
 
 -- WallHop System Variables
 local WallHop = {
@@ -3594,6 +3751,75 @@ local function GetWallRaycastResult()
     end
     return closestHit
 end
+
+
+-- Global variable to track orbit connection
+local OrbitConnection = nil
+
+AddCommandWithPlayer("orbit", nil, "Orbit around a player", function(name)
+    -- Stop existing orbit if any
+    if OrbitConnection then
+        OrbitConnection:Disconnect()
+        OrbitConnection = nil
+    end
+
+    -- Validate player
+    local targetPlayer = GetPlayer(name)
+    if not targetPlayer then
+        return "Player not found."
+    end
+
+    local LocalPlayer = game.Players.LocalPlayer
+    local Character = LocalPlayer.Character or LocalPlayer.CharacterAdded:Wait()
+    local HumanoidRootPart = Character:WaitForChild("HumanoidRootPart")
+
+    -- If target has no character
+    local TargetChar = targetPlayer.Character
+    if not TargetChar or not TargetChar:FindFirstChild("HumanoidRootPart") then
+        return "Target player has no character."
+    end
+
+    -- Orbit settings
+    local radius = 10
+    local speed = 2
+    local angle = 0
+
+    -- Start orbiting
+    OrbitConnection = game:GetService("RunService").Heartbeat:Connect(function(dt)
+        -- Check if target character still exists
+        if not targetPlayer or not targetPlayer.Character or not targetPlayer.Character:FindFirstChild("HumanoidRootPart") then
+            OrbitConnection:Disconnect()
+            OrbitConnection = nil
+            return
+        end
+
+        -- Check if local character still exists
+        if not Character or not Character.Parent or not HumanoidRootPart or not HumanoidRootPart.Parent then
+            OrbitConnection:Disconnect()
+            OrbitConnection = nil
+            return
+        end
+
+        angle = angle + speed * dt
+        local targetHRP = targetPlayer.Character:FindFirstChild("HumanoidRootPart")
+
+        -- Calculate orbit position
+        local offset = Vector3.new(math.cos(angle) * radius, 0, math.sin(angle) * radius)
+        HumanoidRootPart.CFrame = CFrame.new(targetHRP.Position + offset, targetHRP.Position)
+    end)
+
+    return "Started orbiting " .. targetPlayer.Name
+end)
+
+AddCommand("unorbit", nil, "Stop orbiting", function()
+    if OrbitConnection then
+        OrbitConnection:Disconnect()
+        OrbitConnection = nil
+        return "Stopped orbiting."
+    else
+        return "You are not orbiting anyone."
+    end
+end)
 
 -- Core WallHop functionality
 local function SetupWallHop()
@@ -3684,6 +3910,7 @@ AddCommand("unautowallhop", {"unawh"}, "Disables automatic wall hopping", functi
     return "AutoWallHop disabled"
 end)
 
+
 -- Hitbox command
 local originalSizes = {} -- Stores original sizes of HRPs
 local hitboxEnabled = false
@@ -3692,6 +3919,11 @@ local connections = {} -- Stores player connections to clean up later
 
 -- Function to apply hitbox to a character
 local function applyHitbox(character, player)
+    -- Skip if this is the local player
+    if player == game.Players.LocalPlayer then
+        return
+    end
+    
     local hrp = character:FindFirstChild("HumanoidRootPart")
     if hrp then
         -- Store original size if we haven't already
@@ -3717,6 +3949,11 @@ end
 
 -- Function to handle character added events
 local function setupPlayer(player)
+    -- Skip if this is the local player
+    if player == game.Players.LocalPlayer then
+        return
+    end
+    
     -- Clean up any existing connection for this player
     if connections[player] then
         connections[player]:Disconnect()
@@ -3725,11 +3962,14 @@ local function setupPlayer(player)
     
     -- Set up new connection
     connections[player] = player.CharacterAdded:Connect(function(character)
+        -- Wait for the character to fully load
+        character:WaitForChild("HumanoidRootPart")
         applyHitbox(character, player)
     end)
     
     -- Apply to existing character if it exists
     if player.Character then
+        player.Character:WaitForChild("HumanoidRootPart")
         applyHitbox(player.Character, player)
     end
 end
@@ -3741,13 +3981,15 @@ local function cleanup()
     
     -- Disconnect all player connections
     for player, connection in pairs(connections) do
-        connection:Disconnect()
+        if connection then
+            connection:Disconnect()
+        end
     end
     connections = {}
     
     -- Reset all hitboxes
     for player, originalSize in pairs(originalSizes) do
-        if player.Character then
+        if player ~= game.Players.LocalPlayer and player.Character then
             local hrp = player.Character:FindFirstChild("HumanoidRootPart")
             if hrp then
                 hrp.Size = originalSize
@@ -3757,10 +3999,12 @@ local function cleanup()
             end
         end
     end
+    
+    originalSizes = {}
 end
 
 -- Main command
-AddCommandWithValue("hitbox", "amount", "reach", "Changes other players hitbox size (0 to reset)", function(size)
+AddCommandWithValue("hitbox", "amount", {"reach", "hb"}, "Changes other players hitbox size (0 to reset)", function(size)
     local sizeNum = tonumber(size)
     if not sizeNum then crx("Invalid amount!", 1.1, Color3.fromRGB(255, 0, 0), 138081500) end
     
@@ -3791,9 +4035,11 @@ AddCommandWithValue("hitbox", "amount", "reach", "Changes other players hitbox s
     return "Hitbox size set to "..sizeNum
 end)
 
--- Clean up when local player respawns
+-- Reapply hitboxes when local player respawns (to ensure they persist)
 game.Players.LocalPlayer.CharacterAdded:Connect(function()
     if hitboxEnabled then
+        -- Wait a moment for other players to load
+        wait(1)
         -- Reapply hitboxes to all players
         for _, player in ipairs(game:GetService("Players"):GetPlayers()) do
             if player ~= game.Players.LocalPlayer and player.Character then
@@ -3805,6 +4051,7 @@ end)
 
 -- Clean up when script ends
 game:GetService("Players").LocalPlayer.CharacterRemoving:Connect(cleanup)
+
 
 AddCommandWithValue("jumppower", "amount", "jp", "Sets your jump power", function(power)
     local num = tonumber(power)
@@ -5214,7 +5461,7 @@ end
 
     local VersionLabel = Instance.new("TextLabel")
     VersionLabel.Name = "VersionLabel"
-    VersionLabel.Text = "V0.9"
+    VersionLabel.Text = "V1.0"
     VersionLabel.TextSize = 10
     VersionLabel.TextTransparency = 0.6
     VersionLabel.TextColor3 = Color3.fromRGB(0, 0, 0)
