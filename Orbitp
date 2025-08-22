@@ -9,18 +9,6 @@ local function orbitp(target)
     local orbitAngles = {}
     local connection = nil
     
-    local function makeCharacterInvisible(character)
-        if not character then return end
-        
-        for _, part in pairs(character:GetDescendants()) do
-            if part:IsA("BasePart") then
-                part.Transparency = 1
-            elseif part:IsA("ParticleEmitter") or part:IsA("Trail") then
-                part.Enabled = false
-            end
-        end
-    end
-    
     local function orbitPlayer(player, angle)
         if not player.Character then return end
         
@@ -49,7 +37,6 @@ local function orbitp(target)
                     if player ~= LocalPlayer then
                         if orbitAngles[player] == nil then
                             orbitAngles[player] = 0
-                            makeCharacterInvisible(player.Character)
                         end
                         
                         orbitAngles[player] = orbitAngles[player] + orbitSpeed * 0.01
@@ -61,7 +48,6 @@ local function orbitp(target)
                     if player ~= LocalPlayer and player.Name:lower():find(targetLower) then
                         if orbitAngles[player] == nil then
                             orbitAngles[player] = 0
-                            makeCharacterInvisible(player.Character)
                         end
                         
                         orbitAngles[player] = orbitAngles[player] + orbitSpeed * 0.01
