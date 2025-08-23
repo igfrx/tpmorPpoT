@@ -2587,8 +2587,421 @@ local function meh()
 end
 
 local function cmdl()
-    loadstring(game:HttpGet("https://raw.githubusercontent.com/hm5650/O/refs/heads/main/O", true))()
-    return "CmdLooper Loaded.."
+local Players = game:GetService("Players")
+local ReplicatedStorage = game:GetService("ReplicatedStorage")
+local TweenService = game:GetService("TweenService")
+local UserInputService = game:GetService("UserInputService")
+local localPlayer = Players.LocalPlayer
+local cg = cloneref(game:GetService("CoreGui")) or game:GetService("CoreGui")
+
+-- Get HD Admin prefix
+local function getPrefix()
+    return Players.LocalPlayer.PlayerGui:WaitForChild("HDAdminGUIs")
+        :WaitForChild("MainFrame"):WaitForChild("Pages")
+        :WaitForChild("Settings"):WaitForChild("Custom")
+        :WaitForChild("AE1 Prefix"):WaitForChild("SettingValue")
+        :WaitForChild("TextBox").Text
+end
+
+-- GUI Setup
+local sGui = Instance.new("ScreenGui")
+sGui.Name = "CmdBar3"
+sGui.ResetOnSpawn = false
+sGui.Parent = cg
+
+-- Main command bar
+local cmdBar = Instance.new("Frame")
+cmdBar.Size = UDim2.new(0, 400, 0, 36)
+cmdBar.Position = UDim2.new(0.5, -200, 0, 10)
+cmdBar.BackgroundColor3 = Color3.fromRGB(30, 35, 40)
+cmdBar.BorderSizePixel = 0
+cmdBar.Parent = sGui
+
+local cmdBarCorner = Instance.new("UICorner", cmdBar)
+cmdBarCorner.CornerRadius = UDim.new(0, 6)
+
+local cmdBarStroke = Instance.new("UIStroke", cmdBar)
+cmdBarStroke.Thickness = 1
+cmdBarStroke.Color = Color3.fromRGB(60, 70, 75)
+
+-- Add a drag handle at the top of the command bar
+local dragHandle = Instance.new("Frame")
+dragHandle.Size = UDim2.new(1, 0, 0, 36) -- Increased height to cover the entire bar for better dragging
+dragHandle.Position = UDim2.new(0, 0, 0, 0)
+dragHandle.BackgroundTransparency = 1
+dragHandle.BorderSizePixel = 0
+dragHandle.ZIndex = 10
+dragHandle.Parent = cmdBar
+
+-- Command input
+local cmdInput = Instance.new("TextBox")
+cmdInput.Size = UDim2.new(0.7, -10, 0.8, 0)
+cmdInput.Position = UDim2.new(0.01, 0, 0.1, 0)
+cmdInput.PlaceholderText = "Enter command (e.g., ;fly ;invis)"
+cmdInput.Text = ""
+cmdInput.ClearTextOnFocus = false
+cmdInput.TextColor3 = Color3.new(0.9, 0.9, 0.9)
+cmdInput.BackgroundColor3 = Color3.fromRGB(40, 45, 50)
+cmdInput.Font = Enum.Font.Gotham
+cmdInput.TextSize = 14
+cmdInput.TextXAlignment = Enum.TextXAlignment.Left
+cmdInput.Parent = cmdBar
+
+local inputCorner = Instance.new("UICorner", cmdInput)
+inputCorner.CornerRadius = UDim.new(0, 4)
+
+-- Execute button
+local executeBtn = Instance.new("TextButton")
+executeBtn.Size = UDim2.new(0.28, -5, 0.8, 0)
+executeBtn.Position = UDim2.new(0.71, 0, 0.1, 0)
+executeBtn.Text = "Execute"
+executeBtn.TextColor3 = Color3.new(0.9, 0.9, 0.9)
+executeBtn.BackgroundColor3 = Color3.fromRGB(60, 120, 220)
+executeBtn.Font = Enum.Font.GothamBold
+executeBtn.TextSize = 14
+executeBtn.Parent = cmdBar
+
+local executeCorner = Instance.new("UICorner", executeBtn)
+executeCorner.CornerRadius = UDim.new(0, 4)
+
+-- Dropdown arrow for targets
+local dropdownBtn = Instance.new("TextButton")
+dropdownBtn.Size = UDim2.new(0, 20, 0, 20)
+dropdownBtn.Position = UDim2.new(0.98, -20, 0.5, -10)
+dropdownBtn.Text = "▼"
+dropdownBtn.TextColor3 = Color3.new(0.7, 0.7, 0.7)
+dropdownBtn.BackgroundTransparency = 1
+dropdownBtn.Font = Enum.Font.GothamBold
+dropdownBtn.TextSize = 12
+dropdownBtn.Parent = cmdBar
+
+-- Targets panel (initially hidden)
+local targetsPanel = Instance.new("Frame")
+targetsPanel.Size = UDim2.new(0, 380, 0, 150)
+targetsPanel.Position = UDim2.new(0.5, -190, 0, 40)
+targetsPanel.BackgroundColor3 = Color3.fromRGB(30, 35, 40)
+targetsPanel.BorderSizePixel = 0
+targetsPanel.Visible = false
+targetsPanel.Parent = sGui
+
+local targetsCorner = Instance.new("UICorner", targetsPanel)
+targetsCorner.CornerRadius = UDim.new(0, 6)
+
+local targetsStroke = Instance.new("UIStroke", targetsPanel)
+targetsStroke.Thickness = 1
+targetsStroke.Color = Color3.fromRGB(60, 70, 75)
+
+-- Player list
+local scroll = Instance.new("ScrollingFrame", targetsPanel)
+scroll.Size = UDim2.new(0.95, 0, 0.7, 0)
+scroll.Position = UDim2.new(0.025, 0, 0.15, 0)
+scroll.BackgroundColor3 = Color3.fromRGB(40, 45, 50)
+scroll.BorderSizePixel = 0
+scroll.CanvasSize = UDim2.new(0, 0, 0, 0)
+scroll.ScrollBarThickness = 4
+scroll.Parent = targetsPanel
+
+local scrollCorner = Instance.new("UICorner", scroll)
+scrollCorner.CornerRadius = UDim.new(0, 4)
+
+local layout = Instance.new("UIListLayout", scroll)
+layout.Padding = UDim.new(0, 2)
+layout.SortOrder = Enum.SortOrder.LayoutOrder
+
+-- Selection buttons
+local allBtn = Instance.new("TextButton", targetsPanel)
+allBtn.Size = UDim2.new(0.3, -5, 0, 20)
+allBtn.Position = UDim2.new(0.025, 0, 0.05, 0)
+allBtn.Text = "All"
+allBtn.TextColor3 = Color3.new(0.9, 0.9, 0.9)
+allBtn.BackgroundColor3 = Color3.fromRGB(60, 70, 80)
+allBtn.Font = Enum.Font.Gotham
+allBtn.TextSize = 12
+allBtn.Parent = targetsPanel
+
+local othersBtn = Instance.new("TextButton", targetsPanel)
+othersBtn.Size = UDim2.new(0.3, -5, 0, 20)
+othersBtn.Position = UDim2.new(0.35, 0, 0.05, 0)
+othersBtn.Text = "Others"
+othersBtn.TextColor3 = Color3.new(0.9, 0.9, 0.9)
+othersBtn.BackgroundColor3 = Color3.fromRGB(60, 70, 80)
+othersBtn.Font = Enum.Font.Gotham
+othersBtn.TextSize = 12
+othersBtn.Parent = targetsPanel
+
+local clearBtn = Instance.new("TextButton", targetsPanel)
+clearBtn.Size = UDim2.new(0.3, -5, 0, 20)
+clearBtn.Position = UDim2.new(0.675, 0, 0.05, 0)
+clearBtn.Text = "Clear"
+clearBtn.TextColor3 = Color3.new(0.9, 0.9, 0.9)
+clearBtn.BackgroundColor3 = Color3.fromRGB(60, 70, 80)
+clearBtn.Font = Enum.Font.Gotham
+clearBtn.TextSize = 12
+clearBtn.Parent = targetsPanel
+
+-- Loop controls
+local loopToggle = Instance.new("TextButton", targetsPanel)
+loopToggle.Size = UDim2.new(0.4, -5, 0, 20)
+loopToggle.Position = UDim2.new(0.025, 0, 0.9, -20)
+loopToggle.Text = "Loop: Off"
+loopToggle.TextColor3 = Color3.new(0.9, 0.9, 0.9)
+loopToggle.BackgroundColor3 = Color3.fromRGB(80, 30, 30)
+loopToggle.Font = Enum.Font.Gotham
+loopToggle.TextSize = 12
+loopToggle.Parent = targetsPanel
+
+local delayInput = Instance.new("TextBox", targetsPanel)
+delayInput.Size = UDim2.new(0.2, 0, 0, 20)
+delayInput.Position = UDim2.new(0.45, 0, 0.9, -20)
+delayInput.PlaceholderText = "Delay: 1s"
+delayInput.Text = "1"
+delayInput.TextColor3 = Color3.new(0.9, 0.9, 0.9)
+delayInput.BackgroundColor3 = Color3.fromRGB(40, 45, 50)
+delayInput.Font = Enum.Font.Gotham
+delayInput.TextSize = 12
+delayInput.Parent = targetsPanel
+
+local delayCorner = Instance.new("UICorner", delayInput)
+delayCorner.CornerRadius = UDim.new(0, 4)
+
+-- Close button
+local closeBtn = Instance.new("TextButton", targetsPanel)
+closeBtn.Size = UDim2.new(0.3, -5, 0, 20)
+closeBtn.Position = UDim2.new(0.675, 0, 0.9, -20)
+closeBtn.Text = "Close"
+closeBtn.TextColor3 = Color3.new(0.9, 0.9, 0.9)
+closeBtn.BackgroundColor3 = Color3.fromRGB(60, 70, 80)
+closeBtn.Font = Enum.Font.Gotham
+closeBtn.TextSize = 12
+closeBtn.Parent = targetsPanel
+
+-- Selected targets storage
+local selectedTargets = {}
+local looping = false
+
+-- Function to create player checkbox
+local function createCheckbox(player)
+    local container = Instance.new("Frame")
+    container.Size = UDim2.new(1, -10, 0, 20)
+    container.BackgroundTransparency = 1
+    container.Name = player.Name
+    
+    local checkbox = Instance.new("ImageButton")
+    checkbox.Size = UDim2.new(0, 16, 0, 16)
+    checkbox.Position = UDim2.new(0, 0, 0.5, -8)
+    checkbox.BackgroundColor3 = Color3.fromRGB(40, 45, 50)
+    checkbox.BorderSizePixel = 0
+    checkbox.Image = ""
+    checkbox.Parent = container
+    
+    local cbStroke = Instance.new("UIStroke", checkbox)
+    cbStroke.Thickness = 1
+    cbStroke.Color = Color3.fromRGB(70, 80, 80)
+    
+    local cbCorner = Instance.new("UICorner", checkbox)
+    cbCorner.CornerRadius = UDim.new(0, 3)
+    
+    local nameLabel = Instance.new("TextLabel")
+    nameLabel.Text = player == localPlayer and player.Name .. " (you)" or player.Name
+    nameLabel.Position = UDim2.new(0, 22, 0, 0)
+    nameLabel.Size = UDim2.new(1, -22, 1, 0)
+    nameLabel.BackgroundTransparency = 1
+    nameLabel.TextColor3 = Color3.new(0.9, 0.9, 0.9)
+    nameLabel.TextXAlignment = Enum.TextXAlignment.Left
+    nameLabel.Font = Enum.Font.Gotham
+    nameLabel.TextSize = 12
+    nameLabel.Parent = container
+    
+    local function updateCheckboxVisual()
+        local isSelected = selectedTargets[player.Name] == true
+        checkbox.BackgroundColor3 = isSelected and Color3.fromRGB(210, 210, 210) or Color3.fromRGB(40, 45, 50)
+    end
+    
+    updateCheckboxVisual()
+    
+    checkbox.MouseButton1Click:Connect(function()
+        selectedTargets[player.Name] = not selectedTargets[player.Name]
+        updateCheckboxVisual()
+    end)
+    
+    container.Parent = scroll
+end
+
+-- Function to refresh player list
+local function refreshPlayerList()
+    for _, child in ipairs(scroll:GetChildren()) do
+        if child:IsA("Frame") and child.Name ~= "UIListLayout" then
+            child:Destroy()
+        end
+    end
+    
+    for _, player in ipairs(Players:GetPlayers()) do
+        createCheckbox(player)
+    end
+    
+    scroll.CanvasSize = UDim2.new(0, 0, 0, #Players:GetPlayers() * 22)
+end
+
+-- Player events
+Players.PlayerAdded:Connect(refreshPlayerList)
+Players.PlayerRemoving:Connect(function(player)
+    selectedTargets[player.Name] = nil
+    local existing = scroll:FindFirstChild(player.Name)
+    if existing then
+        existing:Destroy()
+    end
+    scroll.CanvasSize = UDim2.new(0, 0, 0, #Players:GetPlayers() * 22)
+end)
+
+-- Execute command function
+local function executeCommand()
+    local commandText = cmdInput.Text
+    if commandText == "" then return end
+    
+    -- Split commands by semicolon
+    local commands = {}
+    for cmd in commandText:gmatch("[^;]+") do
+        table.insert(commands, cmd:match("^%s*(.-)%s*$")) -- Trim whitespace
+    end
+    
+    -- Execute each command
+    for _, cmd in ipairs(commands) do
+        if cmd ~= "" then
+            local fired = false
+            
+            -- Check if any targets are selected
+            for name, isSelected in pairs(selectedTargets) do
+                if isSelected then
+                    local fullCmd = getPrefix() .. cmd .. " " .. name
+                    ReplicatedStorage:WaitForChild("HDAdminClient"):WaitForChild("Signals"):WaitForChild("RequestCommand"):InvokeServer(fullCmd)
+                    fired = true
+                end
+            end
+            
+            -- If no targets selected, execute on self
+            if not fired then
+                local fullCmd = getPrefix() .. cmd
+                ReplicatedStorage:WaitForChild("HDAdminClient"):WaitForChild("Signals"):WaitForChild("RequestCommand"):InvokeServer(fullCmd)
+            end
+        end
+    end
+end
+
+-- Toggle targets panel
+dropdownBtn.MouseButton1Click:Connect(function()
+    targetsPanel.Visible = not targetsPanel.Visible
+    if targetsPanel.Visible then
+        refreshPlayerList()
+    end
+end)
+
+-- Close targets panel
+closeBtn.MouseButton1Click:Connect(function()
+    targetsPanel.Visible = false
+end)
+
+-- Selection buttons
+allBtn.MouseButton1Click:Connect(function()
+    for _, player in ipairs(Players:GetPlayers()) do
+        selectedTargets[player.Name] = true
+    end
+    refreshPlayerList()
+end)
+
+othersBtn.MouseButton1Click:Connect(function()
+    for _, player in ipairs(Players:GetPlayers()) do
+        selectedTargets[player.Name] = player ~= localPlayer
+    end
+    refreshPlayerList()
+end)
+
+clearBtn.MouseButton1Click:Connect(function()
+    for _, player in ipairs(Players:GetPlayers()) do
+        selectedTargets[player.Name] = false
+    end
+    refreshPlayerList()
+end)
+
+-- Execute command
+executeBtn.MouseButton1Click:Connect(executeCommand)
+
+-- Execute on Enter key
+cmdInput.FocusLost:Connect(function(enterPressed)
+    if enterPressed then
+        executeCommand()
+    end
+end)
+
+-- Loop functionality
+loopToggle.MouseButton1Click:Connect(function()
+    looping = not looping
+    if looping then
+        loopToggle.Text = "Loop: On"
+        loopToggle.BackgroundColor3 = Color3.fromRGB(30, 80, 30)
+        
+        task.spawn(function()
+            while looping do
+                executeCommand()
+                local delay = tonumber(delayInput.Text) or 1
+                task.wait(delay)
+            end
+        end)
+    else
+        loopToggle.Text = "Loop: Off"
+        loopToggle.BackgroundColor3 = Color3.fromRGB(80, 30, 30)
+    end
+end)
+
+-- Make command bar draggable using the drag handle
+local dragging = false
+local dragInput, dragStart, startPos
+
+local function update(input)
+    local delta = input.Position - dragStart
+    cmdBar.Position = UDim2.new(startPos.X.Scale, startPos.X.Offset + delta.X, startPos.Y.Scale, startPos.Y.Offset + delta.Y)
+    
+    -- Also update the targets panel position relative to the command bar
+    if targetsPanel.Visible then
+        targetsPanel.Position = UDim2.new(0.5, -190, 0, cmdBar.Position.Y.Offset + 36)
+    end
+end
+
+-- Handle both mouse and touch input for dragging
+local function onInputBegan(input)
+    if (input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch) then
+        dragging = true
+        dragStart = input.Position
+        startPos = cmdBar.Position
+        
+        local connection
+        connection = input.Changed:Connect(function()
+            if input.UserInputState == Enum.UserInputState.End then
+                dragging = false
+                connection:Disconnect()
+            end
+        end)
+    end
+end
+
+local function onInputChanged(input)
+    if dragging and (input.UserInputType == Enum.UserInputType.MouseMovement or input.UserInputType == Enum.UserInputType.Touch) then
+        update(input)
+    end
+end
+
+dragHandle.InputBegan:Connect(onInputBegan)
+dragHandle.InputChanged:Connect(onInputChanged)
+
+-- Also handle input changes through UserInputService for better mobile support
+UserInputService.InputChanged:Connect(function(input)
+    if dragging and (input.UserInputType == Enum.UserInputType.MouseMovement or input.UserInputType == Enum.UserInputType.Touch) then
+        update(input)
+    end
+end)
+
+-- Initial setup
+refreshPlayerList()
+return "Cmdbar3 Loaded!."
 end
 
 local function fexpanel()
@@ -2609,9 +3022,8 @@ end
 local originalPos = nil
 
 local function re()
-    -- Save the current position before death
+crx("Resetting Character\nPlease Wait", 1.1, Color3.fromRGB(0, 255, 0), nil)
     originalPos = game.Players.LocalPlayer.Character.HumanoidRootPart.CFrame
-    crx("Resetting Character\nPlease Wait", 1.1, Color3.fromRGB(0, 255, 0), nil)
     
     local h = game.Players.LocalPlayer.Character.HumanoidRootPart
     local cam = workspace.CurrentCamera
@@ -3563,7 +3975,7 @@ AddCommand("numero", {"nware"}, "really cool gui 8) [18+]", kfw)
 AddCommand("f3x", {"fex"}, "Loads Btools (CLIENT)", fex)
 AddCommand("f3xpanel", {"fexp"}, "Loads Btools panel [TOOL]", fexpanel)
 AddCommand("sit", nil, "Makes you sit", sit)
-AddCommand("cmdlooper", {"cmdl"}, "CmdLooper for HD Admin", cmdl)
+AddCommand("cmdbar3", {"cb3"}, "Cmdbar3 for HD Admin", cmdl)
 AddCommand("dropalltools", {"dat"}, "Drops all your tools", DAT)
 AddCommand("unvcban", {"vban"}, "Removes VoiceChat Ban", Vcban)
 AddCommand("toolcontrol", {"tc"}, "Control any tool [Tool]", tc)
@@ -4051,7 +4463,6 @@ end)
 
 -- Clean up when script ends
 game:GetService("Players").LocalPlayer.CharacterRemoving:Connect(cleanup)
-
 
 AddCommandWithValue("jumppower", "amount", "jp", "Sets your jump power", function(power)
     local num = tonumber(power)
@@ -5912,7 +6323,7 @@ end
 
 -- Initialize and handle respawns
 local mainGUI = initializeMainGUI()
-crx("'118' Cmds Loaded!\nType 'cmds' for commands :D", 4, Color3.fromRGB(0, 255, 255), 12221831)
+crx("'122' Cmds Loaded!\nType 'cmds' for commands :D", 4, Color3.fromRGB(0, 255, 255), 12221831)
 
 Players.LocalPlayer.CharacterAdded:Connect(function()
     if ScreenGui and not ScreenGui.Parent then
