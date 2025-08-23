@@ -2586,6 +2586,370 @@ local function meh()
     crx("Notification!", 3, Color3.fromRGB(50, 50, 50), 12221831)
 end
 
+local function plrd()
+-- Player Radar GUI Script
+local Players = game:GetService("Players")
+local RunService = game:GetService("RunService")
+local TweenService = game:GetService("TweenService")
+local UserInputService = game:GetService("UserInputService")
+
+-- Create main screen GUI
+local player = Players.LocalPlayer
+local playerGui = player:WaitForChild("PlayerGui")
+
+local screenGui = Instance.new("ScreenGui")
+screenGui.Name = "PlayerRadar"
+screenGui.ResetOnSpawn = false
+screenGui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
+screenGui.Parent = playerGui
+
+-- Detect if on mobile
+local isMobile = UserInputService.TouchEnabled
+
+-- Main frame (smaller for mobile)
+local mainFrame = Instance.new("Frame")
+mainFrame.Name = "RadarFrame"
+mainFrame.Size = isMobile and UDim2.new(0, 150, 0, 180) or UDim2.new(0, 200, 0, 200)
+mainFrame.Position = UDim2.new(0, 10, 0, 10)
+mainFrame.BackgroundColor3 = Color3.fromRGB(40, 40, 40)
+mainFrame.BorderSizePixel = 0
+mainFrame.ClipsDescendants = true
+mainFrame.Parent = screenGui
+
+-- Corner for rounded edges
+local corner = Instance.new("UICorner")
+corner.CornerRadius = UDim.new(0, 8)
+corner.Parent = mainFrame
+
+-- Title bar for dragging
+local titleBar = Instance.new("Frame")
+titleBar.Name = "TitleBar"
+titleBar.Size = UDim2.new(1, 0, 0, 24)
+titleBar.Position = UDim2.new(0, 0, 0, 0)
+titleBar.BackgroundColor3 = Color3.fromRGB(30, 30, 30)
+titleBar.BorderSizePixel = 0
+titleBar.Parent = mainFrame
+
+local titleCorner = Instance.new("UICorner")
+titleCorner.CornerRadius = UDim.new(0, 8)
+titleCorner.Parent = titleBar
+
+-- Title text
+local titleText = Instance.new("TextLabel")
+titleText.Name = "Title"
+titleText.Size = UDim2.new(1, -30, 1, 0)
+titleText.Position = UDim2.new(0, 10, 0, 0)
+titleText.BackgroundTransparency = 1
+titleText.Text = "Player Radar"
+titleText.TextColor3 = Color3.fromRGB(255, 255, 255)
+titleText.TextXAlignment = Enum.TextXAlignment.Left
+titleText.Font = Enum.Font.GothamMedium
+titleText.TextSize = 14
+titleText.Parent = titleBar
+
+-- Close button
+local closeButton = Instance.new("TextButton")
+closeButton.Name = "CloseButton"
+closeButton.Size = UDim2.new(0, 24, 0, 24)
+closeButton.Position = UDim2.new(1, -24, 0, 0)
+closeButton.BackgroundColor3 = Color3.fromRGB(30, 30, 30)
+closeButton.BorderSizePixel = 0
+closeButton.Text = "X"
+closeButton.TextColor3 = Color3.fromRGB(255, 255, 255)
+closeButton.Font = Enum.Font.GothamBold
+closeTextSize = isMobile and 12 or 14
+closeButton.TextSize = closeTextSize
+closeButton.Parent = titleBar
+
+-- Radar display area
+local radarDisplay = Instance.new("Frame")
+radarDisplay.Name = "RadarDisplay"
+radarDisplay.Size = UDim2.new(1, -10, 0, isMobile and 100 or 120)
+radarDisplay.Position = UDim2.new(0, 5, 0, 29)
+radarDisplay.BackgroundColor3 = Color3.fromRGB(20, 20, 20)
+radarDisplay.BorderSizePixel = 0
+radarDisplay.Parent = mainFrame
+
+local radarCorner = Instance.new("UICorner")
+radarCorner.CornerRadius = UDim.new(0, 6)
+radarCorner.Parent = radarDisplay
+
+-- Radar center point (player position)
+local centerPoint = Instance.new("Frame")
+centerPoint.Name = "CenterPoint"
+centerPoint.Size = UDim2.new(0, 6, 0, 6)
+centerPoint.AnchorPoint = Vector2.new(0.5, 0.5)
+centerPoint.Position = UDim2.new(0.5, 0, 0.5, 0)
+centerPoint.BackgroundColor3 = Color3.fromRGB(0, 162, 255)
+centerPoint.BorderSizePixel = 0
+centerPoint.ZIndex = 2
+centerPoint.Parent = radarDisplay
+
+local centerCorner = Instance.new("UICorner")
+centerCorner.CornerRadius = UDim.new(1, 0)
+centerCorner.Parent = centerPoint
+
+-- Distance indicator frame
+local distanceFrame = Instance.new("Frame")
+distanceFrame.Name = "DistanceFrame"
+distanceFrame.Size = UDim2.new(1, -10, 0, isMobile and 40 or 30)
+distanceFrame.Position = UDim2.new(0, 5, 0, isMobile and 134 or 154)
+distanceFrame.BackgroundTransparency = 1
+distanceFrame.Parent = mainFrame
+
+-- Distance title
+local distanceTitle = Instance.new("TextLabel")
+distanceTitle.Name = "DistanceTitle"
+distanceTitle.Size = UDim2.new(1, 0, 0, 15)
+distanceTitle.Position = UDim2.new(0, 0, 0, 0)
+distanceTitle.BackgroundTransparency = 1
+distanceTitle.Text = "CLOSEST PLAYER:"
+distanceTitle.TextColor3 = Color3.fromRGB(200, 200, 200)
+distanceTitle.TextXAlignment = Enum.TextXAlignment.Left
+distanceTitle.Font = Enum.Font.Gotham
+distanceTitle.TextSize = isMobile and 10 or 12
+distanceTitle.Parent = distanceFrame
+
+-- Distance value
+local distanceValue = Instance.new("TextLabel")
+distanceValue.Name = "DistanceValue"
+distanceValue.Size = UDim2.new(1, 0, 0, isMobile and 20 or 15)
+distanceValue.Position = UDim2.new(0, 0, 0, 15)
+distanceValue.BackgroundTransparency = 1
+distanceValue.Text = "0 studs"
+distanceValue.TextColor3 = Color3.fromRGB(255, 255, 255)
+distanceValue.TextXAlignment = Enum.TextXAlignment.Left
+distanceValue.Font = Enum.Font.GothamBold
+distanceValue.TextSize = isMobile and 14 or 16
+distanceValue.Parent = distanceFrame
+
+-- Direction indicator
+local directionFrame = Instance.new("Frame")
+directionFrame.Name = "DirectionFrame"
+directionFrame.Size = UDim2.new(0, 20, 0, 20)
+directionFrame.Position = UDim2.new(1, -25, 0, 15)
+directionFrame.BackgroundTransparency = 1
+directionFrame.Parent = distanceFrame
+
+local directionArrow = Instance.new("ImageLabel")
+directionArrow.Name = "DirectionArrow"
+directionArrow.Size = UDim2.new(1, 0, 1, 0)
+directionArrow.BackgroundTransparency = 1
+directionArrow.Image = "rbxassetid://10709790937" -- Arrow icon
+directionArrow.Parent = directionFrame
+
+-- Make the GUI draggable
+local dragging
+local dragInput
+local dragStart
+local startPos
+
+local function update(input)
+	local delta = input.Position - dragStart
+	mainFrame.Position = UDim2.new(startPos.X.Scale, startPos.X.Offset + delta.X, startPos.Y.Scale, startPos.Y.Offset + delta.Y)
+end
+
+titleBar.InputBegan:Connect(function(input)
+	if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
+		dragging = true
+		dragStart = input.Position
+		startPos = mainFrame.Position
+		
+		input.Changed:Connect(function()
+			if input.UserInputState == Enum.UserInputState.End then
+				dragging = false
+			end
+		end)
+	end
+end)
+
+titleBar.InputChanged:Connect(function(input)
+	if input.UserInputType == Enum.UserInputType.MouseMovement or input.UserInputType == Enum.UserInputType.Touch then
+		dragInput = input
+	end
+end)
+
+UserInputService.InputChanged:Connect(function(input)
+	if input == dragInput and dragging then
+		update(input)
+	end
+end)
+
+-- Close button functionality
+closeButton.MouseButton1Click:Connect(function()
+	screenGui.Enabled = false
+end)
+
+-- Radar functionality
+local blips = {} -- Store player blips
+local closestDistance = math.huge
+local closestPlayer = nil
+
+-- Function to create or update player blips
+local function updateBlip(player, position, isLocalPlayer)
+	local character = player.Character
+	if not character then return end
+	
+	local humanoidRootPart = character:FindFirstChild("HumanoidRootPart")
+	if not humanoidRootPart then return end
+	
+	if not blips[player] then
+		local blip = Instance.new("Frame")
+		blip.Name = player.Name
+		blip.Size = UDim2.new(0, 8, 0, 8)
+		blip.AnchorPoint = Vector2.new(0.5, 0.5)
+		blip.BackgroundColor3 = isLocalPlayer and Color3.fromRGB(0, 162, 255) or Color3.fromRGB(255, 50, 50)
+		blip.BorderSizePixel = 0
+		blip.ZIndex = 2
+		blip.Parent = radarDisplay
+		
+		local blipCorner = Instance.new("UICorner")
+		blipCorner.CornerRadius = UDim.new(1, 0)
+		blipCorner.Parent = blip
+		
+		-- Player name label
+		local nameLabel = Instance.new("TextLabel")
+		nameLabel.Name = "NameLabel"
+		nameLabel.Size = UDim2.new(0, 60, 0, 12)
+		nameLabel.Position = UDim2.new(0, -25, 0, -15)
+		nameLabel.BackgroundTransparency = 1
+		nameLabel.Text = player.Name
+		nameLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
+		nameLabel.TextXAlignment = Enum.TextXAlignment.Center
+		nameLabel.Font = Enum.Font.Gotham
+		nameLabel.TextSize = isMobile and 8 or 10
+		nameLabel.Visible = false
+		nameLabel.Parent = blip
+		
+		blips[player] = {blip = blip, label = nameLabel}
+	end
+	
+	-- Update blip position in radar
+	local blipData = blips[player]
+	local blip = blipData.blip
+	local nameLabel = blipData.label
+	
+	-- Calculate position relative to local player
+	local localPlayer = Players.LocalPlayer
+	local localCharacter = localPlayer.Character
+	if localCharacter then
+		local localRoot = localCharacter:FindFirstChild("HumanoidRootPart")
+		if localRoot then
+			-- Calculate direction and distance
+			local direction = (humanoidRootPart.Position - localRoot.Position) * Vector3.new(1, 0, 1)
+			local distance = direction.Magnitude
+			
+			-- Update closest player info
+			if distance > 0 and distance < closestDistance then
+				closestDistance = distance
+				closestPlayer = player
+			end
+			
+			-- Normalize and scale for radar display
+			local maxDistance = 50 -- Radar range
+			local scale = math.min(distance / maxDistance, 1)
+			local normalizedDirection = direction.Unit
+			
+			-- Convert to radar coordinates (0,0 is center)
+			local radarX = normalizedDirection.X * scale * (radarDisplay.AbsoluteSize.X / 2)
+			local radarY = normalizedDirection.Z * scale * (radarDisplay.AbsoluteSize.Y / 2)
+			
+			-- Update blip position
+			blip.Position = UDim2.new(0.5, radarX, 0.5, radarY)
+			
+			-- Adjust size based on distance (closer = bigger)
+			local size = math.max(6, 10 - (distance / maxDistance) * 4)
+			blip.Size = UDim2.new(0, size, 0, size)
+			
+			-- Update name label position and show if close enough
+			if distance < 20 then
+				nameLabel.Visible = true
+				nameLabel.Position = UDim2.new(0, -25, 0, -15)
+			else
+				nameLabel.Visible = false
+			end
+			
+			-- Update direction arrow for closest player
+			if player == closestPlayer then
+				local angle = math.atan2(normalizedDirection.Z, normalizedDirection.X)
+				directionArrow.Rotation = math.deg(angle) + 90
+			end
+		end
+	end
+end
+
+-- Function to remove blips when players leave
+local function removeBlip(player)
+	if blips[player] then
+		blips[player].blip:Destroy()
+		blips[player].label:Destroy()
+		blips[player] = nil
+		
+		if player == closestPlayer then
+			closestDistance = math.huge
+			closestPlayer = nil
+			distanceValue.Text = "No players nearby"
+			directionArrow.Visible = false
+		end
+	end
+end
+
+-- Set up player connections
+Players.PlayerAdded:Connect(function(player)
+	player.CharacterAdded:Connect(function(character)
+		if player == Players.LocalPlayer then
+			-- Don't create a blip for local player (we have the center point)
+			return
+		end
+		updateBlip(player, character:WaitForChild("HumanoidRootPart").Position, false)
+	end)
+	
+	if player.Character then
+		if player == Players.LocalPlayer then
+			-- Don't create a blip for local player
+			return
+		end
+		updateBlip(player, player.Character:WaitForChild("HumanoidRootPart").Position, false)
+	end
+end)
+
+Players.PlayerRemoving:Connect(removeBlip)
+
+-- Update radar continuously
+local radarUpdateConnection
+radarUpdateConnection = RunService.RenderStepped:Connect(function()
+	-- Reset closest distance each frame
+	closestDistance = math.huge
+	closestPlayer = nil
+	
+	for _, player in ipairs(Players:GetPlayers()) do
+		if player ~= Players.LocalPlayer and player.Character then
+			local humanoidRootPart = player.Character:FindFirstChild("HumanoidRootPart")
+			if humanoidRootPart then
+				updateBlip(player, humanoidRootPart.Position, false)
+			end
+		end
+	end
+	
+	-- Update distance display
+	if closestPlayer then
+		distanceValue.Text = math.floor(closestDistance) .. " studs"
+		directionArrow.Visible = true
+	else
+		distanceValue.Text = "No players nearby"
+		directionArrow.Visible = false
+	end
+end)
+
+-- Clean up when GUI is removed
+screenGui.Destroying:Connect(function()
+	if radarUpdateConnection then
+		radarUpdateConnection:Disconnect()
+	end
+end)
+return "Player Radar loaded!."
+end
+
 local function cmdl()
 local Players = game:GetService("Players")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
@@ -3335,7 +3699,7 @@ local function stopdestroyer()
 end
 
 AddCommand("respawn", {"res"}, "Respawns your character", re)
-AddCommand("reset", {"re"}, "FastResets Your character", re)
+AddCommand("reset", {"re"}, "FastResets Your character", res)
 AddCommand("fly", {"f"}, "Opens FLYGUI", function() return enableFlight() end)
 AddCommand("noclip", {"nc"}, "Walk thru walls", ModeOn)
 AddCommand("clip", {"noc"}, "Stops Noclip", ModeOff)
@@ -3969,6 +4333,7 @@ AddCommand("tornado", {"td"}, "Loads Tornado Gui", tornado)
 AddCommand("partcontroller", {"pc"}, "Loads Partcontroller", PCR)
 AddCommand("players", {"plrs"}, "Opens the players list", plrz)
 AddCommand("ragdoll", {"rag"}, "Ragdoll Tool", rag)
+AddCommand("playerradar", {"radar", "gps"}, "Shows an Player Radar", plrd)
 AddCommand("console", {"cn"}, "Opens Console", Con)
 AddCommand("dex", {"explorer"}, "Opens Dex Explorer", DexExe)
 AddCommand("numero", {"nware"}, "really cool gui 8) [18+]", kfw)
