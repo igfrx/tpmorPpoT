@@ -3698,8 +3698,8 @@ local function stopdestroyer()
     end
 end
 
-AddCommand("respawn", {"res"}, "Respawns your character", re)
-AddCommand("reset", {"re"}, "FastResets Your character", res)
+AddCommand("respawn", {"res"}, "Respawns your character", res)
+AddCommand("reset", {"re"}, "FastResets Your character", re)
 AddCommand("fly", {"f"}, "Opens FLYGUI", function() return enableFlight() end)
 AddCommand("noclip", {"nc"}, "Walk thru walls", ModeOn)
 AddCommand("clip", {"noc"}, "Stops Noclip", ModeOff)
