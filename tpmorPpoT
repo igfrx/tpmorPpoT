@@ -3961,6 +3961,123 @@ AddCommand("shiftlock", {"sl"}, "Gives you shiftlock", sl)
 AddCommand("noclip", {"nc"}, "Walk thru walls", ModeOn)
 AddCommand("clip", {"noc"}, "Stops Noclip", ModeOff)
 
+local Freeze = {
+    Enabled = false,
+    Connections = {}
+}
+
+-- Freeze/Anchor command
+AddCommand("freeze", {"anchor", "fr"}, "Freezes/anchors your character completely", function()
+    if Freeze.Enabled then
+        return "You are already frozen! Use 'thaw' or 'unanchor' to unfreeze."
+    end
+    
+    Freeze.Enabled = true
+    local character = game.Players.LocalPlayer.Character
+    if not character then return "Character not found" end
+    
+    -- Clear any existing connections first
+    if Freeze.Connections.characterDescendantAdded then
+        Freeze.Connections.characterDescendantAdded:Disconnect()
+        Freeze.Connections.characterDescendantAdded = nil
+    end
+    
+    -- Anchor all base parts
+    for _, part in ipairs(character:GetDescendants()) do
+        if part:IsA("BasePart") then
+            part.Anchored = true
+        end
+    end
+    
+    -- Stop all movement by zeroing velocities
+    local humanoid = character:FindFirstChildOfClass("Humanoid")
+    if humanoid then
+        humanoid:ChangeState(Enum.HumanoidStateType.Physics)
+    end
+    
+    -- Connect to new parts being added
+    Freeze.Connections.characterDescendantAdded = character.DescendantAdded:Connect(function(descendant)
+        if Freeze.Enabled and descendant:IsA("BasePart") then
+            descendant.Anchored = true
+        end
+    end)
+    
+    return "Frozen!"
+end)
+
+-- Unfreeze/Unanchor command
+AddCommand("thaw", {"unanchor", "unfr"}, "Unfreezes/unanchors your character", function()
+    if not Freeze.Enabled then
+        return "You are not frozen!"
+    end
+    
+    Freeze.Enabled = false
+    local character = game.Players.LocalPlayer.Character
+    if not character then return "Character not found" end
+    
+    -- Disconnect the descendant added connection FIRST
+    if Freeze.Connections.characterDescendantAdded then
+        Freeze.Connections.characterDescendantAdded:Disconnect()
+        Freeze.Connections.characterDescendantAdded = nil
+    end
+    
+    -- Unanchor all base parts
+    for _, part in ipairs(character:GetDescendants()) do
+        if part:IsA("BasePart") then
+            part.Anchored = false
+        end
+    end
+    
+    -- Return to normal state
+    local humanoid = character:FindFirstChildOfClass("Humanoid")
+    if humanoid then
+        humanoid:ChangeState(Enum.HumanoidStateType.GettingUp)
+    end
+    
+    return "Unfrozen!"
+end)
+
+-- Automatic handling for character respawns (fixed)
+if not Freeze.Connections.characterAdded then
+    Freeze.Connections.characterAdded = game.Players.LocalPlayer.CharacterAdded:Connect(function(character)
+        if Freeze.Enabled then
+            task.wait(0.5) -- Wait for character to fully load
+            
+            -- Clear any old connections
+            if Freeze.Connections.characterDescendantAdded then
+                Freeze.Connections.characterDescendantAdded:Disconnect()
+                Freeze.Connections.characterDescendantAdded = nil
+            end
+            
+            -- Anchor new character
+            for _, part in ipairs(character:GetDescendants()) do
+                if part:IsA("BasePart") then
+                    part.Anchored = true
+                end
+            end
+            
+            -- Reconnect descendant added for new character
+            Freeze.Connections.characterDescendantAdded = character.DescendantAdded:Connect(function(descendant)
+                if Freeze.Enabled and descendant:IsA("BasePart") then
+                    descendant.Anchored = true
+                end
+            end)
+        end
+    end)
+end
+
+-- Cleanup when script stops
+game:GetService("UserInputService").WindowFocused:Connect(function()
+    if not Freeze.Enabled then
+        for _, connection in pairs(Freeze.Connections) do
+            if connection then
+                connection:Disconnect()
+            end
+        end
+        Freeze.Connections = {}
+    end
+end)
+
 local swordkillActive = false
 local swordkillTarget = "all"
 local swordkillSilent = false
