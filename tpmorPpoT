@@ -3080,6 +3080,10 @@ end)
 end
 
 local function cmdl()
+local Players = game:GetService("Players")
+local ReplicatedStorage = game:GetService("ReplicatedStorage")
+local TweenService = game:GetService("TweenService")
+local UserInputService = game:GetService("UserInputService")
 local localPlayer = Players.LocalPlayer
 local cg = cloneref(game:GetService("CoreGui")) or game:GetService("CoreGui")
 
