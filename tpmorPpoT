@@ -4723,8 +4723,8 @@ AddCommand("touchinterest", {"fti"}, "Fires All TouchInterest", fti)
 AddCommand("looptouchinterest", {"loopfti"}, "Loop Fires All TouchInterest", ftiloop)
 AddCommand("unlooptouchinterest", {"unloopfti"}, "Stops loop Fires All TouchInterest", unftiloop)
 AddCommand("clickdetectors", {"cds"}, "Fires All ClickDetectors", fireClickDetectors)
-AddCommand("loopclickdetectors", {"loopcds"}, "Loop Fires All ClickDetectors", cdloop)
-AddCommand("unloopclickdetectors", {"unloopcds"}, "Stops Loop Fires All ClickDetectors", uncdloop)
+AddCommand("loopclickd", {"loopcds", "lcds"}, "Loop Fires All ClickDetectors", cdloop)
+AddCommand("unloopclickd", {"unloopcds", "unlcds"}, "Stops Loop Fires All ClickDetectors", uncdloop)
 
 local Killbrick = {
     Enabled = false,
@@ -6067,6 +6067,78 @@ end)
 
 AddCommand("loopaat", {"laat"}, "activate all tools but it's looped", loopaat2)
 AddCommand("unloopaat", {"unlaat"}, "Stops Loopaat", unloopaat1)
+
+local AutoUse = {
+    Enabled = false,
+    Connection = nil,
+    UseCooldown = 0.01 -- 10ms between uses
+}
+
+-- AutoUse command
+AddCommand("autouse", "au", "Automatically uses the selected tool every 0.01 seconds", function()
+    if AutoUse.Enabled then
+        crx("AutoUse is already enabled!", 1.1, Color3.fromRGB(255, 0, 0), 138081500)
+    end
+    
+    AutoUse.Enabled = true
+    local player = game.Players.LocalPlayer
+    
+    -- Start the auto-use loop
+    AutoUse.Connection = game:GetService("RunService").Heartbeat:Connect(function()
+        if not AutoUse.Enabled then return end
+        
+        -- Get the currently selected tool
+        local character = player.Character
+        local backpack = player:FindFirstChild("Backpack")
+        
+        if not character or not backpack then return end
+        
+        -- Check for selected tool in backpack or character
+        local selectedTool = nil
+        local selectedSlot = player:GetAttribute("SelectedSlot") or player:FindFirstChild("SelectedSlot")
+        
+        if selectedSlot then
+            local slotNumber = tonumber(tostring(selectedSlot)) or 1
+            selectedTool = backpack:FindFirstChild(tostring(slotNumber)) or character:FindFirstChild(tostring(slotNumber))
+        else
+            -- Fallback: try to find any equipped tool
+            for _, tool in ipairs(character:GetChildren()) do
+                if tool:IsA("Tool") then
+                    selectedTool = tool
+                    break
+                end
+            end
+        end
+        
+        -- Use the tool if found
+        if selectedTool and selectedTool:IsA("Tool") then
+            -- Activate the tool
+            pcall(function()
+                selectedTool:Activate()
+            end)
+        end
+        
+        -- Respect the cooldown
+        task.wait(AutoUse.UseCooldown)
+    end)
+    
+    return "AutoUse enabled - Automatically using selected tool every 0.01s"
+end)
+
+-- Stop AutoUse command
+AddCommand("unautouse", "unau", "Stops automatically using tools", function()
+    if not AutoUse.Enabled then
+        crx("AutoUse was never enabled!", 1.1, Color3.fromRGB(255, 0, 0), 138081500)
+    end
+    
+    AutoUse.Enabled = false
+    if AutoUse.Connection then
+        AutoUse.Connection:Disconnect()
+        AutoUse.Connection = nil
+    end
+    
+    return "AutoUse disabled"
+end)
 
 -- ESP command
 local espEnabled = false
