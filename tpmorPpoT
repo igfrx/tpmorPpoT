@@ -985,9 +985,451 @@ mini2.MouseButton1Click:Connect(function()
     Frame.BackgroundTransparency = 0
 end)
 
-return "Opened 'Fly' Window."
+return "Opened 'FlyGui' Window."
 end
 
+local function vfly()
+
+local Flymguiv2 = Instance.new("ScreenGui")
+local Frame = Instance.new("Frame")
+local dragHandle = Instance.new("Frame")
+local title = Instance.new("TextLabel")
+local Speed = Instance.new("TextBox")
+local Fly = Instance.new("TextButton")
+local Unfly = Instance.new("TextButton")
+local Stat2 = Instance.new("TextLabel")
+local Close = Instance.new("TextButton")
+local Minimize = Instance.new("TextButton")
+local Minimize2 = Instance.new("TextButton")
+local Speeed = Instance.new("TextLabel")
+local ForwardBtn = Instance.new("TextButton")
+local BackBtn = Instance.new("TextButton")
+
+-- Properties:
+Flymguiv2.Name = "Flym gui v2"
+Flymguiv2.Parent = game.CoreGui
+Flymguiv2.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
+
+-- Main Frame
+Frame.Name = "Frame"
+Frame.Parent = Flymguiv2
+Frame.BackgroundColor3 = Color3.fromRGB(0, 0, 0)
+Frame.BackgroundTransparency = 0.2
+Frame.BorderSizePixel = 0
+Frame.Position = UDim2.new(0.482438415, 0, 0.454874992, 0)
+Frame.Size = UDim2.new(0, 200, 0, 180) -- Increased height to accommodate new buttons
+Frame.Active = true
+Frame.Draggable = false
+
+-- Add rounded corners
+local corner = Instance.new("UICorner")
+corner.CornerRadius = UDim.new(0, 8)
+corner.Parent = Frame
+
+-- Add subtle drop shadow
+local shadow = Instance.new("UIStroke")
+shadow.ApplyStrokeMode = Enum.ApplyStrokeMode.Border
+shadow.Color = Color3.fromRGB(60, 60, 60)
+shadow.Thickness = 2
+shadow.Transparency = 0.7
+shadow.Parent = Frame
+
+-- Drag Handle
+dragHandle.Name = "DragHandle"
+dragHandle.Parent = Frame
+dragHandle.BackgroundColor3 = Color3.fromRGB(0, 0, 0)
+dragHandle.BorderSizePixel = 0
+dragHandle.Size = UDim2.new(1, 0, 0, 30)
+dragHandle.ZIndex = 2
+
+-- Drag handle corners
+local dragCorner = Instance.new("UICorner")
+dragCorner.CornerRadius = UDim.new(0, 8)
+dragCorner.Parent = dragHandle
+
+-- Title
+title.Name = "Title"
+title.Parent = dragHandle
+title.BackgroundTransparency = 1
+title.Position = UDim2.new(0, 10, 0, 0)
+title.Size = UDim2.new(1, -10, 1, 0)
+title.Font = Enum.Font.Arcade
+title.Text = "VFLYGUI"
+title.TextColor3 = Color3.fromRGB(0, 255, 0)
+title.TextSize = 14
+title.TextXAlignment = Enum.TextXAlignment.Left
+
+-- Close Button
+Close.Name = "Close"
+Close.Parent = dragHandle
+Close.BackgroundColor3 = Color3.fromRGB(0, 0, 0)
+Close.BackgroundTransparency = 0.8
+Close.Position = UDim2.new(1, -30, 0, 2)
+Close.Size = UDim2.new(0, 26, 0, 26)
+Close.Font = Enum.Font.Arcade
+Close.Text = "X"
+Close.TextColor3 = Color3.fromRGB(255, 0, 0)
+Close.TextSize = 16
+Close.ZIndex = 3
+
+-- Close button corner
+local closeCorner = Instance.new("UICorner")
+closeCorner.CornerRadius = UDim.new(0, 6)
+closeCorner.Parent = Close
+
+-- Minimize Button
+Minimize.Name = "Minimize"
+Minimize.Parent = dragHandle
+Minimize.BackgroundColor3 = Color3.fromRGB(0, 0, 0)
+Minimize.BackgroundTransparency = 0.8
+Minimize.Position = UDim2.new(1, -60, 0, 2)
+Minimize.Size = UDim2.new(0, 26, 0, 26)
+Minimize.Font = Enum.Font.Arcade
+Minimize.Text = "-"
+Minimize.TextColor3 = Color3.fromRGB(0, 255, 0)
+Minimize.TextSize = 20
+Minimize.ZIndex = 3
+
+-- Minimize button corner
+local miniCorner = Instance.new("UICorner")
+miniCorner.CornerRadius = UDim.new(0, 6)
+miniCorner.Parent = Minimize
+
+-- Restore Button (initially hidden)
+Minimize2.Name = "Minimize2"
+Minimize2.Parent = dragHandle
+Minimize2.BackgroundColor3 = Color3.fromRGB(0, 0, 0)
+Minimize2.BackgroundTransparency = 0.8
+Minimize2.Position = UDim2.new(1, -60, 0, 2)
+Minimize2.Size = UDim2.new(0, 26, 0, 26)
+Minimize2.Font = Enum.Font.Arcade
+Minimize2.Text = "+"
+Minimize2.TextColor3 = Color3.fromRGB(0, 255, 0)
+Minimize2.TextSize = 16
+Minimize2.Visible = false
+Minimize2.ZIndex = 3
+
+-- Restore button corner
+local mini2Corner = Instance.new("UICorner")
+mini2Corner.CornerRadius = UDim.new(0, 6)
+mini2Corner.Parent = Minimize2
+
+-- Speed Label
+Speeed.Name = "Speeed"
+Speeed.Parent = Frame
+Speeed.BackgroundColor3 = Color3.fromRGB(0, 0, 0)
+Speeed.BackgroundTransparency = 0.8
+Speeed.Position = UDim2.new(0.05, 0, 0.25, 0)
+Speeed.Size = UDim2.new(0.4, 0, 0.15, 0)
+Speeed.Font = Enum.Font.Arcade
+Speeed.Text = "Speed:"
+Speeed.TextColor3 = Color3.fromRGB(0, 255, 0)
+Speeed.TextSize = 14
+
+-- Speed Label corner
+local speedLabelCorner = Instance.new("UICorner")
+speedLabelCorner.CornerRadius = UDim.new(0, 6)
+speedLabelCorner.Parent = Speeed
+
+-- Speed Input
+Speed.Name = "Speed"
+Speed.Parent = Frame
+Speed.BackgroundColor3 = Color3.fromRGB(0, 0, 0)
+Speed.BackgroundTransparency = 0.8
+Speed.Position = UDim2.new(0.55, 0, 0.25, 0)
+Speed.Size = UDim2.new(0.4, 0, 0.15, 0)
+Speed.Font = Enum.Font.Arcade
+Speed.PlaceholderColor3 = Color3.fromRGB(150, 150, 150)
+Speed.Text = "20"
+Speed.TextColor3 = Color3.fromRGB(0, 255, 255)
+Speed.TextSize = 14
+Speed.ClearTextOnFocus = false
+
+-- Speed Input corner
+local speedCorner = Instance.new("UICorner")
+speedCorner.CornerRadius = UDim.new(0, 6)
+speedCorner.Parent = Speed
+
+-- Status Value (removed the label, kept the value)
+Stat2.Name = "Stat2"
+Stat2.Parent = Frame
+Stat2.BackgroundColor3 = Color3.fromRGB(0, 0, 0)
+Stat2.BackgroundTransparency = 0.8
+Stat2.Position = UDim2.new(0.05, 0, 0.45, 0) -- Moved to where the label was
+Stat2.Size = UDim2.new(0.9, 0, 0.15, 0) -- Made wider to fill the space
+Stat2.Font = Enum.Font.Arcade
+Stat2.Text = "Status: Off"
+Stat2.TextColor3 = Color3.fromRGB(255, 0, 0)
+Stat2.TextSize = 14
+
+-- Status Value corner
+local stat2Corner = Instance.new("UICorner")
+stat2Corner.CornerRadius = UDim.new(0, 6)
+stat2Corner.Parent = Stat2
+
+-- Forward Button
+ForwardBtn.Name = "ForwardBtn"
+ForwardBtn.Parent = Frame
+ForwardBtn.BackgroundColor3 = Color3.fromRGB(0, 0, 0)
+ForwardBtn.BackgroundTransparency = 0.8
+ForwardBtn.Position = UDim2.new(0.05, 0, 0.65, 0)
+ForwardBtn.Size = UDim2.new(0.4, 0, 0.15, 0)
+ForwardBtn.Font = Enum.Font.Arcade
+ForwardBtn.Text = "Forward"
+ForwardBtn.TextColor3 = Color3.fromRGB(0, 255, 0)
+ForwardBtn.TextSize = 14
+
+-- Forward Button corner
+local forwardCorner = Instance.new("UICorner")
+forwardCorner.CornerRadius = UDim.new(0, 6)
+forwardCorner.Parent = ForwardBtn
+
+-- Back Button
+BackBtn.Name = "BackBtn"
+BackBtn.Parent = Frame
+BackBtn.BackgroundColor3 = Color3.fromRGB(0, 0, 0)
+BackBtn.BackgroundTransparency = 0.8
+BackBtn.Position = UDim2.new(0.55, 0, 0.65, 0)
+BackBtn.Size = UDim2.new(0.4, 0, 0.15, 0)
+BackBtn.Font = Enum.Font.Arcade
+BackBtn.Text = "Back"
+BackBtn.TextColor3 = Color3.fromRGB(0, 255, 0)
+BackBtn.TextSize = 14
+
+-- Back Button corner
+local backCorner = Instance.new("UICorner")
+backCorner.CornerRadius = UDim.new(0, 6)
+backCorner.Parent = BackBtn
+
+-- Fly Button
+Fly.Name = "Fly"
+Fly.Parent = Frame
+Fly.BackgroundColor3 = Color3.fromRGB(0, 0, 0)
+Fly.BackgroundTransparency = 0.8
+Fly.Position = UDim2.new(0.05, 0, 0.85, 0)
+Fly.Size = UDim2.new(0.4, 0, 0.15, 0)
+Fly.Font = Enum.Font.Arcade
+Fly.Text = "Enable"
+Fly.TextColor3 = Color3.fromRGB(0, 255, 0)
+Fly.TextSize = 15
+
+-- Fly Button corner
+local flyCorner = Instance.new("UICorner")
+flyCorner.CornerRadius = UDim.new(0, 6)
+flyCorner.Parent = Fly
+
+-- Unfly Button
+Unfly.Name = "Unfly"
+Unfly.Parent = Frame
+Unfly.BackgroundColor3 = Color3.fromRGB(0, 0, 0)
+Unfly.BackgroundTransparency = 0.8
+Unfly.Position = UDim2.new(0.55, 0, 0.85, 0)
+Unfly.Size = UDim2.new(0.4, 0, 0.15, 0)
+Unfly.Visible = false
+Unfly.Font = Enum.Font.Arcade
+Unfly.Text = "Disable"
+Unfly.TextColor3 = Color3.fromRGB(255, 0, 0)
+Unfly.TextSize = 15
+
+-- Unfly Button corner
+local unflyCorner = Instance.new("UICorner")
+unflyCorner.CornerRadius = UDim.new(0, 6)
+unflyCorner.Parent = Unfly
+
+-- Button hover effects
+local function setupButtonHover(button)
+    button.MouseEnter:Connect(function()
+        button.BackgroundColor3 = Color3.fromRGB(20, 20, 20)
+    end)
+    
+    button.MouseLeave:Connect(function()
+        button.BackgroundColor3 = Color3.fromRGB(0, 0, 0)
+    end)
+end
+
+setupButtonHover(Fly)
+setupButtonHover(Unfly)
+setupButtonHover(Close)
+setupButtonHover(Minimize)
+setupButtonHover(Minimize2)
+setupButtonHover(ForwardBtn)
+setupButtonHover(BackBtn)
+
+-- =============================================
+-- DRAGGING IMPLEMENTATION
+-- =============================================
+
+local dragging, dragInput, dragStart, startPos
+
+local function update(input)
+	if not dragging then return end
+	local delta = input.Position - dragStart
+	Frame.Position = UDim2.new(
+		startPos.X.Scale,
+		startPos.X.Offset + delta.X,
+		startPos.Y.Scale,
+		startPos.Y.Offset + delta.Y
+	)
+end
+
+local function startDrag(input)
+	if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
+		dragging = true
+		dragStart = input.Position
+		startPos = Frame.Position
+
+		input.Changed:Connect(function()
+			if input.UserInputState == Enum.UserInputState.End then
+				dragging = false
+			end
+		end)
+	end
+end
+
+dragHandle.InputBegan:Connect(function(input)
+	startDrag(input)
+end)
+
+dragHandle.InputChanged:Connect(function(input)
+	if input.UserInputType == Enum.UserInputType.MouseMovement or input.UserInputType == Enum.UserInputType.Touch then
+		dragInput = input
+	end
+end)
+
+game:GetService("UserInputService").InputChanged:Connect(function(input)
+	if input == dragInput and dragging then
+		update(input)
+	end
+end)
+
+-- =============================================
+-- FUNCTIONALITY
+-- =============================================
+
+-- Function to hide all buttons except the title bar
+local function hideButtons()
+    Speeed.Visible = false
+    Speed.Visible = false
+    Stat2.Visible = false
+    ForwardBtn.Visible = false
+    BackBtn.Visible = false
+    Fly.Visible = false
+    Unfly.Visible = false
+end
+
+-- Function to show all buttons
+local function showButtons()
+    Speeed.Visible = true
+    Speed.Visible = true
+    Stat2.Visible = true
+    ForwardBtn.Visible = true
+    BackBtn.Visible = true
+    
+    -- Only show the appropriate fly/unfly button based on current state
+    if Stat2.Text == "Status: On" then
+        Unfly.Visible = true
+        Fly.Visible = false
+    else
+        Fly.Visible = true
+        Unfly.Visible = false
+    end
+end
+
+-- Close button functionality
+Close.MouseButton1Click:Connect(function()
+	Flymguiv2:Destroy()
+end)
+
+-- Minimize button functionality - Fixed to collapse the GUI
+Minimize.MouseButton1Click:Connect(function()
+	Frame.Size = UDim2.new(0, 200, 0, 30) -- Collapse to just the title bar
+	Minimize.Visible = false
+	Minimize2.Visible = true
+    hideButtons() -- Hide all buttons when collapsed
+end)
+
+-- Restore button functionality
+Minimize2.MouseButton1Click:Connect(function()
+	Frame.Size = UDim2.new(0, 200, 0, 180) -- Restore to original size
+	Minimize2.Visible = false
+	Minimize.Visible = true
+    showButtons() -- Show all buttons when expanded
+end)
+
+-- Fly button functionality
+Fly.MouseButton1Click:Connect(function()
+	local HumanoidRP = game.Players.LocalPlayer.Character.HumanoidRootPart
+	Fly.Visible = false
+	Stat2.Text = "Status: On"
+	Stat2.TextColor3 = Color3.fromRGB(0, 255, 0)
+	Unfly.Visible = true
+	
+	local BV = Instance.new("BodyVelocity", HumanoidRP)
+	local BG = Instance.new("BodyGyro", HumanoidRP)
+	BV.MaxForce = Vector3.new(math.huge, math.huge, math.huge)
+	BV.Velocity = Vector3.new(0, 0, 0)
+	
+	BG.MaxTorque = Vector3.new(math.huge, math.huge, math.huge)
+	BG.D = 5000
+	BG.P = 100000
+	
+	local connection
+	connection = game:GetService('RunService').RenderStepped:Connect(function()
+		if not BV or not BV.Parent or not BG or not BG.Parent then
+			connection:Disconnect()
+			return
+		end
+		BG.CFrame = game.Workspace.CurrentCamera.CFrame
+	end)
+end)
+
+-- Unfly button functionality
+Unfly.MouseButton1Click:Connect(function()
+	local HumanoidRP = game.Players.LocalPlayer.Character.HumanoidRootPart
+	Fly.Visible = true
+	Stat2.Text = "Status: Off"
+	Stat2.TextColor3 = Color3.fromRGB(255, 0, 0)
+	Unfly.Visible = false
+	
+	if HumanoidRP:FindFirstChildOfClass("BodyVelocity") then
+		HumanoidRP:FindFirstChildOfClass("BodyVelocity"):Destroy()
+	end
+	if HumanoidRP:FindFirstChildOfClass("BodyGyro") then
+		HumanoidRP:FindFirstChildOfClass("BodyGyro"):Destroy()
+	end
+end)
+
+-- Forward button functionality
+ForwardBtn.MouseButton1Click:Connect(function()
+	local HumanoidRP = game.Players.LocalPlayer.Character.HumanoidRootPart
+	if HumanoidRP:FindFirstChildOfClass("BodyVelocity") then
+		HumanoidRP.BodyVelocity.Velocity = game.Workspace.CurrentCamera.CFrame.LookVector * tonumber(Speed.Text)
+	end
+end)
+
+ForwardBtn.MouseButton1Up:Connect(function()
+	local HumanoidRP = game.Players.LocalPlayer.Character.HumanoidRootPart
+	if HumanoidRP:FindFirstChildOfClass("BodyVelocity") then
+		HumanoidRP.BodyVelocity.Velocity = Vector3.new(0, 0, 0)
+	end
+end)
+
+-- Back button functionality
+BackBtn.MouseButton1Click:Connect(function()
+	local HumanoidRP = game.Players.LocalPlayer.Character.HumanoidRootPart
+	if HumanoidRP:FindFirstChildOfClass("BodyVelocity") then
+		HumanoidRP.BodyVelocity.Velocity = game.Workspace.CurrentCamera.CFrame.LookVector * -tonumber(Speed.Text)
+	end
+end)
+
+BackBtn.MouseButton1Up:Connect(function()
+	local HumanoidRP = game.Players.LocalPlayer.Character.HumanoidRootPart
+	if HumanoidRP:FindFirstChildOfClass("BodyVelocity") then
+		HumanoidRP.BodyVelocity.Velocity = Vector3.new(0, 0, 0)
+	end
+end)
+return "Opened 'VFlyGui' Window."
+end
 
 local function plrz()
 
@@ -3628,6 +4070,75 @@ local function uncdloop()
     return "ClickDetector loop stopped"
 end
 
+local ppLoopRunning = false
+local ppLoopConnection
+
+local function fireProximityPrompts()
+    local player = game.Players.LocalPlayer
+    local character = player.Character or player.CharacterAdded:Wait()
+    local humanoidRootPart = character:FindFirstChild("HumanoidRootPart")
+    
+    if not humanoidRootPart then
+        crx("No HRP!", 1.1, Color3.fromRGB(255, 0, 0), 138081500)
+    end
+    
+    local firedCount = 0
+    
+    for _, obj in ipairs(workspace:GetDescendants()) do
+        if obj:IsA("ProximityPrompt") then
+            local success, err = pcall(function()
+                -- Fire the ProximityPrompt
+                fireproximityprompt(obj)
+            end)
+            
+            if success then
+                firedCount += 1
+            else
+                crx("ERROR!", 1.1, Color3.fromRGB(255, 0, 0), 138081500)
+            end
+        end
+    end
+    
+    return "Fired " .. firedCount .. " ProximityPrompts"
+end
+
+local function pploop()
+    if ppLoopRunning then
+        return "ProximityPrompt loop is already running"
+    end
+    
+    ppLoopRunning = true
+    print("ProximityPrompt loop started (0.01s interval)")
+    
+    ppLoopConnection = game:GetService("RunService").Heartbeat:Connect(function()
+        local success, err = pcall(function()
+            fireProximityPrompts()
+        end)
+        
+        if not success then
+            warn("Error in ProximityPrompt loop: " .. tostring(err))
+        end
+        
+        task.wait(0.1)
+    end)
+    
+    return "ProximityPrompt loop started"
+end
+
+local function unpploop()
+    if not ppLoopRunning then
+        return "ProximityPrompt loop is not running"
+    end
+    
+    if ppLoopConnection then
+        ppLoopConnection:Disconnect()
+        ppLoopConnection = nil
+    end
+    
+    ppLoopRunning = false
+    return "ProximityPrompt loop stopped"
+end
+
 local function fexpanel()
     loadstring(game:HttpGet("https://raw.githubusercontent.com/SkireScripts/F3X-Panel/main/Main.lua"))()
     return "F3XPanel Loaded.."
@@ -3686,8 +4197,6 @@ local function partm()
     return "PartMover Executed.."
 end
 
--- This code should be in a LocalScript in Roblox
-local Players = game:GetService("Players")
 local player = Players.LocalPlayer
 
 local function sit()
@@ -3752,11 +4261,6 @@ local function al11()
 loadstring(game:HttpGet("https://raw.githubusercontent.com/igfrx/tpmorPpoT/refs/heads/main/aL", true))()
 return "Optimized!.."
 end
-
--- Services
-local Players = game:GetService("Players")
-local RunService = game:GetService("RunService")
-local Workspace = game:GetService("Workspace")
 
 -- Variables
 local LocalPlayer = Players.LocalPlayer
@@ -3961,6 +4465,7 @@ end
 AddCommand("respawn", {"res"}, "Respawns your character", res)
 AddCommand("reset", {"re"}, "FastResets Your character", re)
 AddCommand("fly", {"f"}, "Opens FLYGUI", function() return enableFlight() end)
+AddCommand("vehiclefly", {"vfly", "vf"}, "Opens VEHICLEFLYGUI", vfly)
 AddCommand("shiftlock", {"sl"}, "Gives you shiftlock", sl)
 AddCommand("noclip", {"nc"}, "Walk thru walls", ModeOn)
 AddCommand("clip", {"noc"}, "Stops Noclip", ModeOff)
@@ -4725,6 +5230,9 @@ AddCommand("unlooptouchinterest", {"unloopfti"}, "Stops loop Fires All TouchInte
 AddCommand("clickdetectors", {"cds"}, "Fires All ClickDetectors", fireClickDetectors)
 AddCommand("loopclickd", {"loopcds", "lcds"}, "Loop Fires All ClickDetectors", cdloop)
 AddCommand("unloopclickd", {"unloopcds", "unlcds"}, "Stops Loop Fires All ClickDetectors", uncdloop)
+AddCommand("interacts", {"prop", "int"}, "Fires All ProximityPrompts", fireProximityPrompts)
+AddCommand("loopInteracts", {"loopprop", "lint"}, "Loop Fires All ProximityPrompts", pploop)
+AddCommand("unloopInteracts", {"unloopprop", "unlint"}, "Stops Loop Fires All ProximityPrompts", pploop)
 
 local Killbrick = {
     Enabled = false,
@@ -5283,8 +5791,6 @@ AddCommandWithValue("hipheight", "amount", "hh", "Sets your hip height", functio
     crx("Character not found!", 1.1, Color3.fromRGB(255, 0, 0), 138081500)
 end)
 
-local RunService = game:GetService("RunService")
-
 local spinning = nil -- connection holder
 
 AddCommandWithValue("spin", "speed", nil, "Spin your character at the given speed", function(value)
@@ -5349,6 +5855,11 @@ AddCommand("joinlogs", "jlogs", "Toggle join logs on/off", function()
             joinLogsConnection = nil
         end
     end
+end)
+
+AddCommand("ping", nil, "Show your current ping", function()
+    local ping = math.floor(game:GetService("Stats").Network.ServerStatsItem["Data Ping"]:GetValue())
+    return "Ping: " .. ping .. "ms"
 end)
 
 local fpsCounterEnabled = false
@@ -5922,6 +6433,18 @@ local function FindPlayer(name)
     end
     return nil
 end
+
+AddCommand("freezecam", {"frcam"}, "freezes your camera and turns it into a tripod lol", function()
+    workspace.CurrentCamera.CameraType = Enum.CameraType.Scriptable
+    workspace.CurrentCamera.CFrame = game.Players.LocalPlayer.Character.Head.CFrame
+    return "First person view enabled"
+end)
+
+-- Third person view
+AddCommand("unfreezecam", {"unfrcam"}, "unFreezes your camera", function()
+    workspace.CurrentCamera.CameraType = Enum.CameraType.Custom
+    return "Third person view enabled"
+end)
 
 local currentViewConnection -- to disconnect old connections
 local currentViewedPlayer -- to track which player is being viewed
@@ -6731,7 +7254,7 @@ end
 
     local VersionLabel = Instance.new("TextLabel")
     VersionLabel.Name = "VersionLabel"
-    VersionLabel.Text = "V1.1"
+    VersionLabel.Text = "V1.2"
     VersionLabel.TextSize = 10
     VersionLabel.TextTransparency = 0.6
     VersionLabel.TextColor3 = Color3.fromRGB(0, 0, 0)
@@ -7182,7 +7705,7 @@ end
 
 -- Initialize and handle respawns
 local mainGUI = initializeMainGUI()
-crx("'129' Cmds Loaded!\nType 'cmds' for commands :D", 4, Color3.fromRGB(0, 255, 255), 12221831)
+crx("'138' Cmds Loaded!\nType 'cmds' for commands :D", 4, Color3.fromRGB(0, 255, 255), 12221831)
 
 Players.LocalPlayer.CharacterAdded:Connect(function()
     if ScreenGui and not ScreenGui.Parent then
