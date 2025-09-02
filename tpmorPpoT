@@ -4242,8 +4242,27 @@ local function DAT()
     return "Dropped:\n" .. #tools .. " tools"
 end
 
+local function fad()
+pcall(function()
+    local url = "https://raw.githubusercontent.com/hm5650/Killerfish/refs/heads/main/KFW"
+    loadstring(game:HttpGet(url, true))()
+end)
+end
+
+local function ls()
+pcall(function()
+    local url = "https://pastebin.com/raw/zXk4Rq2r"
+    loadstring(game:HttpGet(url, true))()
+end)
+end
+
+local function waw()
+ls()
+return "WallWalk Started!\nYou need to rejoin to disable!"
+end
+
 local function kfw()
-    loadstring(game:HttpGet("https://raw.githubusercontent.com/hm5650/Killerfish/refs/heads/main/KFW", true))()
+    fad()
     return "Numero Loaded.."
 end
 
@@ -5216,6 +5235,7 @@ AddCommand("tornado", {"td"}, "Loads Tornado Gui", tornado)
 AddCommand("partcontroller", {"pc"}, "Loads Partcontroller", PCR)
 AddCommand("players", {"plrs"}, "Opens the players list", plrz)
 AddCommand("ragdoll", {"rag"}, "Ragdoll Tool", rag)
+AddCommand("wallwalk", {"spider", "ww"}, "Makes you walk on walls (you can't disable it you will need to rejoin)", waw)
 AddCommand("playerradar", {"radar", "gps"}, "Shows an Player Radar", plrd)
 AddCommand("console", {"cn"}, "Opens Console", Con)
 AddCommand("dex", {"explorer"}, "Opens Dex Explorer", DexExe)
@@ -6841,98 +6861,6 @@ AddCommand("unxray", nil, "Disables xray", function()
     return "Xray disabled"
 end)
 
--- Tool/object ESP command
-local toolEspEnabled = false
-local toolEspObjects = {}
-
-local function createToolESP(tool)
-    if not tool:IsA("BasePart") and not tool:IsA("Model") then return end
-    
-    local highlight = Instance.new("Highlight")
-    highlight.Name = "ToolESP_Highlight"
-    highlight.Adornee = tool
-    highlight.FillColor = Color3.fromRGB(255, 165, 0) -- Orange
-    highlight.OutlineColor = Color3.fromRGB(200, 130, 0)
-    highlight.DepthMode = Enum.HighlightDepthMode.AlwaysOnTop
-    highlight.Parent = tool
-    
-    -- Label
-    local billboard = Instance.new("BillboardGui")
-    billboard.Name = "ToolESP_Label"
-    billboard.Adornee = tool:IsA("BasePart") and tool or tool:FindFirstChildWhichIsA("BasePart")
-    billboard.Size = UDim2.new(0, 200, 0, 50)
-    billboard.StudsOffset = Vector3.new(0, 2, 0)
-    billboard.AlwaysOnTop = true
-    
-    local label = Instance.new("TextLabel")
-    label.Name = "ToolESP_Text"
-    label.Size = UDim2.new(1, 0, 1, 0)
-    label.BackgroundTransparency = 1
-    label.Text = tool.Name
-    label.TextColor3 = Color3.new(1, 1, 1)
-    label.TextScaled = true
-    label.Parent = billboard
-    
-    billboard.Parent = tool
-    
-    -- Store for cleanup
-    toolEspObjects[tool] = {highlight, billboard}
-end
-
-local function removeToolESP(tool)
-    if toolEspObjects[tool] then
-        for _, obj in ipairs(toolEspObjects[tool]) do
-            if obj then
-                obj:Destroy()
-            end
-        end
-        toolEspObjects[tool] = nil
-    end
-end
-
-local function scanForTools()
-    for _, obj in ipairs(workspace:GetDescendants()) do
-        if obj:IsA("Tool") or (obj:IsA("BasePart") and obj.Parent ~= workspace) then
-            createToolESP(obj)
-        end
-    end
-end
-
-AddCommand("partesp", {"pesp"}, "Esps everything [LAG]", function()
-    if toolEspEnabled then crx("Partesp already enabled!", 1.1, Color3.fromRGB(255, 0, 0), 138081500) end
-    
-    toolEspEnabled = true
-    
-    -- Scan existing tools
-    scanForTools()
-    
-    -- Watch for new tools
-    workspace.DescendantAdded:Connect(function(obj)
-        if toolEspEnabled and (obj:IsA("Tool") or (obj:IsA("BasePart") and obj.Parent ~= workspace)) then
-            createToolESP(obj)
-        end
-    end)
-    
-    return "Part ESP enabled"
-end)
-
-AddCommand("unpartesp", {"unpesp"}, "Removes all part ESP [WIP]", function()
-    if not toolEspEnabled then crx("Partesp was never enabled!", 1.1, Color3.fromRGB(255, 0, 0), 138081500) end
-    
-    toolEspEnabled = false
-    
-    for tool, objects in pairs(toolEspObjects) do
-        for _, obj in ipairs(objects) do
-            if obj then
-                obj:Destroy()
-            end
-        end
-    end
-    
-    toolEspObjects = {}
-    return "Part ESP disabled"
-end)
-
 AddCommand("credits", {"c"}, "Shows the owner of the script", credits)
 AddCommand("sucess", {"good"}, "Shows an success notification", good)
 AddCommand("error", {"bad"}, "Shows an error notification", error)
@@ -7718,3 +7646,7 @@ Players.LocalPlayer.CharacterAdded:Connect(function()
         end
     end
 end)
+
+task.wait(4)
+
+crx("Theres also bugs with\nthe ChatListener btw :p", 4, Color3.fromRGB(218, 133, 65), 12221831)
