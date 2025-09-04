@@ -1,4 +1,3 @@
-local function flu()
 
 repeat wait()
 a = pcall(function()
@@ -15,6 +14,7 @@ game:WaitForChild("Players").LocalPlayer:WaitForChild("PlayerScripts").ChildAdde
 		c.Disabled = true
 	end
 end)
+
 
 function _CameraUI()
 	local Players = game:GetService("Players")
@@ -11528,7 +11528,6 @@ end
 
 Controller.GetGravityUp = GetGravityUp
 
--- E is toggle
 game:GetService("ContextActionService"):BindAction("Toggle", function(action, state, input)
 	if not (state == Enum.UserInputState.Begin) then
 		return
@@ -11542,6 +11541,4 @@ game:GetService("ContextActionService"):BindAction("Toggle", function(action, st
 		Controller.GetGravityUp = GetGravityUp
 	end
 end, false, Enum.KeyCode.Z)
-end
-
-return flu
+print("end")
