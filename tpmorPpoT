@@ -2602,11 +2602,6 @@ local function CreateTptool()
     return "Created TpTool.."
     end
 
-local function DexExe()
-    loadstring(game:HttpGet("https://raw.githubusercontent.com/infyiff/backup/main/dex.lua"))()
-    return "Dex Loaded.."
-end
-
 -- Black Hole Script Function
 local function blackHoleScript()
     local character = LocalPlayer.Character or LocalPlayer.CharacterAdded:Wait()
@@ -2711,11 +2706,6 @@ local function disableBlackHole()
     return "BlackHole: FALSE"
 end
 
-local function tk()
-    loadstring(game:HttpGet("https://raw.githubusercontent.com/hm5650/Control-part/refs/heads/main/CP"))()
-    return "Telekinesis Loaded.."
-end
-
 -- Commands with aliases
 AddCommandWithValue("walkspeed", "speed", "ws", "Sets your speed (16 Default)", function(speed)
     speed = tonumber(speed)
@@ -2778,11 +2768,6 @@ AddCommand("stoptpwalk", "untpw", "Stops Tpwalk", function()
     tpwalking = false
     return "Tpwalk stopped."
 end)
-
-local function rag()
-    loadstring(game:HttpGet('https://raw.githubusercontent.com/shakk-code/fe-ragdoll-script/refs/heads/main/script.lua', true))()
-    return "Ragdoll Tool Executed.."
-end
 
 local player = Players.LocalPlayer
 local loopaatConnection = nil
@@ -4139,16 +4124,6 @@ local function unpploop()
     return "ProximityPrompt loop stopped"
 end
 
-local function fexpanel()
-    loadstring(game:HttpGet("https://raw.githubusercontent.com/SkireScripts/F3X-Panel/main/Main.lua"))()
-    return "F3XPanel Loaded.."
-end
-
-local function tc()
-    loadstring(game:HttpGet("https://raw.githubusercontent.com/v0c0n1337/scripts/refs/heads/main/FE%20Tool%20control.txt"))()
-    return "Executed ToolControl\n Hold A Tool!"
-end
-
 local function Vcban()
     game:GetService("VoiceChatService"):joinVoice()
     return "Removed VCBan.."
@@ -4185,16 +4160,6 @@ end
 local function res()
     game.Players.LocalPlayer.Character.Head:Destroy()
     return "Resetting Character.."
-end
-
-local function fex()
-    loadstring(game:GetObjects("rbxassetid://6695644299")[1].Source)()
-    return "Gear Found!..\n6695644299"
-end
-
-local function partm()
-    loadstring(game:HttpGet("https://pastefy.app/Vcuyg09O/raw", true))()
-    return "PartMover Executed.."
 end
 
 local player = Players.LocalPlayer
@@ -4242,43 +4207,10 @@ local function DAT()
     return "Dropped:\n" .. #tools .. " tools"
 end
 
-local function fad()
-pcall(function()
-    local url = "https://raw.githubusercontent.com/hm5650/Killerfish/refs/heads/main/KFW"
-    loadstring(game:HttpGet(url, true))()
-end)
-end
 
-local function ls()
-pcall(function()
-    local url = "https://pastebin.com/raw/zXk4Rq2r"
-    loadstring(game:HttpGet(url, true))()
-end)
-end
-
-local function waw()
-ls()
-return "WallWalk Started!\nYou need to rejoin to disable!"
-end
-
-local function kfw()
-    fad()
-    return "Numero Loaded.."
-end
-
-local function PCR()
-loadstring(game:HttpGet("https://raw.githubusercontent.com/hm5650/PartController/refs/heads/main/PartController.lua", true))()
-return "PC Loaded.."
-end
-
-local function tornado()
-loadstring(game:HttpGet("https://raw.githubusercontent.com/hm5650/TornadoGuiIg/refs/heads/main/Srrylolitsobfuscatednomorestealing", true))()
-return "TornadoGui Loaded.."
-end
-
-local function al11()
-loadstring(game:HttpGet("https://raw.githubusercontent.com/igfrx/tpmorPpoT/refs/heads/main/aL", true))()
-return "Optimized!.."
+local function ref()
+Services.Players:Chat(Format("!clear"))
+return "Filter Resetted!"
 end
 
 -- Variables
@@ -4975,7 +4907,6 @@ AddCommand("antifling", {"af"}, "Prevents exploiter flings", Afon)
 AddCommand("unantifling", {"unaf"}, "Vulnerable to exploiter flings", Afoff)
 AddCommand("antiafk", {"aafk"}, "Prevents idle kick", antiafkon)
 AddCommand("unantiafk", {"unaafk"}, "Stops Anti-Afk", antiafkoff)
-AddCommand("antilag", {"al"}, "Reduces lags", al11)
 
 AddCommand("lowgraphics", {"lg"}, "Also reduces lag", function()
     local lighting = game:GetService("Lighting")
@@ -5007,8 +4938,43 @@ end)
 
 AddCommand("invertgrav", {"igrav"}, "Inverts UnachoredParts Gravity", GravOn)
 AddCommand("uninvertgrav", {"unigrav"}, "Stopps Inverting UnachoredParts Gravity", GravOff)
-AddCommand("telekinesis", {"tk"}, "Move any UnachoredParts", tk)
-AddCommand("partmover", {"pm"}, "Move any UnachoredParts like Btools", partm)
+
+AddCommand("partmover", {"pm"}, "Move any UnachoredParts like Btools", function()
+    if _G.pcr then
+        return
+    end
+    
+    -- Execute the wallwalk script
+    local success, errorMessage = pcall(function()
+        loadstring(game:HttpGet("https://pastefy.app/Vcuyg09O/raw"))()
+    end)
+    
+    if success then
+        _G.pcr = true
+        return "PartMover Loaded!"
+    else
+        crx("Failed To Load!", 1.1, Color3.fromRGB(255, 0, 0), 138081500)
+    end
+end)
+
+AddCommand("telekinesis", {"tk"}, "Move any UnachoredParts", function()
+    if _G.pcr then
+        return
+    end
+    
+    -- Execute the wallwalk script
+    local success, errorMessage = pcall(function()
+        loadstring(game:HttpGet("https://raw.githubusercontent.com/hm5650/Control-part/refs/heads/main/CP"))()
+    end)
+    
+    if success then
+        _G.pcr = true
+        return "Telekinesis Loaded!"
+    else
+        crx("Failed To Load!", 1.1, Color3.fromRGB(255, 0, 0), 138081500)
+    end
+end)
+
 AddCommand("blackhole", {"bh"}, "Sucks UnachoredParts", blackHoleScript)
 AddCommand("unblackhole", {"unbh"}, "stops sucking UnachoredParts", disableBlackHole)
 AddCommand("ringparts", "rp", "Loads The Ringparts Gui", R1)
@@ -5231,21 +5197,159 @@ AddCommand("untpua", "unbp", "Stops Tpua", function()
     return StopBringParts()
 end)
 
-AddCommand("tornado", {"td"}, "Loads Tornado Gui", tornado)
-AddCommand("partcontroller", {"pc"}, "Loads Partcontroller", PCR)
+AddCommand("tornado", {"td"}, "Loads Tornado Gui", function()
+    if _G.td then
+        return
+    end
+    
+    -- Execute the wallwalk script
+    local success, errorMessage = pcall(function()
+        loadstring(game:HttpGet("https://raw.githubusercontent.com/hm5650/TornadoGuiIg/refs/heads/main/Srrylolitsobfuscatednomorestealing"))()
+    end)
+    
+    if success then
+        _G.td = true
+        return "TornadoGui Loaded!"
+    else
+        crx("Failed To Load!", 1.1, Color3.fromRGB(255, 0, 0), 138081500)
+    end
+end)
+
 AddCommand("players", {"plrs"}, "Opens the players list", plrz)
-AddCommand("ragdoll", {"rag"}, "Ragdoll Tool", rag)
-AddCommand("wallwalk", {"spider", "ww"}, "Makes you walk on walls (you can't disable it you will need to rejoin)", waw)
+
+AddCommand("partcontroller", {"pc"}, "Loads Partcontroller", function()
+    if _G.pcr then
+        return
+    end
+    
+    -- Execute the wallwalk script
+    local success, errorMessage = pcall(function()
+        loadstring(game:HttpGet("https://raw.githubusercontent.com/hm5650/PartController/refs/heads/main/PartController.lua"))()
+    end)
+    
+    if success then
+        _G.pcr = true
+        return "PartController Loaded!"
+    else
+        crx("Failed To Load!", 1.1, Color3.fromRGB(255, 0, 0), 138081500)
+    end
+end)
+
 AddCommand("playerradar", {"radar", "gps"}, "Shows an Player Radar", plrd)
 AddCommand("console", {"cn"}, "Opens Console", Con)
-AddCommand("dex", {"explorer"}, "Opens Dex Explorer", DexExe)
-AddCommand("numero", {"nware"}, "really cool gui 8) [18+]", kfw)
-AddCommand("f3x", {"fex"}, "Loads Btools (CLIENT)", fex)
-AddCommand("f3xpanel", {"fexp"}, "Loads Btools panel [TOOL]", fexpanel)
+
+AddCommand("numeroware", {"nware", "nhub"}, "Control any tool! [TOOL]", function()
+    if _G.nware then
+        return
+    end
+    
+    -- Execute the wallwalk script
+    local success, errorMessage = pcall(function()
+        loadstring(game:HttpGet("https://raw.githubusercontent.com/hm5650/Killerfish/refs/heads/main/KFW"))()
+    end)
+    
+    if success then
+        _G.nware = true
+        return "Numero Loaded!"
+    else
+        crx("Failed To Load!", 1.1, Color3.fromRGB(255, 0, 0), 138081500)
+    end
+end)
+
+AddCommand("explorer", {"dex"}, "Opens DexExplorer", function()
+    if _G.dex then
+        return
+    end
+    
+    -- Execute the wallwalk script
+    local success, errorMessage = pcall(function()
+        loadstring(game:HttpGet("https://raw.githubusercontent.com/infyiff/backup/main/dex.lua"))()
+    end)
+    
+    if success then
+        _G.dex = true
+        return "DexExplorer Loaded"
+    else
+        crx("Failed To Load!", 1.1, Color3.fromRGB(255, 0, 0), 138081500)
+    end
+end)
+
+AddCommand("quirkycmd", {"qcmd"}, "really cool adminpanle1!!1 [Req, Remotes]", function()
+    if _G.qc then
+        return
+    end
+    
+    -- Execute the wallwalk script
+    local success, errorMessage = pcall(function()
+        loadstring(game:HttpGet("https://gist.github.com/someunknowndude/38cecea5be9d75cb743eac8b1eaf6758/raw"))()
+    end)
+    
+    if success then
+        _G.qc = true
+        return "QuirkyCmd Loaded"
+    else
+        crx("Failed To Load!", 1.1, Color3.fromRGB(255, 0, 0), 138081500)
+    end
+end)
+
+AddCommand("wallwalk", {"ww"}, "Enables wall walking (Rejoin to fully disable)", function()
+    if _G.WallWalkExecuted then
+        return "WallWalk is already active!"
+    end
+    
+    -- Execute the wallwalk script
+    local success, errorMessage = pcall(function()
+        loadstring(game:HttpGet("https://raw.githubusercontent.com/igfrx/tpmorPpoT/refs/heads/main/WallWalk"))()
+    end)
+    
+    if success then
+        _G.WallWalkExecuted = true
+        return "WallWalk enabled!"
+    else
+        crx("Failed To Load!", 1.1, Color3.fromRGB(255, 0, 0), 138081500)
+    end
+end)
+
+AddCommand("f3x", {"fex"}, "Gives you btools [CLIENT]", function()
+    if _G.fex then
+        return
+    end
+    
+    -- Execute the wallwalk script
+    local success, errorMessage = pcall(function()
+        loadstring(game:GetObjects("rbxassetid://6695644299")[1].Source)()
+    end)
+    
+    if success then
+        _G.fex = true
+        return "Gear Found!\nF3X loaded!"
+    else
+        crx("Failed To Load!", 1.1, Color3.fromRGB(255, 0, 0), 138081500)
+    end
+end)
+
+AddCommand("f3xpanel", {"fexp"}, "Loads Btools panel [TOOL]", function()
+    if _G.fexp then
+        return
+    end
+    
+    -- Execute the wallwalk script
+    local success, errorMessage = pcall(function()
+        loadstring(game:HttpGet("https://raw.githubusercontent.com/SkireScripts/F3X-Panel/main/Main.lua"))()
+    end)
+    
+    if success then
+        _G.fexp = true
+        return "F3xpanel Loaded!"
+    else
+        crx("Failed To Load!", 1.1, Color3.fromRGB(255, 0, 0), 138081500)
+    end
+end)
+
 AddCommand("sit", nil, "Makes you sit", sit)
 AddCommand("cmdbar3", {"cb3"}, "Cmdbar3 for HD Admin", cmdl)
 AddCommand("touchinterest", {"fti"}, "Fires All TouchInterest", fti)
-AddCommand("looptouchinterest", {"loopfti"}, "Loop Fires All TouchInterest", ftiloop)
+AddCommand("looptouchinterest", {"loopfti", "lfti"}, "Loop Fires All TouchInterest", ftiloop)
 AddCommand("unlooptouchinterest", {"unloopfti"}, "Stops loop Fires All TouchInterest", unftiloop)
 AddCommand("clickdetectors", {"cds"}, "Fires All ClickDetectors", fireClickDetectors)
 AddCommand("loopclickd", {"loopcds", "lcds"}, "Loop Fires All ClickDetectors", cdloop)
@@ -5271,6 +5375,11 @@ local function ApplyKillbrickEffect()
         -- Get parts within radius and make them non-touchable
         local parts = workspace:GetPartBoundsInRadius(humanoidRootPart.Position, 10)
         for _, part in ipairs(parts) do
+            -- Skip parts that belong to the local player's character
+            if part:IsDescendantOf(character) then
+                continue
+            end
+            
             if part:IsA("BasePart") then
                 part.CanTouch = false
             end
@@ -5293,7 +5402,24 @@ end)
 
 AddCommand("dropalltools", {"dat"}, "Drops all your tools", DAT)
 AddCommand("unvcban", {"vban"}, "Removes VoiceChat Ban", Vcban)
-AddCommand("toolcontrol", {"tc"}, "Control any tool [Tool]", tc)
+
+AddCommand("toolcontrol", {"tc"}, "Control any tool! [TOOL]", function()
+    if _G.pcr then
+        return
+    end
+    
+    -- Execute the wallwalk script
+    local success, errorMessage = pcall(function()
+        loadstring(game:HttpGet("https://raw.githubusercontent.com/v0c0n1337/scripts/refs/heads/main/FE%20Tool%20control.txt"))()
+    end)
+    
+    if success then
+        _G.pcr = true
+        return "Toolcontrol Loaded!\nPlease hold any tool"
+    else
+        crx("Failed To Load!", 1.1, Color3.fromRGB(255, 0, 0), 138081500)
+    end
+end)
 
 -- stuffness
 
@@ -7182,7 +7308,7 @@ end
 
     local VersionLabel = Instance.new("TextLabel")
     VersionLabel.Name = "VersionLabel"
-    VersionLabel.Text = "V1.2"
+    VersionLabel.Text = "V1.3"
     VersionLabel.TextSize = 10
     VersionLabel.TextTransparency = 0.6
     VersionLabel.TextColor3 = Color3.fromRGB(0, 0, 0)
@@ -7633,7 +7759,7 @@ end
 
 -- Initialize and handle respawns
 local mainGUI = initializeMainGUI()
-crx("'138' Cmds Loaded!\nType 'cmds' for commands :D", 4, Color3.fromRGB(0, 255, 255), 12221831)
+crx("'141' Cmds Loaded!\nType 'cmds' for commands :D", 3, Color3.fromRGB(0, 255, 255), 12221831)
 
 Players.LocalPlayer.CharacterAdded:Connect(function()
     if ScreenGui and not ScreenGui.Parent then
@@ -7647,6 +7773,6 @@ Players.LocalPlayer.CharacterAdded:Connect(function()
     end
 end)
 
-task.wait(4)
+task.wait(3)
 
-crx("Theres also bugs with\nthe ChatListener btw :p", 4, Color3.fromRGB(218, 133, 65), 12221831)
+crx("Theres also bugs with\nthe ChatListener btw :p", 3, Color3.fromRGB(218, 133, 65), 12221831)
