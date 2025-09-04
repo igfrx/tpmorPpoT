@@ -11528,17 +11528,155 @@ end
 
 Controller.GetGravityUp = GetGravityUp
 
+local Player = game:GetService("Players").LocalPlayer
+local PlayerGui = Player:WaitForChild("PlayerGui")
+local UserInputService = game:GetService("UserInputService")
+
+-- Create ScreenGui
+local ScreenGui = Instance.new("ScreenGui")
+ScreenGui.Name = "GravityControllerGUI"
+ScreenGui.Parent = PlayerGui
+
+-- Create Toggle Frame
+local ToggleFrame = Instance.new("Frame")
+ToggleFrame.Size = UDim2.new(0, 150, 0, 40)
+ToggleFrame.Position = UDim2.new(0.5, -75, 0, 10)
+ToggleFrame.AnchorPoint = Vector2.new(0.5, 0)
+ToggleFrame.BackgroundColor3 = Color3.fromRGB(0, 0, 0)
+ToggleFrame.BackgroundTransparency = 0.2
+ToggleFrame.BorderSizePixel = 0
+ToggleFrame.Parent = ScreenGui
+ToggleFrame.Active = true -- Make frame interactable
+
+-- Add UICorner to the frame
+local UICorner = Instance.new("UICorner")
+UICorner.CornerRadius = UDim.new(0, 8)
+UICorner.Parent = ToggleFrame
+
+-- Create Toggle Button
+local ToggleButton = Instance.new("TextButton")
+ToggleButton.Size = UDim2.new(1, 0, 1, 0)
+ToggleButton.BackgroundColor3 = Color3.fromRGB(0, 0, 0)
+ToggleButton.BackgroundTransparency = 0.2
+ToggleButton.BorderSizePixel = 0
+ToggleButton.Text = "Toggle WallWalk :/"
+ToggleButton.TextColor3 = Color3.fromRGB(255, 255, 0)
+ToggleButton.Font = Enum.Font.Arcade
+ToggleButton.TextSize = 14
+ToggleButton.Parent = ToggleFrame
+
+-- Add UICorner to the button
+local ButtonUICorner = Instance.new("UICorner")
+ButtonUICorner.CornerRadius = UDim.new(0, 8)
+ButtonUICorner.Parent = ToggleButton
+
+-- Create a separate drag handle at the top of the frame
+local DragHandle = Instance.new("Frame")
+DragHandle.Size = UDim2.new(1, 0, 0, 10)
+DragHandle.Position = UDim2.new(0, 0, 0, 0)
+DragHandle.BackgroundColor3 = Color3.fromRGB(255, 255, 0)
+DragHandle.BackgroundTransparency = 0.7
+DragHandle.BorderSizePixel = 0
+DragHandle.Parent = ToggleFrame
+
+-- Add UICorner to the top of the drag handle
+local HandleTopCorner = Instance.new("UICorner")
+HandleTopCorner.CornerRadius = UDim.new(0, 8)
+HandleTopCorner.Parent = DragHandle
+
+-- Make the drag handle interactive
+DragHandle.Active = true
+DragHandle.Selectable = true
+
+-- Improved drag functionality
+local isDragging = false
+local dragStart = nil
+local startPosition = nil
+
+local function update(input)
+    local delta = input.Position - dragStart
+    ToggleFrame.Position = UDim2.new(
+        startPosition.X.Scale, 
+        startPosition.X.Offset + delta.X,
+        startPosition.Y.Scale, 
+        startPosition.Y.Offset + delta.Y
+    )
+end
+
+-- Connect drag events to the drag handle
+DragHandle.InputBegan:Connect(function(input)
+    if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
+        isDragging = true
+        dragStart = input.Position
+        startPosition = ToggleFrame.Position
+        
+        -- Capture the input for smooth dragging
+        local connection
+        connection = input.Changed:Connect(function()
+            if input.UserInputState == Enum.UserInputState.End then
+                isDragging = false
+                connection:Disconnect()
+            end
+        end)
+    end
+end)
+
+DragHandle.InputChanged:Connect(function(input)
+    if input.UserInputType == Enum.UserInputType.MouseMovement or input.UserInputType == Enum.UserInputType.Touch then
+        -- Store the input for the update function
+        dragInput = input
+    end
+end)
+
+UserInputService.InputChanged:Connect(function(input)
+    if isDragging and (input.UserInputType == Enum.UserInputType.MouseMovement or input.UserInputType == Enum.UserInputType.Touch) then
+        update(input)
+    end
+end)
+
+-- Function to refresh player animations
+local function refreshAnimations()
+    local character = Player.Character
+    if character then
+        local humanoid = character:FindFirstChildOfClass("Humanoid")
+        if humanoid then
+            -- Store current animation tracks
+            local animator = humanoid:FindFirstChildOfClass("Animator")
+            if animator then
+                local playingTracks = animator:GetPlayingAnimationTracks()
+                -- Stop all animations
+                for _, track in ipairs(playingTracks) do
+                    track:Stop()
+                end
+                -- Reset to default state
+                humanoid:ChangeState(Enum.HumanoidStateType.Running)
+            end
+        end
+    end
+end
+
+-- Toggle functionality
+local function toggleGravity()
+    if Controller then
+        Controller:Destroy()
+        Controller = nil
+        ToggleButton.BackgroundColor3 = Color3.fromRGB(0, 0, 0)
+        ToggleButton.Text = "Toggle WallWalk :("
+    else
+        Controller = GravityController.new(Player)
+        Controller.GetGravityUp = GetGravityUp
+        ToggleButton.BackgroundColor3 = Color3.fromRGB(0, 120, 0)
+        ToggleButton.Text = "Toggle WallWalk :)"
+    end
+    refreshAnimations() -- Refresh animations on toggle
+end
+
+-- Mouse click handling
+ToggleButton.MouseButton1Click:Connect(toggleGravity)
+
+-- Keep original keybind functionality
 game:GetService("ContextActionService"):BindAction("Toggle", function(action, state, input)
-	if not (state == Enum.UserInputState.Begin) then
-		return
-	end
-	
-	if (Controller) then
-		Controller:Destroy()
-		Controller = nil
-	else
-		Controller = GravityController.new(PLAYERS.LocalPlayer)
-		Controller.GetGravityUp = GetGravityUp
-	end
+    if state == Enum.UserInputState.Begin then
+        toggleGravity()
+    end
 end, false, Enum.KeyCode.Z)
-print("end")
