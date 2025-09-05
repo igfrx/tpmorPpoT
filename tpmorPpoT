@@ -5659,10 +5659,10 @@ AddCommand("climb", {"truss"}, "Allows you to climb in the air", function()
         end
     end)
     
-    return "Climb enabled - You can now climb in the air"
+    return "Climb enabled"
 end)
 
-AddCommand("unclimb", {"truss"}, "Disables the climb command", function()
+AddCommand("unclimb", {"untruss"}, "Disables the climb command", function()
     if not Climb.Enabled then
         crx("Climb wasn't active!", 1.1, Color3.fromRGB(255, 0, 0), 138081500)
         return
