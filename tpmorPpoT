@@ -3504,6 +3504,7 @@ player.CharacterAdded:Connect(function()
 		crosshair.Visible = false
 	end
 end)
+return "FakeShiftlock Loaded"
 end
 
 local function cmdl()
@@ -4999,32 +5000,1118 @@ AddCommand("unantifling", {"unaf"}, "Vulnerable to exploiter flings", Afoff)
 AddCommand("antiafk", {"aafk"}, "Prevents idle kick", antiafkon)
 AddCommand("unantiafk", {"unaafk"}, "Stops Anti-Afk", antiafkoff)
 
-AddCommand("lowgraphics", {"lg"}, "Also reduces lag", function()
-    local lighting = game:GetService("Lighting")
-    
-    -- Disable various effects
-    lighting.GlobalShadows = false
-    lighting.FogEnd = 100000
-    lighting.Brightness = 1
-    
-    -- Reduce quality settings
-    settings().Rendering.QualityLevel = 1
-    
-    return "Low graphics mode enabled"
+
+-- Universal Artificial Gravity Commands
+AddCommandWithValue("setuagrav", "amount", {"sug"}, "Sets unanchored gravity", function(value)
+    local gravityValue = tonumber(value)
+    if not gravityValue then
+        crx("Invalid gravity value!", 1.1, Color3.fromRGB(255, 0, 0), 138081500)
+        return
+    end
+
+    sethiddenproperty(game.Players.LocalPlayer, "SimulationRadius", 5000)
+    sethiddenproperty(game.Players.LocalPlayer, "MaxSimulationRadius", 5000)
+
+    if _G.CustomGravityForces then
+        for part, force in pairs(_G.CustomGravityForces) do
+            if part and part.Parent then force:Destroy() end
+        end
+    end
+
+    _G.CustomGravityForces = {}
+    local changed, partsProcessed = 0, 0
+    local maxPartsPerFrame = 100
+    local partsToProcess = {}
+
+    for _, part in ipairs(workspace:GetDescendants()) do
+        if part:IsA("BasePart") and not part.Anchored then
+            table.insert(partsToProcess, part)
+        end
+    end
+
+    local connection
+    connection = game:GetService("RunService").Heartbeat:Connect(function()
+        local processed = 0
+        while processed < maxPartsPerFrame and partsProcessed < #partsToProcess do
+            partsProcessed = partsProcessed + 1
+            local part = partsToProcess[partsProcessed]
+
+            for _, child in ipairs(part:GetChildren()) do
+                if child:IsA("BodyForce") and child.Name == "CustomGravityForce" then
+                    child:Destroy()
+                end
+            end
+
+            local bodyForce = Instance.new("BodyForce")
+            bodyForce.Name = "CustomGravityForce"
+
+            if gravityValue == 0 then
+                bodyForce.Force = Vector3.new(0, part:GetMass() * workspace.Gravity, 0)
+                part.Velocity = Vector3.new(0, 0, 0)
+                part.RotationalVelocity = Vector3.new(0, 0, 0)
+            else
+                bodyForce.Force = Vector3.new(0, part:GetMass() * workspace.Gravity * (gravityValue - 1), 0)
+            end
+
+            bodyForce.Parent = part
+            _G.CustomGravityForces[part] = bodyForce
+            changed = changed + 1
+            processed = processed + 1
+        end
+
+        if partsProcessed >= #partsToProcess then
+            connection:Disconnect()
+            return string.format("Applied gravity to %d parts (Multiplier: %.2f)", changed, gravityValue)
+        end
+    end)
+
+    return string.format("Processing %d parts with gravity multiplier %.2f...", #partsToProcess, gravityValue)
 end)
 
-AddCommand("highgraphics", {"hg"}, "Increases graphics quality", function()
-    local lighting = game:GetService("Lighting")
+AddCommand("resetuagrav", {"rsug"}, "Resets unanchored Gravity", function()
+    if not _G.CustomGravityForces then
+        return "No custom gravity forces to remove"
+    end
+
+    local restored, processed = 0, 0
+    local maxPerFrame, totalToProcess = 100, 0
+    for _ in pairs(_G.CustomGravityForces) do totalToProcess = totalToProcess + 1 end
+
+    local connection
+    connection = game:GetService("RunService").Heartbeat:Connect(function()
+        local batch = 0
+        for part, force in pairs(_G.CustomGravityForces) do
+            if part and part.Parent then force:Destroy() end
+            _G.CustomGravityForces[part] = nil
+            restored = restored + 1
+            processed = processed + 1
+            batch = batch + 1
+
+            if batch >= maxPerFrame then break end
+        end
+
+        if processed >= totalToProcess then
+            connection:Disconnect()
+            _G.CustomGravityForces = nil
+            return string.format("Removed custom gravity from %d parts", restored)
+        end
+    end)
+
+    return string.format("Resetting gravity forces... (%d parts)", totalToProcess)
+end)
+
+-- AntiTrip System (FIXED)
+local AntiTripSystem = {
+    Enabled = false,
+    Connections = {}
+}
+
+AddCommand("antitrip", {"at"}, "Prevents sitting and tripping", function()
+    if AntiTripSystem.Enabled then
+        crx("AntiTrip is already enabled!", 1.1, Color3.fromRGB(255, 0, 0), 138081500)
+        return
+    end
     
-    -- Enable various effects
-    lighting.GlobalShadows = true
-    lighting.FogEnd = 1000000
-    lighting.Brightness = 3
+    AntiTripSystem.Enabled = true
+    local player = game.Players.LocalPlayer
     
-    -- Increase quality settings
-    settings().Rendering.QualityLevel = 10
+    local function monitorHumanoid(humanoid)
+        if AntiTripSystem.Connections.heartbeat then
+            AntiTripSystem.Connections.heartbeat:Disconnect()
+        end
+        
+        AntiTripSystem.Connections.heartbeat = game:GetService("RunService").Heartbeat:Connect(function()
+            if not AntiTripSystem.Enabled or not humanoid or not humanoid.Parent then
+                AntiTripSystem.Connections.heartbeat:Disconnect()
+                return
+            end
+            
+            local state = humanoid:GetState()
+            if state == Enum.HumanoidStateType.Seated or
+               state == Enum.HumanoidStateType.FallingDown or
+               state == Enum.HumanoidStateType.Ragdoll then
+                humanoid:ChangeState(Enum.HumanoidStateType.GettingUp)
+            end
+            
+            if humanoid.Sit then
+                humanoid.Sit = false
+            end
+        end)
+    end
     
-    return "High graphics mode enabled"
+    if player.Character then
+        local humanoid = player.Character:FindFirstChildOfClass("Humanoid")
+        if humanoid then
+            monitorHumanoid(humanoid)
+        end
+    end
+    
+    if AntiTripSystem.Connections.characterAdded then
+        AntiTripSystem.Connections.characterAdded:Disconnect()
+    end
+    
+    AntiTripSystem.Connections.characterAdded = player.CharacterAdded:Connect(function(character)
+        if AntiTripSystem.Enabled then
+            local humanoid = character:WaitForChild("Humanoid")
+            monitorHumanoid(humanoid)
+        end
+    end)
+    
+    return "AntiTrip enabled!"
+end)
+
+AddCommand("unantitrip", {"unat"}, "Allows sitting and tripping again", function()
+    if not AntiTripSystem.Enabled then
+        crx("AntiTrip wasn't active!", 1.1, Color3.fromRGB(255, 0, 0), 138081500)
+        return
+    end
+    
+    AntiTripSystem.Enabled = false
+    
+    for _, connection in pairs(AntiTripSystem.Connections) do
+        if connection then
+            connection:Disconnect()
+        end
+    end
+    AntiTripSystem.Connections = {}
+    
+    return "AntiTrip disabled"
+end)
+
+local AutoRejoin = {
+    Enabled = false,
+    Connection = nil
+}
+
+AddCommand("autorejoin", {"autorj", "arj"}, "Automatically rejoins if you get kicked", function()
+    if AutoRejoin.Enabled then
+        crx("AutoRejoin is already enabled!", 1.1, Color3.fromRGB(255, 0, 0), 138081500)
+        return
+    end
+    
+    AutoRejoin.Enabled = true
+    
+    -- Create connection to detect kick messages
+    if AutoRejoin.Connection then
+        AutoRejoin.Connection:Disconnect()
+    end
+    
+    AutoRejoin.Connection = game:GetService("GuiService").ErrorMessageChanged:Connect(function()
+        if AutoRejoin.Enabled then
+            -- Rejoin the same server
+            game:GetService("TeleportService"):TeleportToPlaceInstance(game.PlaceId, game.JobId)
+        end
+    end)
+    
+    return "AutoRejoin enabled"
+end)
+
+AddCommand("unautorejoin", {"unautorj", "unarj"}, "Disables AutoRejoin", function()
+    if not AutoRejoin.Enabled then
+        crx("AutoRejoin wasn't active!", 1.1, Color3.fromRGB(255, 0, 0), 138081500)
+        return
+    end
+    
+    AutoRejoin.Enabled = false
+    
+    -- Disconnect the connection
+    if AutoRejoin.Connection then
+        AutoRejoin.Connection:Disconnect()
+        AutoRejoin.Connection = nil
+    end
+    
+    return "AutoRejoin disabled"
+end)
+
+local AutoRespawn = {
+    Enabled = false,
+    Connections = {},
+    DeathPosition = nil
+}
+
+AddCommand("autorespawn", {"autore"}, "Automatically teleports you back to your death location", function()
+    if AutoRespawn.Enabled then
+        crx("AutoRespawn is already enabled!", 1.1, Color3.fromRGB(255, 0, 0), 138081500)
+        return
+    end
+    
+    AutoRespawn.Enabled = true
+    local player = game.Players.LocalPlayer
+    
+    -- Function to handle respawn teleport
+    local function setupRespawn(character)
+        local humanoid = character:WaitForChild("Humanoid")
+        local rootPart = character:WaitForChild("HumanoidRootPart")
+        
+        -- Store death position
+        if AutoRespawn.Connections.died then
+            AutoRespawn.Connections.died:Disconnect()
+        end
+        
+        AutoRespawn.Connections.died = humanoid.Died:Connect(function()
+            if AutoRespawn.Enabled then
+                AutoRespawn.DeathPosition = rootPart.CFrame
+            end
+        end)
+    end
+    
+    -- Function to teleport to death position
+    local function teleportToDeathPosition(newCharacter)
+        if AutoRespawn.Enabled and AutoRespawn.DeathPosition then
+            local newRoot = newCharacter:WaitForChild("HumanoidRootPart")
+            newRoot.CFrame = AutoRespawn.DeathPosition
+            AutoRespawn.DeathPosition = nil -- Clear after use
+        end
+    end
+    
+    -- Setup current character
+    if player.Character then
+        setupRespawn(player.Character)
+    end
+    
+    -- Setup character added connection
+    if AutoRespawn.Connections.characterAdded then
+        AutoRespawn.Connections.characterAdded:Disconnect()
+    end
+    
+    AutoRespawn.Connections.characterAdded = player.CharacterAdded:Connect(function(character)
+        if AutoRespawn.Enabled then
+            -- Wait for character to fully load
+            character:WaitForChild("Humanoid")
+            character:WaitForChild("HumanoidRootPart")
+            
+            -- Teleport to death position if available
+            teleportToDeathPosition(character)
+            
+            -- Setup respawn for the new character
+            setupRespawn(character)
+        end
+    end)
+    
+    return "AutoRespawn enabled"
+end)
+
+AddCommand("unautorespawn", {"unautore"}, "Disables AutoRespawn", function()
+    if not AutoRespawn.Enabled then
+        crx("AutoRespawn wasn't active!", 1.1, Color3.fromRGB(255, 0, 0), 138081500)
+        return
+    end
+    
+    AutoRespawn.Enabled = false
+    AutoRespawn.DeathPosition = nil
+    
+    -- Disconnect all connections
+    for _, connection in pairs(AutoRespawn.Connections) do
+        if connection then
+            connection:Disconnect()
+        end
+    end
+    AutoRespawn.Connections = {}
+    
+    return "AutoRespawn disabled"
+end)
+
+-- FPS Commands
+AddCommandWithValue("setfpscap", "value", {"sfc"}, "Sets the maximum FPS limit", function(value)
+    local fps = tonumber(value)
+    if not fps or fps <= 0 then
+        crx("Invalid FPS value! Usage: setfpscap [number]", 1.1, Color3.fromRGB(255, 0, 0), 138081500)
+        return
+    end
+    
+    if setfpscap then
+        setfpscap(fps)
+        return "Set FPS cap to " .. fps
+    else
+        crx("Unsupported Executor - Missing setfpscap function", 1.1, Color3.fromRGB(255, 0, 0), 138081500)
+        return
+    end
+end)
+
+AddCommand("unlockfps", {"unlf"}, "Unlocks the FPS limit (1000)", function()
+    if setfpscap then
+        setfpscap(1000)
+        return "FPS unlocked to 1000"
+    else
+        crx("Unsupported Executor - Missing setfpscap function", 1.1, Color3.fromRGB(255, 0, 0), 138081500)
+        return
+    end
+end)
+
+-- AntiKick System
+local AntiKick = {
+    Enabled = false,
+    OriginalFunctions = {}
+}
+
+AddCommand("antikick", {"ak"}, "Prevents (client) scripts from kicking you", function()
+    if AntiKick.Enabled then
+        crx("AntiKick is already enabled!", 1.1, Color3.fromRGB(255, 0, 0), 138081500)
+        return
+    end
+    
+    AntiKick.Enabled = true
+    
+    if hookfunction then
+        -- Hook LocalPlayer.Kick methods
+        local kickMethods = {game.Players.LocalPlayer.Kick, game.Players.LocalPlayer.kick}
+        
+        for _, kickFunc in ipairs(kickMethods) do
+            if type(kickFunc) == "function" then
+                AntiKick.OriginalFunctions[kickFunc] = hookfunction(kickFunc, function(...)
+                    if not AntiKick.Enabled then
+                        return AntiKick.OriginalFunctions[kickFunc](...)
+                    end
+                    -- Block the kick if AntiKick is enabled
+                    return nil
+                end)
+            end
+        end
+        
+        return "AntiKick enabled"
+    else
+        crx("Unsupported Executor - Missing hookfunction", 1.1, Color3.fromRGB(255, 0, 0), 138081500)
+        return
+    end
+end)
+
+AddCommand("unantikick", {"unak"}, "Disables AntiKick", function()
+    if not AntiKick.Enabled then
+        crx("AntiKick wasn't active!", 1.1, Color3.fromRGB(255, 0, 0), 138081500)
+        return
+    end
+    
+    AntiKick.Enabled = false
+    
+    -- Restore original functions
+    if hookfunction then
+        for func, original in pairs(AntiKick.OriginalFunctions) do
+            if type(func) == "function" and type(original) == "function" then
+                hookfunction(func, original)
+            end
+        end
+        AntiKick.OriginalFunctions = {}
+    end
+    
+    return "AntiKick disabled"
+end)
+
+-- AntiTeleport System
+local AntiTeleport = {
+    Enabled = false,
+    OriginalFunctions = {}
+}
+
+AddCommand("antiteleport", {"ant"}, "Prevents you from getting teleported to other games", function()
+    if AntiTeleport.Enabled then
+        crx("AntiTeleport is already enabled!", 1.1, Color3.fromRGB(255, 0, 0), 138081500)
+        return
+    end
+    
+    AntiTeleport.Enabled = true
+    
+    if hookfunction then
+        local ts = game:GetService("TeleportService")
+        local http = game:GetService("HttpService")
+        
+        -- Hook teleport functions
+        local teleportFunctions = {
+            ts.TeleportToPlaceInstance,
+            ts.TeleportToPrivateServer,
+            ts.Teleport,
+            ts.TeleportToPlace,
+            ts.TeleportToGame
+        }
+        
+        -- Also check HttpService for teleport methods
+        if http.TeleportToPlaceInstance then
+            table.insert(teleportFunctions, http.TeleportToPlaceInstance)
+        end
+        
+        for _, teleportFunc in ipairs(teleportFunctions) do
+            if type(teleportFunc) == "function" then
+                AntiTeleport.OriginalFunctions[teleportFunc] = hookfunction(teleportFunc, function(...)
+                    if not AntiTeleport.Enabled then
+                        return AntiTeleport.OriginalFunctions[teleportFunc](...)
+                    end
+                    -- Block the teleport if AntiTeleport is enabled
+                    return nil
+                end)
+            end
+        end
+        
+        return "AntiTeleport enabled"
+    else
+        crx("Unsupported Executor - Missing hookfunction", 1.1, Color3.fromRGB(255, 0, 0), 138081500)
+        return
+    end
+end)
+
+AddCommand("unantiteleport", {"unant"}, "Disables AntiTeleport", function()
+    if not AntiTeleport.Enabled then
+        crx("AntiTeleport wasn't active!", 1.1, Color3.fromRGB(255, 0, 0), 138081500)
+        return
+    end
+    
+    AntiTeleport.Enabled = false
+    
+    -- Restore original functions
+    if hookfunction then
+        for func, original in pairs(AntiTeleport.OriginalFunctions) do
+            if type(func) == "function" and type(original) == "function" then
+                hookfunction(func, original)
+            end
+        end
+        AntiTeleport.OriginalFunctions = {}
+    end
+    
+    return "AntiTeleport disabled"
+end)
+
+-- Save/Load Tools
+AddCommand("savetools", {"st"}, "Drops all your tools in the sky, type LoadTools to get them back", function()
+    local player = game.Players.LocalPlayer
+    local character = player.Character
+    local backpack = player:FindFirstChild("Backpack")
+    
+    if not character then
+        crx("Character not found!", 1.1, Color3.fromRGB(255, 0, 0), 138081500)
+        return
+    end
+    
+    local rootPart = character:FindFirstChild("HumanoidRootPart")
+    if not rootPart then
+        crx("HumanoidRootPart not found!", 1.1, Color3.fromRGB(255, 0, 0), 138081500)
+        return
+    end
+    
+    local oldPosition = rootPart.CFrame
+    rootPart.CFrame = CFrame.new(0, 9e9, 0)
+    
+    task.wait(1)
+    
+    -- Drop tools from backpack
+    if backpack then
+        for _, tool in ipairs(backpack:GetChildren()) do
+            if tool:IsA("Tool") and tool.CanBeDropped then
+                tool.Parent = character
+                tool.Parent = workspace
+            end
+        end
+    end
+    
+    -- Drop tools from character
+    for _, tool in ipairs(character:GetChildren()) do
+        if tool:IsA("Tool") and tool.CanBeDropped then
+            tool.Parent = workspace
+        end
+    end
+    
+    task.wait(0.5)
+    rootPart.CFrame = oldPosition
+    
+    return "Tools saved in the sky - Use loadtools to retrieve them"
+end)
+
+AddCommand("loadtools", {"lt"}, "Receives all the tools you've saved", function()
+    local player = game.Players.LocalPlayer
+    local character = player.Character
+    local humanoid = character and character:FindFirstChildOfClass("Humanoid")
+    
+    if not humanoid then
+        crx("Humanoid not found!", 1.1, Color3.fromRGB(255, 0, 0), 138081500)
+        return
+    end
+    
+    local toolsCollected = 0
+    for _, tool in ipairs(workspace:GetChildren()) do
+        if tool:IsA("Tool") then
+            humanoid:EquipTool(tool)
+            toolsCollected = toolsCollected + 1
+        end
+    end
+    
+    return "Collected " .. toolsCollected .. " tools from workspace"
+end)
+
+-- AirWalk System
+local AirWalk = {
+    Enabled = false,
+    AirPart = nil,
+    Connection = nil
+}
+
+AddCommand("airwalk", {"aw"}, "Allows you to walk on air; jump to go up", function()
+    if AirWalk.Enabled then
+        crx("AirWalk is already enabled!", 1.1, Color3.fromRGB(255, 0, 0), 138081500)
+        return
+    end
+    
+    AirWalk.Enabled = true
+    local character = game.Players.LocalPlayer.Character
+    if not character then
+        crx("Character not found!", 1.1, Color3.fromRGB(255, 0, 0), 138081500)
+        return
+    end
+    
+    local rootPart = character:FindFirstChild("HumanoidRootPart")
+    if not rootPart then
+        crx("HumanoidRootPart not found!", 1.1, Color3.fromRGB(255, 0, 0), 138081500)
+        return
+    end
+    
+    -- Create air platform
+    AirWalk.AirPart = Instance.new("Part")
+    AirWalk.AirPart.Transparency = 1
+    AirWalk.AirPart.Size = Vector3.new(7, 2, 3)
+    AirWalk.AirPart.Parent = workspace
+    AirWalk.AirPart.CanCollide = true
+    AirWalk.AirPart.Anchored = true
+    AirWalk.AirPart.Name = "AirWalkPlatform_" .. tostring(math.random(10000, 99999))
+    
+    -- Update platform position
+    if AirWalk.Connection then
+        AirWalk.Connection:Disconnect()
+    end
+    
+    AirWalk.Connection = game:GetService("RunService").Heartbeat:Connect(function()
+        if AirWalk.Enabled and AirWalk.AirPart and rootPart and rootPart.Parent then
+            AirWalk.AirPart.CFrame = rootPart.CFrame + Vector3.new(0, -4, 0)
+        else
+            AirWalk.Connection:Disconnect()
+        end
+    end)
+    
+    return "AirWalk enabled"
+end)
+
+AddCommand("unairwalk", {"unaw"}, "Disables the airwalk command", function()
+    if not AirWalk.Enabled then
+        crx("AirWalk wasn't active!", 1.1, Color3.fromRGB(255, 0, 0), 138081500)
+        return
+    end
+    
+    AirWalk.Enabled = false
+    
+    if AirWalk.AirPart then
+        AirWalk.AirPart:Destroy()
+        AirWalk.AirPart = nil
+    end
+    
+    if AirWalk.Connection then
+        AirWalk.Connection:Disconnect()
+        AirWalk.Connection = nil
+    end
+    
+    return "AirWalk disabled"
+end)
+
+local Climb = {
+    Enabled = false,
+    ClimbPart = nil,
+    Connection = nil
+}
+
+AddCommand("climb", {"truss"}, "Allows you to climb in the air", function()
+    if Climb.Enabled then
+        crx("Climb is already enabled!", 1.1, Color3.fromRGB(255, 0, 0), 138081500)
+        return
+    end
+    
+    Climb.Enabled = true
+    local player = game.Players.LocalPlayer
+    local character = player.Character
+    if not character then
+        crx("Character not found!", 1.1, Color3.fromRGB(255, 0, 0), 138081500)
+        return
+    end
+    
+    local rootPart = character:FindFirstChild("HumanoidRootPart")
+    if not rootPart then
+        crx("HumanoidRootPart not found!", 1.1, Color3.fromRGB(255, 0, 0), 138081500)
+        return
+    end
+    
+    -- Remove old climb part if exists
+    if Climb.ClimbPart then
+        Climb.ClimbPart:Destroy()
+        Climb.ClimbPart = nil
+    end
+    
+    -- Create new climb part
+    Climb.ClimbPart = Instance.new("TrussPart")
+    Climb.ClimbPart.Transparency = 1
+    Climb.ClimbPart.Size = Vector3.new(2, 10, 2)
+    Climb.ClimbPart.Parent = workspace
+    Climb.ClimbPart.CanCollide = true
+    Climb.ClimbPart.Name = "ClimbPart_" .. tostring(math.random(10000, 99999))
+    
+    -- Update climb part position
+    if Climb.Connection then
+        Climb.Connection:Disconnect()
+    end
+    
+    Climb.Connection = game:GetService("RunService").Heartbeat:Connect(function()
+        if Climb.Enabled and Climb.ClimbPart and rootPart and rootPart.Parent then
+            Climb.ClimbPart.CFrame = rootPart.CFrame * CFrame.new(0, 0, -1.5)
+        else
+            Climb.Connection:Disconnect()
+        end
+    end)
+    
+    return "Climb enabled - You can now climb in the air"
+end)
+
+AddCommand("unclimb", {"truss"}, "Disables the climb command", function()
+    if not Climb.Enabled then
+        crx("Climb wasn't active!", 1.1, Color3.fromRGB(255, 0, 0), 138081500)
+        return
+    end
+    
+    Climb.Enabled = false
+    
+    if Climb.ClimbPart then
+        Climb.ClimbPart:Destroy()
+        Climb.ClimbPart = nil
+    end
+    
+    if Climb.Connection then
+        Climb.Connection:Disconnect()
+        Climb.Connection = nil
+    end
+    
+    return "Climb disabled"
+end)
+
+-- Auto cleanup
+game.Players.LocalPlayer.CharacterRemoving:Connect(function()
+    if Climb.ClimbPart then
+        Climb.ClimbPart:Destroy()
+        Climb.ClimbPart = nil
+    end
+    Climb.Enabled = false
+    if Climb.Connection then
+        Climb.Connection:Disconnect()
+        Climb.Connection = nil
+    end
+end)
+
+-- Show/Hide Invisible Parts
+local ShowHide = {
+    HiddenParts = {},
+    Active = false
+}
+
+AddCommand("showwalls", {"swalls"}, "Reveals all invisible parts ingame", function()
+    if ShowHide.Active then
+        crx("Show is already active!", 1.1, Color3.fromRGB(255, 0, 0), 138081500)
+        return
+    end
+    
+    ShowHide.Active = true
+    ShowHide.HiddenParts = {}
+    local revealed = 0
+    
+    for _, part in ipairs(workspace:GetDescendants()) do
+        if part:IsA("BasePart") and part.Transparency == 1 and part.Name ~= "HumanoidRootPart" then
+            table.insert(ShowHide.HiddenParts, part)
+            part.Transparency = 0
+            revealed = revealed + 1
+        end
+    end
+    
+    return "Showing " .. revealed .. " invisible walls"
+end)
+
+AddCommand("hidewalls", {"hwalls"}, "Hides all previously shown parts", function()
+    if not ShowHide.Active then
+        crx("Show wasn't active!", 1.1, Color3.fromRGB(255, 0, 0), 138081500)
+        return
+    end
+    
+    ShowHide.Active = false
+    local hidden = 0
+    
+    for _, part in ipairs(ShowHide.HiddenParts) do
+        if part and part.Parent then
+            part.Transparency = 1
+            hidden = hidden + 1
+        end
+    end
+    
+    ShowHide.HiddenParts = {}
+    return "Hidden " .. hidden .. " previously shown walls"
+end)
+
+-- Set Spawn Location
+local SpawnSystem = {
+    Enabled = false,
+    SpawnLocation = nil,
+    Connection = nil
+}
+
+AddCommand("setspawn", {"ss"}, "Sets your new spawn location", function()
+    local character = game.Players.LocalPlayer.Character
+    if not character then
+        crx("Character not found!", 1.1, Color3.fromRGB(255, 0, 0), 138081500)
+        return
+    end
+    
+    local rootPart = character:FindFirstChild("HumanoidRootPart")
+    if not rootPart then
+        crx("HumanoidRootPart not found!", 1.1, Color3.fromRGB(255, 0, 0), 138081500)
+        return
+    end
+    
+    SpawnSystem.Enabled = true
+    SpawnSystem.SpawnLocation = rootPart.CFrame
+    
+    -- Disconnect previous connection
+    if SpawnSystem.Connection then
+        SpawnSystem.Connection:Disconnect()
+    end
+    
+    -- Connect to character respawns
+    SpawnSystem.Connection = game.Players.LocalPlayer.CharacterAdded:Connect(function(newCharacter)
+        if SpawnSystem.Enabled and SpawnSystem.SpawnLocation then
+            local newRoot = newCharacter:WaitForChild("HumanoidRootPart")
+            newRoot.CFrame = SpawnSystem.SpawnLocation
+        end
+    end)
+    
+    return "Spawnpoint set at current location"
+end)
+
+AddCommand("unsetspawn", {"unss"}, "Deletes the spawn location you've saved", function()
+    if not SpawnSystem.Enabled then
+        crx("No spawnpoint was set!", 1.1, Color3.fromRGB(255, 0, 0), 138081500)
+        return
+    end
+    
+    SpawnSystem.Enabled = false
+    SpawnSystem.SpawnLocation = nil
+    
+    if SpawnSystem.Connection then
+        SpawnSystem.Connection:Disconnect()
+        SpawnSystem.Connection = nil
+    end
+    
+    return "Spawnpoint removed"
+end)
+
+local FreezeWalk = {
+    Enabled = false,
+    OriginalParts = {},
+    Clones = {}
+}
+
+AddCommand("freezewalk", {"frwalk"}, "Freezes your character server-side but not client-side", function()
+    if FreezeWalk.Enabled then
+        crx("FreezeWalk is already enabled!", 1.1, Color3.fromRGB(255, 0, 0), 138081500)
+        return
+    end
+    
+    FreezeWalk.Enabled = true
+    local player = game.Players.LocalPlayer
+    local character = player.Character
+    if not character then
+        crx("Character not found!", 1.1, Color3.fromRGB(255, 0, 0), 138081500)
+        return
+    end
+    
+    local humanoid = character:FindFirstChildOfClass("Humanoid")
+    if not humanoid then
+        crx("Humanoid not found!", 1.1, Color3.fromRGB(255, 0, 0), 138081500)
+        return
+    end
+    
+    -- Store original parts and create clones
+    if humanoid.RigType == Enum.HumanoidRigType.R6 then
+        -- R6 Character (RootPart based)
+        local rootPart = character:FindFirstChild("HumanoidRootPart")
+        if rootPart then
+            FreezeWalk.OriginalParts[rootPart] = rootPart:Clone()
+            local clone = rootPart:Clone()
+            clone.Parent = character
+            rootPart:Destroy()
+            FreezeWalk.Clones[rootPart] = clone
+        end
+    else
+        -- R15 Character (LowerTorso based)
+        local lowerTorso = character:FindFirstChild("LowerTorso")
+        if lowerTorso then
+            -- Store original state
+            FreezeWalk.OriginalParts[lowerTorso] = {
+                Anchored = lowerTorso.Anchored,
+                Root = lowerTorso:FindFirstChild("Root")
+            }
+            
+            -- Anchor and remove root
+            lowerTorso.Anchored = true
+            local root = lowerTorso:FindFirstChild("Root")
+            if root then
+                root:Destroy()
+            end
+        end
+    end
+    
+    return "FreezeWalk enabledl"
+end)
+
+AddCommand("unfreezewalk", {"unfrwalk"}, "Disables FreezeWalk and restores normal movement", function()
+    if not FreezeWalk.Enabled then
+        crx("FreezeWalk wasn't active!", 1.1, Color3.fromRGB(255, 0, 0), 138081500)
+        return
+    end
+    
+    FreezeWalk.Enabled = false
+    local player = game.Players.LocalPlayer
+    local character = player.Character
+    
+    if character then
+        local humanoid = character:FindFirstChildOfClass("Humanoid")
+        if humanoid then
+            if humanoid.RigType == Enum.HumanoidRigType.R6 then
+                -- Restore R6 character
+                for originalPart, clone in pairs(FreezeWalk.Clones) do
+                    if clone and clone.Parent then
+                        clone:Destroy()
+                    end
+                    if originalPart and not originalPart.Parent then
+                        originalPart.Parent = character
+                    end
+                end
+            else
+                -- Restore R15 character
+                local lowerTorso = character:FindFirstChild("LowerTorso")
+                if lowerTorso then
+                    -- Restore anchored state
+                    lowerTorso.Anchored = FreezeWalk.OriginalParts[lowerTorso] and 
+                                         FreezeWalk.OriginalParts[lowerTorso].Anchored or false
+                    
+                    -- Restore root if it was removed
+                    if FreezeWalk.OriginalParts[lowerTorso] and 
+                       FreezeWalk.OriginalParts[lowerTorso].Root and 
+                       not lowerTorso:FindFirstChild("Root") then
+                        local root = Instance.new("Motor6D")
+                        root.Name = "Root"
+                        root.Part0 = lowerTorso
+                        root.Part1 = character:FindFirstChild("UpperTorso")
+                        root.C0 = CFrame.new(0, 0, 0)
+                        root.C1 = CFrame.new(0, 0, 0)
+                        root.Parent = lowerTorso
+                    end
+                end
+            end
+        end
+    end
+    
+    -- Clear stored data
+    FreezeWalk.OriginalParts = {}
+    FreezeWalk.Clones = {}
+    
+    return "FreezeWalk disabled - Normal movement restored"
+end)
+
+-- Auto cleanup on character respawn
+game.Players.LocalPlayer.CharacterAdded:Connect(function(character)
+    if FreezeWalk.Enabled then
+        FreezeWalk.Enabled = false
+        FreezeWalk.OriginalParts = {}
+        FreezeWalk.Clones = {}
+    end
+end)
+
+
+local Spazz = {
+    Enabled = false,
+    BodyVelocity = nil
+}
+
+AddCommand("spazz", {"sillyspin"}, "silly spin :p", function()
+    if Spazz.Enabled then
+        crx("Spazz is already enabled!", 1.1, Color3.fromRGB(255, 0, 0), 138081500)
+        return
+    end
+    
+    Spazz.Enabled = true
+    local player = game.Players.LocalPlayer
+    local character = player.Character
+    if not character then
+        crx("Character not found!", 1.1, Color3.fromRGB(255, 0, 0), 138081500)
+        return
+    end
+    
+    local rootPart = character:FindFirstChild("HumanoidRootPart")
+    if not rootPart then
+        crx("HumanoidRootPart not found!", 1.1, Color3.fromRGB(255, 0, 0), 138081500)
+        return
+    end
+    
+    -- Remove existing BodyVelocity if any
+    if Spazz.BodyVelocity then
+        Spazz.BodyVelocity:Destroy()
+        Spazz.BodyVelocity = nil
+    end
+    
+    -- Apply initial rotation
+    rootPart.CFrame = rootPart.CFrame * CFrame.Angles(-0.3, 0, 0)
+    
+    -- Create BodyAngularVelocity for spinning
+    Spazz.BodyVelocity = Instance.new("BodyAngularVelocity")
+    Spazz.BodyVelocity.P = 200000
+    Spazz.BodyVelocity.AngularVelocity = Vector3.new(0, 15, 0)
+    Spazz.BodyVelocity.MaxTorque = Vector3.new(200000, 200000, 200000)
+    Spazz.BodyVelocity.Parent = rootPart
+    
+    return "Spazz enabled"
+end)
+
+AddCommand("unspazz", {"sillyspin"}, "Disables Spazz", function()
+    if not Spazz.Enabled then
+        crx("Spazz wasn't active!", 1.1, Color3.fromRGB(255, 0, 0), 138081500)
+        return
+    end
+    
+    Spazz.Enabled = false
+    
+    -- Remove BodyVelocity
+    if Spazz.BodyVelocity then
+        Spazz.BodyVelocity:Destroy()
+        Spazz.BodyVelocity = nil
+    end
+    
+    return "Spazz disabled"
+end)
+
+-- Auto cleanup on character respawn
+game.Players.LocalPlayer.CharacterAdded:Connect(function(character)
+    if Spazz.Enabled then
+        Spazz.Enabled = false
+        if Spazz.BodyVelocity then
+            Spazz.BodyVelocity:Destroy()
+            Spazz.BodyVelocity = nil
+        end
+    end
+end)
+
+-- Auto cleanup when character is destroyed
+game.Players.LocalPlayer.CharacterRemoving:Connect(function()
+    if Spazz.BodyVelocity then
+        Spazz.BodyVelocity:Destroy()
+        Spazz.BodyVelocity = nil
+    end
+    Spazz.Enabled = false
+end)
+
+-- NPC Control Commands
+AddCommand("killnpcs", {"knpc"}, "Kills all NPCs", function()
+    local killed = 0
+    local players = game:GetService("Players")
+    
+    -- Get all NPCs (non-player characters with humanoids)
+    for _, npc in ipairs(workspace:GetDescendants()) do
+        if npc:FindFirstChildOfClass("Humanoid") and not players:GetPlayerFromCharacter(npc) then
+            local humanoid = npc:FindFirstChildOfClass("Humanoid")
+            humanoid.Health = 0
+            killed = killed + 1
+        end
+    end
+    
+    return "Killed " .. killed .. " NPCs"
+end)
+
+AddCommand("flingnpcs", {"fnpc"}, "Flings all NPCs", function()
+    local flung = 0
+    local players = game:GetService("Players")
+    
+    for _, npc in ipairs(workspace:GetDescendants()) do
+        if npc:FindFirstChildOfClass("Humanoid") and not players:GetPlayerFromCharacter(npc) then
+            local humanoid = npc:FindFirstChildOfClass("Humanoid")
+            humanoid.HipHeight = 1024
+            flung = flung + 1
+        end
+    end
+    
+    return "Flung " .. flung .. " NPCs"
+end)
+
+AddCommand("voidnpcs", {"vnpc"}, "Voids all NPCs", function()
+    local voided = 0
+    local players = game:GetService("Players")
+    
+    for _, npc in ipairs(workspace:GetDescendants()) do
+        if npc:FindFirstChildOfClass("Humanoid") and not players:GetPlayerFromCharacter(npc) then
+            local humanoid = npc:FindFirstChildOfClass("Humanoid")
+            humanoid.HipHeight = -1024
+            voided = voided + 1
+        end
+    end
+    
+    return "Voided " .. voided .. " NPCs"
+end)
+
+AddCommand("bringnpcs", {"bnpc"}, "Brings all NPCs to you", function()
+    local player = game.Players.LocalPlayer
+    local character = player.Character
+    if not character then
+        crx("Character not found!", 1.1, Color3.fromRGB(255, 0, 0), 138081500)
+        return
+    end
+    
+    local rootPart = character:FindFirstChild("HumanoidRootPart")
+    if not rootPart then
+        crx("HumanoidRootPart not found!", 1.1, Color3.fromRGB(255, 0, 0), 138081500)
+        return
+    end
+    
+    local brought = 0
+    local players = game:GetService("Players")
+    
+    for _, npc in ipairs(workspace:GetDescendants()) do
+        if npc:FindFirstChildOfClass("Humanoid") and not players:GetPlayerFromCharacter(npc) then
+            local root = npc:FindFirstChild("HumanoidRootPart") or npc:FindFirstChild("Torso") or npc:FindFirstChild("UpperTorso")
+            if root then
+                root.CFrame = rootPart.CFrame
+                brought = brought + 1
+            end
+        end
+    end
+    
+    return "Brought " .. brought .. " NPCs to your position"
+end)
+
+-- Advanced NPC Control with better detection
+AddCommand("freezenpcs", {"frnpc"}, "Freezes all NPCs in place", function()
+    local frozen = 0
+    local players = game:GetService("Players")
+    
+    for _, npc in ipairs(workspace:GetDescendants()) do
+        if npc:FindFirstChildOfClass("Humanoid") and not players:GetPlayerFromCharacter(npc) then
+            for _, part in ipairs(npc:GetDescendants()) do
+                if part:IsA("BasePart") then
+                    part.Anchored = true
+                end
+            end
+            frozen = frozen + 1
+        end
+    end
+    
+    return "Froze " .. frozen .. " NPCs"
+end)
+
+AddCommand("unnpcs", {"unpc"}, "Removes all NPCs from the game", function()
+    local removed = 0
+    local players = game:GetService("Players")
+    
+    for _, npc in ipairs(workspace:GetDescendants()) do
+        if npc:FindFirstChildOfClass("Humanoid") and not players:GetPlayerFromCharacter(npc) then
+            npc:Destroy()
+            removed = removed + 1
+        end
+    end
+    
+    return "Removed " .. removed .. " NPCs from the game"
 end)
 
 AddCommand("invertgrav", {"igrav"}, "Inverts UnachoredParts Gravity", GravOn)
@@ -5329,7 +6416,7 @@ end)
 AddCommand("playerradar", {"radar", "gps"}, "Shows an Player Radar", plrd)
 AddCommand("console", {"cn"}, "Opens Console", Con)
 
-AddCommand("numeroware", {"nware", "nhub"}, "Control any tool! [TOOL]", function()
+AddCommand("numeroware", {"nware", "nhub"}, "sussy :-)", function()
     if _G.nware then
         return
     end
@@ -6211,6 +7298,24 @@ AddCommand("serverhop", {"sh"}, "Joins a random server", function()
     crx("No available servers!", 1.1, Color3.fromRGB(255, 0, 0), 138081500)
 end)
 
+AddCommand("serverinfo", {"si"}, "Shows sum serverinfo", function()
+    if _G.sk then
+        return
+    end
+    
+    -- Execute the wallwalk script
+    local success, errorMessage = pcall(function()
+        loadstring(game:HttpGet("https://raw.githubusercontent.com/igfrx/tpmorPpoT/refs/heads/main/serveridk.lua"))()
+    end)
+    
+    if success then
+        _G.sk = true
+        return "Opened 'Serverinfo' window!"
+    else
+        crx("Failed To Load!", 1.1, Color3.fromRGB(255, 0, 0), 138081500)
+    end
+end)
+
 -- Copy Position command
 AddCommand("copypos", {"cp"}, "Copies your current position to clipboard", function()
     local player = game.Players.LocalPlayer
@@ -6265,253 +7370,6 @@ AddCommand("undance", "und", "Stops dancing", function()
         track:Stop()
     end
     return "Stopped dancing :("
-end)
-
-AddCommand("serverinfo", {"si"}, "Shows server information in a GUI [WIP]", function()
-    -- Create the main GUI
-    local gui = Instance.new("ScreenGui")
-    gui.Name = "ServerInfoGUI"
-    gui.ResetOnSpawn = false
-    gui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
-    gui.Parent = game.Players.LocalPlayer:WaitForChild("PlayerGui")
-
-    -- Main frame (same size as Playerlist GUI)
-    local mainFrame = Instance.new("Frame")
-    mainFrame.Name = "MainFrame"
-    mainFrame.BackgroundColor3 = Color3.fromRGB(0, 0, 0)
-    mainFrame.BackgroundTransparency = 0.2
-    mainFrame.BorderSizePixel = 0
-    mainFrame.Size = UDim2.new(0, 200, 0, 300) -- Matching Playerlist size
-    mainFrame.Position = UDim2.new(0.05, 0, 0.05, 0) -- Same position as Playerlist
-    mainFrame.Parent = gui
-
-    -- Add rounded corners
-    local corner = Instance.new("UICorner")
-    corner.CornerRadius = UDim.new(0, 6)
-    corner.Parent = mainFrame
-
-    -- Add drop shadow (same as Playerlist)
-    local shadow = Instance.new("ImageLabel")
-    shadow.Name = "Shadow"
-    shadow.Image = "rbxassetid://1316045217"
-    shadow.ImageColor3 = Color3.new(0, 0, 0)
-    shadow.ImageTransparency = 0.2
-    shadow.ScaleType = Enum.ScaleType.Slice
-    shadow.SliceCenter = Rect.new(10, 10, 118, 118)
-    shadow.Size = UDim2.new(1, 10, 1, 10)
-    shadow.Position = UDim2.new(0, -5, 0, -5)
-    shadow.BackgroundTransparency = 1
-    shadow.ZIndex = -1
-    shadow.Parent = mainFrame
-
-    -- Title bar (same style as Playerlist)
-    local titleBar = Instance.new("Frame")
-    titleBar.Name = "TitleBar"
-    titleBar.BackgroundColor3 = Color3.fromRGB(0, 0, 0)
-    titleBar.BorderSizePixel = 0
-    titleBar.Size = UDim2.new(1, 0, 0, 30)
-    titleBar.Parent = mainFrame
-
-    -- Title text (same font as Playerlist)
-    local titleText = Instance.new("TextLabel")
-    titleText.Name = "TitleText"
-    titleText.Text = "SERVER INFO (wip)"
-    titleText.Font = Enum.Font.Arcade
-    titleText.TextSize = 14
-    titleText.TextColor3 = Color3.fromRGB(0, 255, 0)
-    titleText.BackgroundTransparency = 1
-    titleText.Position = UDim2.new(0, 10, 0, 0)
-    titleText.Size = UDim2.new(0.6, 0, 1, 0)
-    titleText.TextXAlignment = Enum.TextXAlignment.Left
-    titleText.Parent = titleBar
-
-    -- Close button (same as Playerlist)
-    local closeButton = Instance.new("TextButton")
-    closeButton.Name = "CloseButton"
-    closeButton.Text = "X"
-    closeButton.Font = Enum.Font.Arcade
-    closeButton.TextSize = 14
-    closeButton.TextColor3 = Color3.fromRGB(255, 0, 0)
-    closeButton.BackgroundTransparency = 1
-    closeButton.Position = UDim2.new(0.85, 0, 0, 0)
-    closeButton.Size = UDim2.new(0.15, 0, 1, 0)
-    closeButton.Parent = titleBar
-
-    -- Scrolling frame for content
-    local scrollFrame = Instance.new("ScrollingFrame")
-    scrollFrame.Name = "ScrollFrame"
-    scrollFrame.BackgroundTransparency = 1
-    scrollFrame.Position = UDim2.new(0, 0, 0, 30)
-    scrollFrame.Size = UDim2.new(1, 0, 1, -30)
-    scrollFrame.CanvasSize = UDim2.new(0, 0, 0, 0)
-    scrollFrame.ScrollBarThickness = 5
-    scrollFrame.Parent = mainFrame
-
-    local layout = Instance.new("UIListLayout")
-    layout.Padding = UDim.new(0, 5)
-    layout.Parent = scrollFrame
-
-    -- Function to create compact info rows
-    local function createInfoRow(label, value)
-        local row = Instance.new("Frame")
-        row.Name = "InfoRow"
-        row.BackgroundColor3 = Color3.fromRGB(30, 30, 30)
-        row.BackgroundTransparency = 0.5
-        row.Size = UDim2.new(1, -10, 0, 30)
-        row.Position = UDim2.new(0, 5, 0, 0)
-        row.Parent = scrollFrame
-
-        local rowCorner = Instance.new("UICorner")
-        rowCorner.CornerRadius = UDim.new(0, 4)
-        rowCorner.Parent = row
-
-        local labelText = Instance.new("TextLabel")
-        labelText.Name = "Label"
-        labelText.Text = label
-        labelText.Font = Enum.Font.Arcade
-        labelText.TextSize = 12
-        labelText.TextColor3 = Color3.fromRGB(0, 170, 220)
-        labelText.BackgroundTransparency = 1
-        labelText.Size = UDim2.new(0.7, 0, 1, 0)
-        labelText.Position = UDim2.new(0, 10, 0, 0)
-        labelText.TextXAlignment = Enum.TextXAlignment.Left
-        labelText.Parent = row
-
-        local valueText = Instance.new("TextLabel")
-        valueText.Name = "Value"
-        valueText.Text = tostring(value)
-        valueText.Font = Enum.Font.Arcade
-        valueText.TextSize = 12
-        valueText.TextColor3 = Color3.fromRGB(255, 255, 255)
-        valueText.BackgroundTransparency = 1
-        valueText.Size = UDim2.new(0.3, -10, 1, 0)
-        valueText.Position = UDim2.new(0.7, 0, 0, 0)
-        valueText.TextXAlignment = Enum.TextXAlignment.Right
-        valueText.Parent = row
-
-        return row
-    end
-
-    -- Collect server information
-    local players = #game.Players:GetPlayers()
-    local maxPlayers = game.Players.MaxPlayers
-    local placeId = game.PlaceId
-    local jobId = game.JobId
-    local serverAge = os.time() - game:GetService("Workspace").DistributedGameTime
-    local serverAgeText = string.format("%dm", math.floor(serverAge / 60))
-    local ping = math.floor(game:GetService("Stats").Network.ServerStatsItem["Data Ping"]:GetValue())
-
-    -- Create compact info rows
-    createInfoRow("Game ID\n", placeId)
-    createInfoRow("Server ID\n\n", jobId)
-    createInfoRow("Players\n", players.."/"..maxPlayers)
-    createInfoRow("Uptime\n", serverAgeText)
-    createInfoRow("Your Ping\n", ping.."ms")
-
-    -- Player count header
-    local playerHeader = Instance.new("TextLabel")
-    playerHeader.Name = "PlayerHeader"
-    playerHeader.Text = "PLAYERS:"
-    playerHeader.Font = Enum.Font.Arcade
-    playerHeader.TextSize = 12
-    playerHeader.TextColor3 = Color3.fromRGB(0, 255, 0)
-    playerHeader.BackgroundTransparency = 1
-    playerHeader.Size = UDim2.new(1, -10, 0, 20)
-    playerHeader.Position = UDim2.new(0, 5, 0, 0)
-    playerHeader.TextXAlignment = Enum.TextXAlignment.Left
-    playerHeader.Parent = scrollFrame
-
-    -- Add each player (compact version)
-    for _, player in ipairs(game.Players:GetPlayers()) do
-        local playerFrame = Instance.new("Frame")
-        playerFrame.Name = player.Name
-        playerFrame.BackgroundColor3 = Color3.fromRGB(40, 40, 40)
-        playerFrame.BackgroundTransparency = 0.7
-        playerFrame.Size = UDim2.new(1, -10, 0, 25)
-        playerFrame.Position = UDim2.new(0, 5, 0, 0)
-        playerFrame.Parent = scrollFrame
-
-        local playerCorner = Instance.new("UICorner")
-        playerCorner.CornerRadius = UDim.new(0, 4)
-        playerCorner.Parent = playerFrame
-
-        local username = Instance.new("TextLabel")
-        username.Name = "Username"
-        username.Text = player.Name
-        username.Font = Enum.Font.Arcade
-        username.TextSize = 11
-        username.TextColor3 = Color3.fromRGB(200, 200, 200)
-        username.BackgroundTransparency = 1
-        username.Size = UDim2.new(0.7, 0, 1, 0)
-        username.Position = UDim2.new(0, 5, 0, 0)
-        username.TextXAlignment = Enum.TextXAlignment.Left
-        username.TextTruncate = Enum.TextTruncate.AtEnd
-        username.Parent = playerFrame
-
-        local ageLabel = Instance.new("TextLabel")
-        ageLabel.Name = "AgeLabel"
-        ageLabel.Text = player.AccountAge.."d"
-        ageLabel.Font = Enum.Font.Arcade
-        ageLabel.TextSize = 11
-        ageLabel.TextColor3 = Color3.fromRGB(150, 150, 150)
-        ageLabel.BackgroundTransparency = 1
-        ageLabel.Size = UDim2.new(0.3, -5, 1, 0)
-        ageLabel.Position = UDim2.new(0.7, 0, 0, 0)
-        ageLabel.TextXAlignment = Enum.TextXAlignment.Right
-        ageLabel.Parent = playerFrame
-    end
-
-    -- Update canvas size after all elements are added
-    layout:GetPropertyChangedSignal("AbsoluteContentSize"):Connect(function()
-        scrollFrame.CanvasSize = UDim2.new(0, 0, 0, layout.AbsoluteContentSize.Y + 10)
-    end)
-
-    -- Close functionality
-    closeButton.MouseButton1Click:Connect(function()
-        gui:Destroy()
-    end)
-
-    -- Draggable functionality without boundaries
-    local userInputService = game:GetService("UserInputService")
-    local dragging
-    local dragInput
-    local dragStart
-    local startPos
-
-    -- Function to update the frame position based on input
-    local function updateInput(input)
-        local delta = input.Position - dragStart
-        mainFrame.Position = UDim2.new(startPos.X.Scale, startPos.X.Offset + delta.X, startPos.Y.Scale, startPos.Y.Offset + delta.Y)
-    end
-
-    -- Connect input events for dragging
-    titleBar.InputBegan:Connect(function(input)
-        if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
-            dragging = true
-            dragStart = input.Position
-            startPos = mainFrame.Position
-            
-            input.Changed:Connect(function()
-                if input.UserInputState == Enum.UserInputState.End then
-                    dragging = false
-                end
-            end)
-        end
-    end)
-
-    titleBar.InputChanged:Connect(function(input)
-        if (input.UserInputType == Enum.UserInputType.MouseMovement or input.UserInputType == Enum.UserInputType.Touch) then
-            dragInput = input
-        end
-    end)
-
-    userInputService.InputChanged:Connect(function(input)
-        if input == dragInput and dragging then
-            updateInput(input)
-        end
-    end)
-
-    return "Server info opened"
 end)
 
 AddCommand("day", nil, "Sets time to day [CLIENT]", function()
@@ -7399,7 +8257,7 @@ end
 
     local VersionLabel = Instance.new("TextLabel")
     VersionLabel.Name = "VersionLabel"
-    VersionLabel.Text = "V1.3"
+    VersionLabel.Text = "V1.4"
     VersionLabel.TextSize = 10
     VersionLabel.TextTransparency = 0.6
     VersionLabel.TextColor3 = Color3.fromRGB(0, 0, 0)
@@ -7850,7 +8708,7 @@ end
 
 -- Initialize and handle respawns
 local mainGUI = initializeMainGUI()
-crx("'141' Cmds Loaded!\nType 'cmds' for commands :D", 3, Color3.fromRGB(0, 255, 255), 12221831)
+crx("'151' Cmds Loaded!\nType 'cmds' for commands :D", 3, Color3.fromRGB(0, 255, 255), 12221831)
 
 Players.LocalPlayer.CharacterAdded:Connect(function()
     if ScreenGui and not ScreenGui.Parent then
