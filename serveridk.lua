@@ -1,16 +1,11 @@
 local CollectionService = game:GetService("CollectionService")
-local HttpService = game:GetService("HttpService")
-local TeleportService = game:GetService("TeleportService")
-local Players = game:GetService("Players")
 local TweenService = game:GetService("TweenService")
-local localPlayer = Players.LocalPlayer
-
+local HttpService = game:GetService("HttpService")
 local G2L = {}
 
--- Create the GUI
+-- Players.hmmm5651.PlayerGui.ScreenGui
 G2L["ScreenGui_1"] = Instance.new("ScreenGui", game:GetService("Players").LocalPlayer:WaitForChild("PlayerGui"))
 G2L["ScreenGui_1"]["ZIndexBehavior"] = Enum.ZIndexBehavior.Sibling
-G2L["ScreenGui_1"]["Enabled"] = false -- Hidden by default
 
 -- Tags
 CollectionService:AddTag(G2L["ScreenGui_1"], [[main]])
@@ -20,10 +15,8 @@ G2L["Frame_2"] = Instance.new("Frame", G2L["ScreenGui_1"])
 G2L["Frame_2"]["BorderSizePixel"] = 0
 G2L["Frame_2"]["BackgroundColor3"] = Color3.fromRGB(0, 0, 0)
 G2L["Frame_2"]["Size"] = UDim2.new(0, 388, 0, 46)
-G2L["Frame_2"]["Position"] = UDim2.new(0.5, -194, 0, -50)
-G2L["Frame_2"]["AnchorPoint"] = Vector2.new(0.5, 0)
+G2L["Frame_2"]["Position"] = UDim2.new(0, 396, 0, -50)
 G2L["Frame_2"]["BackgroundTransparency"] = 0.2
-G2L["Frame_2"]["ClipsDescendants"] = true
 
 -- Players.hmmm5651.PlayerGui.ScreenGui.Frame.ServerAmount
 G2L["ServerAmount_3"] = Instance.new("TextLabel", G2L["Frame_2"])
@@ -132,188 +125,166 @@ G2L["ScrollingFrame_c"]["BackgroundColor3"] = Color3.fromRGB(0, 0, 0)
 G2L["ScrollingFrame_c"]["Size"] = UDim2.new(0, 152, 0, 50)
 G2L["ScrollingFrame_c"]["Position"] = UDim2.new(0, 16, 0, 2)
 G2L["ScrollingFrame_c"]["BackgroundTransparency"] = 1
-G2L["ScrollingFrame_c"]["CanvasSize"] = UDim2.new(0, 0, 0, 0)
 G2L["ScrollingFrame_c"]["ScrollBarThickness"] = 5
+G2L["ScrollingFrame_c"]["CanvasSize"] = UDim2.new(0, 0, 0, 0)
 
--- Players.hmmm5651.PlayerGui.ScreenGui.Frame.ShowServers.DropDown.ScrollingFrame.UIListLayout
-G2L["UIListLayout_d"] = Instance.new("UIListLayout", G2L["ScrollingFrame_c"])
-G2L["UIListLayout_d"]["Padding"] = UDim.new(0, 5)
-G2L["UIListLayout_d"]["SortOrder"] = Enum.SortOrder.LayoutOrder
+-- Players.hmmm5651.PlayerGui.ScreenGui.Frame.ShowServers.DropDown.ScrollingFrame.JoinServerBtn
+G2L["JoinServerBtn_d"] = Instance.new("TextButton", G2L["ScrollingFrame_c"])
+G2L["JoinServerBtn_d"]["BorderSizePixel"] = 0
+G2L["JoinServerBtn_d"]["TextXAlignment"] = Enum.TextXAlignment.Left
+G2L["JoinServerBtn_d"]["TextSize"] = 9
+G2L["JoinServerBtn_d"]["TextColor3"] = Color3.fromRGB(0, 171, 255)
+G2L["JoinServerBtn_d"]["BackgroundColor3"] = Color3.fromRGB(0, 0, 0)
+G2L["JoinServerBtn_d"]["FontFace"] = Font.new([[rbxasset://fonts/families/PressStart2P.json]], Enum.FontWeight.Regular, Enum.FontStyle.Normal)
+G2L["JoinServerBtn_d"]["BackgroundTransparency"] = 0.5
+G2L["JoinServerBtn_d"]["Size"] = UDim2.new(0, 122, 0, 18)
+G2L["JoinServerBtn_d"]["Text"] = [[[1. Server] Players: 0]]
+G2L["JoinServerBtn_d"]["Name"] = [[JoinServerBtn]]
+G2L["JoinServerBtn_d"]["Position"] = UDim2.new(0, 20, 0, 6)
 
--- Variables
-local serverButtons = {}
-local isDropdownVisible = false
-local startTime = os.time()
-local serverList = {}
-local runtimeUpdateConnection
+-- Players.hmmm5651.PlayerGui.ScreenGui.Frame.ShowServers.DropDown.ScrollingFrame.JoinServerBtn.UICorner
+G2L["UICorner_e"] = Instance.new("UICorner", G2L["JoinServerBtn_d"])
 
--- Function to get server information
-local function getServers()
-    local success, result = pcall(function()
-        return HttpService:JSONDecode(game:HttpGet("https://games.roblox.com/v1/games/" .. game.GameId .. "/servers/Public?sortOrder=Asc&limit=100"))
+-- Animation function
+local function createTween(object, properties, duration, easingStyle, easingDirection)
+    local tweenInfo = TweenInfo.new(duration, easingStyle, easingDirection)
+    local tween = TweenService:Create(object, tweenInfo, properties)
+    return tween
+end
+
+-- Slide in animation for the main frame
+local slideInTween = createTween(G2L["Frame_2"], {Position = UDim2.new(0, 396, 0, 10)}, 0.5, Enum.EasingStyle.Quad, Enum.EasingDirection.Out)
+slideInTween:Play()
+
+-- Function to update server info
+local function updateServerInfo()
+    -- Get server count and player count (this is a placeholder - you'll need to implement your own logic)
+    local serverCount = #game:GetService("ReplicatedStorage"):GetChildren() -- Example, replace with actual server count logic
+    local playerCount = #game.Players:GetPlayers()
+    
+    -- Update labels with animation
+    local serverTween = createTween(G2L["ServerAmount_3"], {TextColor3 = Color3.fromRGB(255, 255, 255)}, 0.2, Enum.EasingStyle.Linear, Enum.EasingDirection.Out)
+    serverTween:Play()
+    
+    serverTween.Completed:Connect(function()
+        G2L["ServerAmount_3"].Text = "Servers: " .. serverCount
+        createTween(G2L["ServerAmount_3"], {TextColor3 = Color3.fromRGB(0, 171, 255)}, 0.2, Enum.EasingStyle.Linear, Enum.EasingDirection.Out):Play()
     end)
     
-    if success and result and result.data then
-        return result.data
-    else
-        return {}
+    local playerTween = createTween(G2L["PlayerCount_4"], {TextColor3 = Color3.fromRGB(255, 255, 255)}, 0.2, Enum.EasingStyle.Linear, Enum.EasingDirection.Out)
+    playerTween:Play()
+    
+    playerTween.Completed:Connect(function()
+        G2L["PlayerCount_4"].Text = "Players: " .. playerCount
+        createTween(G2L["PlayerCount_4"], {TextColor3 = Color3.fromRGB(0, 171, 255)}, 0.2, Enum.EasingStyle.Linear, Enum.EasingDirection.Out):Play()
+    end)
+end
+
+-- Function to update server runtime
+local startTime = os.time()
+local function updateRuntime()
+    while true do
+        local elapsed = os.time() - startTime
+        local minutes = math.floor(elapsed / 60)
+        local seconds = elapsed % 60
+        
+        G2L["ServerRuntime_7"].Text = "Runtime: " .. minutes .. "m " .. seconds .. "s"
+        
+        -- Pulsing animation for runtime
+        local pulseTween = createTween(G2L["ServerRuntime_7"], {TextColor3 = Color3.fromRGB(255, 255, 255)}, 0.5, Enum.EasingStyle.Sine, Enum.EasingDirection.Out)
+        pulseTween:Play()
+        
+        pulseTween.Completed:Connect(function()
+            createTween(G2L["ServerRuntime_7"], {TextColor3 = Color3.fromRGB(0, 171, 255)}, 0.5, Enum.EasingStyle.Sine, Enum.EasingDirection.Out):Play()
+        end)
+        
+        wait(1)
     end
 end
 
--- Function to update server information
-local function updateServerInfo()
-    local servers = getServers()
-    serverList = servers
-    
-    -- Update server count
-    G2L["ServerAmount_3"].Text = "Servers: " .. #servers
-    
-    -- Calculate total players
-    local totalPlayers = 0
-    for _, server in ipairs(servers) do
-        totalPlayers = totalPlayers + (server.playing or 0)
-    end
-    
-    -- Update player count
-    G2L["PlayerCount_4"].Text = "Players: " .. totalPlayers
-    
-    -- Update runtime
-    local runtime = os.time() - startTime
-    local minutes = math.floor(runtime / 60)
-    local seconds = runtime % 60
-    G2L["ServerRuntime_7"].Text = "Runtime: " .. minutes .. "m " .. seconds .. "s"
+-- Function to fetch server list (placeholder - implement your own server fetching logic)
+local function fetchServers()
+    -- This is a placeholder - you'll need to implement your own server fetching logic
+    local servers = {
+        {name = "Server 1", players = 5, id = "12345"},
+        {name = "Server 2", players = 3, id = "12346"},
+        {name = "Server 3", players = 8, id = "12347"}
+    }
+    return servers
 end
 
--- Function to update server buttons
-local function updateServerButtons()
+-- Function to populate server list
+local function populateServerList()
+    local servers = fetchServers()
     local scrollingFrame = G2L["ScrollingFrame_c"]
     
     -- Clear existing buttons
-    for _, button in ipairs(serverButtons) do
-        button:Destroy()
+    for _, child in ipairs(scrollingFrame:GetChildren()) do
+        if child:IsA("TextButton") then
+            child:Destroy()
+        end
     end
-    serverButtons = {}
     
-    -- Create new buttons for each server
-    for i, server in ipairs(serverList) do
-        local button = Instance.new("TextButton")
-        button.Name = "JoinServerBtn_" .. i
-        button.Size = UDim2.new(0, 122, 0, 18)
-        button.Position = UDim2.new(0, 0, 0, (i-1) * 23)
-        button.Text = "[Server " .. i .. "] Players: " .. (server.playing or 0)
-        button.TextXAlignment = Enum.TextXAlignment.Left
-        button.TextSize = 9
-        button.TextColor3 = Color3.fromRGB(0, 171, 255)
-        button.BackgroundColor3 = Color3.fromRGB(0, 0, 0)
-        button.BackgroundTransparency = 0.5
-        button.BorderSizePixel = 0
-        button.Font = Enum.Font.PressStart2P
-        button.Parent = scrollingFrame
-        
-        -- Add corner
-        local corner = Instance.new("UICorner")
-        corner.CornerRadius = UDim.new(0, 4)
-        corner.Parent = button
+    -- Create buttons for each server
+    local yOffset = 5
+    for i, server in ipairs(servers) do
+        local serverBtn = G2L["JoinServerBtn_d"]:Clone()
+        serverBtn.Text = "[" .. i .. ". " .. server.name .. "] Players: " .. server.players
+        serverBtn.Position = UDim2.new(0, 20, 0, yOffset)
+        serverBtn.Visible = true
+        serverBtn.Parent = scrollingFrame
         
         -- Add click event
-        button.MouseButton1Click:Connect(function()
-            if server.id ~= game.JobId then
-                TeleportService:TeleportToPlaceInstance(game.GameId, server.id, localPlayer)
-            end
+        serverBtn.MouseButton1Click:Connect(function()
+            -- Animation on click
+            local clickTween = createTween(serverBtn, {TextColor3 = Color3.fromRGB(255, 255, 255)}, 0.1, Enum.EasingStyle.Linear, Enum.EasingDirection.Out)
+            clickTween:Play()
+            
+            clickTween.Completed:Connect(function()
+                createTween(serverBtn, {TextColor3 = Color3.fromRGB(0, 171, 255)}, 0.1, Enum.EasingStyle.Linear, Enum.EasingDirection.Out):Play()
+                -- Add your server join logic here
+                print("Joining server: " .. server.name)
+            end)
         end)
         
-        table.insert(serverButtons, button)
+        yOffset = yOffset + 25
     end
     
-    -- Update scrolling frame size
-    scrollingFrame.CanvasSize = UDim2.new(0, 0, 0, #serverList * 23)
+    -- Update scrolling frame canvas size
+    scrollingFrame.CanvasSize = UDim2.new(0, 0, 0, yOffset)
 end
 
--- Function to toggle dropdown with animation
-local function toggleDropdown()
-    isDropdownVisible = not isDropdownVisible
-    
+-- Toggle dropdown visibility
+G2L["ShowServers_9"].MouseButton1Click:Connect(function()
     local dropdown = G2L["DropDown_a"]
+    dropdown.Visible = not dropdown.Visible
     
-    if isDropdownVisible then
-        dropdown.Visible = true
-        updateServerInfo()
-        updateServerButtons()
-        
-        -- Animate dropdown in
-        local tweenInfo = TweenInfo.new(0.3, Enum.EasingStyle.Back, Enum.EasingDirection.Out)
-        local tween = TweenService:Create(dropdown, tweenInfo, {Size = UDim2.new(0, 176, 0, math.min(200, #serverList * 23 + 10))})
-        tween:Play()
+    if dropdown.Visible then
+        populateServerList()
+        createTween(dropdown, {Size = UDim2.new(0, 176, 0, 156)}, 0.3, Enum.EasingStyle.Quad, Enum.EasingDirection.Out):Play()
     else
-        -- Animate dropdown out
-        local tweenInfo = TweenInfo.new(0.2, Enum.EasingStyle.Back, Enum.EasingDirection.In)
-        local tween = TweenService:Create(dropdown, tweenInfo, {Size = UDim2.new(0, 176, 0, 0)})
-        tween:Play()
-        
-        tween.Completed:Connect(function()
-            dropdown.Visible = false
-            dropdown.Size = UDim2.new(0, 176, 0, 56) -- Reset size
-        end)
+        createTween(dropdown, {Size = UDim2.new(0, 176, 0, 0)}, 0.3, Enum.EasingStyle.Quad, Enum.EasingDirection.Out):Play()
+        wait(0.3)
+        dropdown.Visible = false
     end
-end
+end)
 
--- Function to show GUI with improved animation
-local function showgui()
-    G2L["ScreenGui_1"].Enabled = true
+-- Close button functionality
+G2L["CloseBtn_8"].MouseButton1Click:Connect(function()
+    local slideOutTween = createTween(G2L["Frame_2"], {Position = UDim2.new(0, 396, 0, -50)}, 0.5, Enum.EasingStyle.Quad, Enum.EasingDirection.Out)
+    slideOutTween:Play()
     
-    -- Animation
-    local frame = G2L["Frame_2"]
-    
-    -- First tween: slide down
-    local slideTweenInfo = TweenInfo.new(0.5, Enum.EasingStyle.Bounce, Enum.EasingDirection.Out)
-    local slideTween = TweenService:Create(frame, slideTweenInfo, {Position = UDim2.new(0.5, -194, 0, 10)})
-    slideTween:Play()
-    
-    -- Second tween: slight bounce effect
-    slideTween.Completed:Connect(function()
-        local bounceTweenInfo = TweenInfo.new(0.2, Enum.EasingStyle.Quad, Enum.EasingDirection.Out)
-        local bounceTween = TweenService:Create(frame, bounceTweenInfo, {Position = UDim2.new(0.5, -194, 0, 15)})
-        bounceTween:Play()
-        
-        bounceTween.Completed:Connect(function()
-            local finalTweenInfo = TweenInfo.new(0.1, Enum.EasingStyle.Quad, Enum.EasingDirection.Out)
-            local finalTween = TweenService:Create(frame, finalTweenInfo, {Position = UDim2.new(0.5, -194, 0, 10)})
-            finalTween:Play()
-        end)
-    end)
-    
-    -- Start updating runtime
-    if runtimeUpdateConnection then
-        runtimeUpdateConnection:Disconnect()
-    end
-    
-    runtimeUpdateConnection = game:GetService("RunService").Heartbeat:Connect(function()
-        updateServerInfo()
-    end)
-end
-
--- Function to destroy GUI with animation
-local function destroygui()
-    local frame = G2L["Frame_2"]
-    
-    -- Animation: slide up with ease
-    local tweenInfo = TweenInfo.new(0.4, Enum.EasingStyle.Back, Enum.EasingDirection.In)
-    local tween = TweenService:Create(frame, tweenInfo, {Position = UDim2.new(0.5, -194, 0, -50)})
-    tween:Play()
-    
-    tween.Completed:Connect(function()
-        if runtimeUpdateConnection then
-            runtimeUpdateConnection:Disconnect()
-        end
+    slideOutTween.Completed:Connect(function()
         G2L["ScreenGui_1"]:Destroy()
     end)
+end)
+
+-- Initialize
+updateServerInfo()
+spawn(updateRuntime)
+
+-- Periodically update server info (every 30 seconds)
+while true do
+    wait(30)
+    updateServerInfo()
 end
-
--- Connect events
-G2L["CloseBtn_8"].MouseButton1Click:Connect(destroygui)
-G2L["ShowServers_9"].MouseButton1Click:Connect(toggleDropdown)
-
--- Export the showgui function
-return {
-    showgui = showgui
-}
