@@ -5100,6 +5100,102 @@ AddCommand("resetuagrav", {"rsug"}, "Resets unanchored Gravity", function()
     return string.format("Resetting gravity forces... (%d parts)", totalToProcess)
 end)
 
+local Buff = {
+    Enabled = false,
+    OriginalProperties = {}
+}
+
+AddCommand("buff", {}, "Easier to move unanchored parts", function()
+    if Buff.Enabled then
+        crx("Buff is already enabled!", 1.1, Color3.fromRGB(255, 0, 0), 138081500)
+        return
+    end
+    
+    Buff.Enabled = true
+    local character = game.Players.LocalPlayer.Character
+    if not character then
+        crx("Character not found!", 1.1, Color3.fromRGB(255, 0, 0), 138081500)
+        return
+    end
+    
+    -- Store original properties and apply buff
+    Buff.OriginalProperties = {}
+    local partsModified = 0
+    
+    for _, part in ipairs(character:GetDescendants()) do
+        if part:IsA("BasePart") then
+            -- Store original properties
+            Buff.OriginalProperties[part] = part.CustomPhysicalProperties
+            
+            -- Apply buff properties (massive weight for easy movement)
+            part.CustomPhysicalProperties = PhysicalProperties.new(math.huge, 0.5, 0.5)
+            partsModified = partsModified + 1
+        end
+    end
+    
+    -- Listen for new parts being added to character
+    if Buff.Connections then
+        for _, connection in pairs(Buff.Connections) do
+            connection:Disconnect()
+        end
+    end
+    
+    Buff.Connections = {}
+    Buff.Connections.descendantAdded = character.DescendantAdded:Connect(function(descendant)
+        if Buff.Enabled and descendant:IsA("BasePart") then
+            Buff.OriginalProperties[descendant] = descendant.CustomPhysicalProperties
+            descendant.CustomPhysicalProperties = PhysicalProperties.new(math.huge, 0.5, 0.5)
+        end
+    end)
+    
+    return "Buff enabled"
+end)
+
+AddCommand("unbuff", {}, "Disables the buff command", function()
+    if not Buff.Enabled then
+        crx("Buff wasn't active!", 1.1, Color3.fromRGB(255, 0, 0), 138081500)
+        return
+    end
+    
+    Buff.Enabled = false
+    local partsRestored = 0
+    local character = game.Players.LocalPlayer.Character
+    
+    -- Restore original properties
+    for part, originalProps in pairs(Buff.OriginalProperties) do
+        if part and part.Parent then
+            part.CustomPhysicalProperties = originalProps
+            partsRestored = partsRestored + 1
+        end
+    end
+    
+    -- Disconnect connections
+    if Buff.Connections then
+        for _, connection in pairs(Buff.Connections) do
+            connection:Disconnect()
+        end
+        Buff.Connections = {}
+    end
+    
+    Buff.OriginalProperties = {}
+    
+    return "Buff disabled"
+end)
+
+-- Auto cleanup on character respawn
+game.Players.LocalPlayer.CharacterAdded:Connect(function(character)
+    if Buff.Enabled then
+        Buff.Enabled = false
+        Buff.OriginalProperties = {}
+        if Buff.Connections then
+            for _, connection in pairs(Buff.Connections) do
+                connection:Disconnect()
+            end
+            Buff.Connections = {}
+        end
+    end
+end)
+
 -- AntiTrip System (FIXED)
 local AntiTripSystem = {
     Enabled = false,
@@ -6002,6 +6098,86 @@ game.Players.LocalPlayer.CharacterRemoving:Connect(function()
         Spazz.BodyVelocity = nil
     end
     Spazz.Enabled = false
+end)
+
+local FreeGamepasses = {
+    Hooked = false,
+    OriginalFunction = nil
+}
+
+AddCommand("freegamepasses", {"freegp", "fgp"}, "Pretends you own every gamepass and fires purchase signals", function()
+    if FreeGamepasses.Hooked then
+        crx("FreeGamepasses is already enabled!", 1.1, Color3.fromRGB(255, 0, 0), 138081500)
+        return
+    end
+    
+    local marketplaceService = game:GetService("MarketplaceService")
+    local players = game:GetService("Players")
+    local localPlayer = players.LocalPlayer
+    
+    local signalsFired = 0
+    
+    -- Hook UserOwnsGamePassAsync if possible
+    if hookfunction then
+        FreeGamepasses.OriginalFunction = hookfunction(
+            marketplaceService.UserOwnsGamePassAsync,
+            function(...)
+                return true -- Always return true (you own the gamepass)
+            end
+        )
+        FreeGamepasses.Hooked = true
+    else
+        crx("Hookfunction not available - Gamepass ownership won't be faked", 1.1, Color3.fromRGB(255, 165, 0), 138081500)
+    end
+    
+    -- Try to get developer products and fire signals
+    pcall(function()
+        local success, products = pcall(function()
+            return marketplaceService:GetDeveloperProductsAsync():GetCurrentPage()
+        end)
+        
+        if success and products then
+            for _, product in ipairs(products) do
+                if product.ProductId then
+                    pcall(function()
+                        marketplaceService:SignalPromptProductPurchaseFinished(localPlayer.UserId, product.ProductId, true)
+                        signalsFired = signalsFired + 1
+                    end)
+                end
+            end
+        end
+    end)
+    
+    -- Also try to fire signals for known gamepass types
+    pcall(function()
+        -- Common gamepass IDs (you can add more specific ones)
+        local commonPasses = {100, 200, 300, 400, 500, 1000, 2000, 5000}
+        for _, passId in ipairs(commonPasses) do
+            pcall(function()
+                marketplaceService:SignalPromptProductPurchaseFinished(localPlayer.UserId, passId, true)
+                signalsFired = signalsFired + 1
+            end)
+        end
+    end)
+    
+    return "Free Gamepasses enabled - " .. signalsFired .. " purchase signals fired"
+end)
+
+AddCommand("unfreegamepasses", {"unfreegp", "unfgp"}, "Disables free gamepasses hook", function()
+    if not FreeGamepasses.Hooked then
+        crx("FreeGamepasses wasn't active!", 1.1, Color3.fromRGB(255, 0, 0), 138081500)
+        return
+    end
+    
+    -- Restore original function if hooked
+    if hookfunction and FreeGamepasses.OriginalFunction then
+        hookfunction(game:GetService("MarketplaceService").UserOwnsGamePassAsync, FreeGamepasses.OriginalFunction)
+    end
+    
+    FreeGamepasses.Hooked = false
+    FreeGamepasses.OriginalFunction = nil
+    
+    return "Free Gamepasses disabled"
 end)
 
 -- NPC Control Commands
