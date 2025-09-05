@@ -4840,7 +4840,7 @@ local function ExecuteBkill()
 end
 
 -- Command to start killing (all or specific player)
-AddCommandWithPlayer("bkill", {"bk"}, "Deletes parts of target player(s) using Building Tools", function(name)
+AddCommandWithPlayer("btoolkill", {"bkill"}, "Deletes parts of target player(s) using Building Tools", function(name)
     if Bkill.Active then
         crx("Bkill already active!", 1.1, Color3.fromRGB(255, 0, 0), 138081500)
     end
@@ -4865,7 +4865,7 @@ AddCommandWithPlayer("bkill", {"bk"}, "Deletes parts of target player(s) using B
 end)
 
 -- Command to stop killing
-AddCommand("unbkill", {"unbk"}, "Stops the bkill process", function()
+AddCommand("unbtoolkill", {"unbkill"}, "Stops the bkill process", function()
     if not Bkill.Active then
         crx("Bkill isn't active!", 1.1, Color3.fromRGB(255, 0, 0), 138081500)
     end
@@ -4876,10 +4876,101 @@ AddCommand("unbkill", {"unbk"}, "Stops the bkill process", function()
     return "Bkill stopped"
 end)
 
+AddCommandWithPlayer("clientkill", {"ckill"}, "Kills players on the client (CLIENT)", function(name)
+    local targets = {}
+    local localPlayer = game.Players.LocalPlayer
+    
+    -- Check if targeting all players
+    if not name or string.lower(name) == "all" then
+        for _, player in ipairs(game.Players:GetPlayers()) do
+            if player ~= localPlayer then
+                table.insert(targets, player)
+            end
+        end
+    else
+        -- Target specific player
+        local target = GetPlayer(name)
+        if not target then return "Player not found" end
+        if target == localPlayer then return "Cannot neckkill yourself" end
+        table.insert(targets, target)
+    end
+    
+    if #targets == 0 then
+        return "No valid targets found"
+    end
+    
+    local count = 0
+    
+    for _, target in ipairs(targets) do
+        local character = target.Character
+        if not character then continue end
+        
+        local humanoid = character:FindFirstChildOfClass("Humanoid")
+        local head = character:FindFirstChild("Head")
+        local torso = character:FindFirstChild("Torso") or character:FindFirstChild("UpperTorso")
+        
+        if humanoid and head and torso then
+            -- Method 1: Try to find and destroy neck joint
+            pcall(function() 
+                local neck = head:FindFirstChild("Neck") or head:FindFirstChild("NeckRigAttachment")
+                if neck then neck:Destroy() end
+            end)
+            
+            -- Method 2: Try remote events
+            local remotes = {
+                game.ReplicatedStorage:FindFirstChild("DefaultChatSystemChatEvents"),
+                game.ReplicatedStorage:FindFirstChild("SayMessageRequest"),
+                game.ReplicatedStorage:FindFirstChild("Health"),
+                game.ReplicatedStorage:FindFirstChild("Damage"),
+                game.ReplicatedStorage:FindFirstChild("Kill"),
+                game.ReplicatedStorage:FindFirstChild("BreakJoints"),
+                game.ReplicatedStorage:FindFirstChild("Remotes"),
+                game.ReplicatedStorage:FindFirstChild("RemoteEvents"),
+                game.ReplicatedStorage:FindFirstChild("RemoteFunctions"),
+                game.Workspace:FindFirstChild("Remote"),
+                game.Workspace:FindFirstChild("Events"),
+            }
+            
+            for _, remote in ipairs(remotes) do
+                if remote and (remote:IsA("RemoteEvent") or remote:IsA("RemoteFunction")) then
+                    pcall(function()
+                        if remote:IsA("RemoteEvent") then
+                            remote:FireServer("BreakNeck", target, character)
+                            remote:FireServer("Kill", target, "NeckBreak")
+                        elseif remote:IsA("RemoteFunction") then
+                            remote:InvokeServer("BreakNeck", target)
+                        end
+                    end)
+                end
+            end
+            
+            -- Method 3: Direct damage
+            pcall(function()
+                humanoid:TakeDamage(math.huge)
+                humanoid.Health = 0
+            end)
+            
+            -- Method 4: Break joints
+            pcall(function()
+                head:BreakJoints()
+                torso:BreakJoints()
+            end)
+            
+            count = count + 1
+        end
+    end
+    
+    if string.lower(name) == "all" then
+        return "Killed " .. count .. " players"
+    else
+        return "Killed " .. targets[1].Name
+    end
+end)
+
 AddCommand("walkfling", {"wf"}, "Starts Touchfling", TFlingOn)
 AddCommand("unwalkfling", {"unwf"}, "Stops Touchfling", TFlingOff)
 
-AddCommandWithPlayer("kill", {"fling"}, "Fling a player", function(name)
+AddCommandWithPlayer("fkill", {"fling"}, "Fling a player", function(name)
     local target = GetPlayer(name)
     if not target then crx("Target not found!", 1.1, Color3.fromRGB(255, 0, 0), 138081500) end
     return SkidFling(target)
