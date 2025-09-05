@@ -6063,7 +6063,7 @@ AddCommand("spazz", {"sillyspin"}, "silly spin :p", function()
     return "Spazz enabled"
 end)
 
-AddCommand("unspazz", {"sillyspin"}, "Disables Spazz", function()
+AddCommand("unspazz", {"unsillyspin"}, "Disables Spazz", function()
     if not Spazz.Enabled then
         crx("Spazz wasn't active!", 1.1, Color3.fromRGB(255, 0, 0), 138081500)
         return
