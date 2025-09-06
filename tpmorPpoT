@@ -1863,8 +1863,6 @@ end
 local TeleportTime = 0.2
 local AutoStopTime = 3 -- seconds to run before auto-stopping
 
-local Players = game:GetService("Players")
-
 local localPlayer = Players.LocalPlayer
 
 local function resetCameraSubject()
@@ -2420,8 +2418,6 @@ function antiafkoff()
     end
 end
 
-local Players = game:GetService("Players")
-local RunService = game:GetService("RunService")
 local speaker = Players.LocalPlayer
 
 local antiflingConnection = nil
@@ -5246,6 +5242,505 @@ AddCommand("unbtoolkill", {"unbkill"}, "Stops the bkill process", function()
     Bkill.TargetAll = false
     Bkill.CurrentTarget = nil
     return "Bkill stopped"
+end)
+
+local BToolGun = {
+    Tool = nil,
+    Sound = nil,
+    Animation = nil,
+    Highlight = nil
+}
+
+AddCommand("flinggun", {"fgun"}, "cool gun that flings people", function()
+    local player = game.Players.LocalPlayer
+    local backpack = player:FindFirstChild("Backpack")
+    
+    if not backpack then
+        crx("Backpack not found!", 1.1, Color3.fromRGB(255, 0, 0), 138081500)
+        return
+    end
+    
+    -- Remove existing tool if any
+    if BToolGun.Tool then
+        BToolGun.Tool:Destroy()
+        BToolGun.Tool = nil
+    end
+    
+    -- Create the BToolGun
+    local tool = Instance.new("Tool")
+    tool.Name = "BToolGun"
+    tool.ToolTip = "FlingGun - Click players to fling them"
+    tool.RequiresHandle = true
+    tool.Parent = backpack
+    
+    -- Create tool handle
+    local handle = Instance.new("Part")
+    handle.Name = "Handle"
+    handle.Size = Vector3.new(1, 2, 1)
+    handle.BrickColor = BrickColor.new("Bright blue")
+    handle.Material = Enum.Material.Neon
+    handle.Parent = tool
+    
+    -- Create mesh
+    local mesh = Instance.new("SpecialMesh")
+    mesh.MeshType = Enum.MeshType.FileMesh
+    mesh.MeshId = "rbxassetid://94242777" -- Gun mesh
+    mesh.TextureId = "rbxassetid://94242778"
+    mesh.Scale = Vector3.new(0.5, 0.5, 0.5)
+    mesh.Parent = handle
+    
+    -- Create shoot sound
+    local shootSound = Instance.new("Sound")
+    shootSound.SoundId = "rbxassetid://7026894166"
+    shootSound.Volume = 1
+    shootSound.Parent = handle
+    
+    -- Create highlight for target
+    local highlight = Instance.new("Highlight")
+    highlight.Name = "TargetHighlight"
+    highlight.Enabled = false
+    highlight.FillColor = Color3.fromRGB(255, 255, 0) -- Yellow
+    highlight.OutlineColor = Color3.fromRGB(255, 200, 0)
+    highlight.FillTransparency = 0.5
+    highlight.Parent = tool
+    
+    -- Animation track
+    local animationTrack = nil
+    
+    -- Tool equipped event
+    tool.Equipped:Connect(function()
+        -- Play equip sound
+        local equipSound = Instance.new("Sound")
+        equipSound.SoundId = "rbxassetid://7026893899"
+        equipSound.Volume = 0.5
+        equipSound.Parent = handle
+        equipSound:Play()
+        game:GetService("Debris"):AddItem(equipSound, 2)
+        
+        -- Load animation
+        local humanoid = player.Character:FindFirstChildOfClass("Humanoid")
+        if humanoid then
+            local animator = humanoid:FindFirstChildOfClass("Animator")
+            if animator then
+                local animation = Instance.new("Animation")
+                animation.AnimationId = "rbxassetid://94242777"
+                animationTrack = animator:LoadAnimation(animation)
+                animationTrack:Play()
+            end
+        end
+    end)
+    
+    -- Tool unequipped event
+    tool.Unequipped:Connect(function()
+        if animationTrack then
+            animationTrack:Stop()
+            animationTrack = nil
+        end
+        highlight.Enabled = false
+        highlight.Adornee = nil
+    end)
+    
+    -- Tool activated event (shooting)
+    tool.Activated:Connect(function()
+        -- Play shoot sound
+        shootSound:Play()
+        
+        -- Get mouse target
+        local mouse = player:GetMouse()
+        local target = mouse.Target
+        local targetPlayer = nil
+        
+        -- Find if target is a player
+        if target then
+            local model = target:FindFirstAncestorOfClass("Model")
+            if model then
+                targetPlayer = game.Players:GetPlayerFromCharacter(model)
+            end
+        end
+        
+        if targetPlayer and targetPlayer ~= player then
+            -- Highlight target
+            highlight.Adornee = targetPlayer.Character
+            highlight.Enabled = true
+            
+            -- Visual effects
+            local function createMuzzleFlash()
+                local flash = Instance.new("Part")
+                flash.Size = Vector3.new(0.5, 0.5, 0.5)
+                flash.BrickColor = BrickColor.new("Bright yellow")
+                flash.Material = Enum.Material.Neon
+                flash.Anchored = true
+                flash.CanCollide = false
+                flash.CFrame = handle.CFrame * CFrame.new(0, 0, -1)
+                flash.Parent = workspace
+                
+                local pointLight = Instance.new("PointLight")
+                pointLight.Brightness = 10
+                pointLight.Range = 15
+                pointLight.Color = Color3.fromRGB(255, 255, 0)
+                pointLight.Parent = flash
+                
+                game:GetService("TweenService"):Create(flash, TweenInfo.new(0.3), {Size = Vector3.new(0, 0, 0)}):Play()
+                game:GetService("TweenService"):Create(pointLight, TweenInfo.new(0.3), {Brightness = 0}):Play()
+                game:GetService("Debris"):AddItem(flash, 0.4)
+            end
+            
+            -- Camera effects
+            local function applyCameraEffects()
+                local camera = workspace.CurrentCamera
+                local originalCFrame = camera.CFrame
+                
+                -- Camera shake
+                local shakeIntensity = 0.5
+                for i = 1, 10 do
+                    camera.CFrame = originalCFrame * CFrame.new(
+                        math.random(-shakeIntensity, shakeIntensity),
+                        math.random(-shakeIntensity, shakeIntensity),
+                        math.random(-shakeIntensity, shakeIntensity)
+                    )
+                    task.wait(0.02)
+                end
+                camera.CFrame = originalCFrame
+                
+                -- Camera blur (simulated with FOV change)
+                local originalFOV = camera.FieldOfView
+                camera.FieldOfView = originalFOV + 10
+                game:GetService("TweenService"):Create(camera, TweenInfo.new(0.5), {FieldOfView = originalFOV}):Play()
+            end
+            
+            -- Create visual effects
+            createMuzzleFlash()
+            applyCameraEffects()
+            
+            -- Execute bkill on target
+            SkidFling(targetPlayer)
+            
+            -- Remove highlight after delay
+            task.delay(2, function()
+                highlight.Enabled = false
+                highlight.Adornee = nil
+            end)
+            
+            return "flunged " .. targetPlayer.Name
+        else
+            -- Play empty click sound for missed shot
+            local clickSound = Instance.new("Sound")
+            clickSound.SoundId = "rbxassetid://131147845"
+            clickSound.Volume = 0.3
+            clickSound.Parent = handle
+            clickSound:Play()
+            game:GetService("Debris"):AddItem(clickSound, 2)
+            
+            return "Aim at a player to shoot!"
+        end
+    end)
+    
+    -- Mouse movement (target highlighting)
+    local mouse = player:GetMouse()
+    mouse.Move:Connect(function()
+        if tool.Parent == player.Character then
+            local target = mouse.Target
+            local targetPlayer = nil
+            
+            if target then
+                local model = target:FindFirstAncestorOfClass("Model")
+                if model then
+                    targetPlayer = game.Players:GetPlayerFromCharacter(model)
+                end
+            end
+            
+            if targetPlayer and targetPlayer ~= player then
+                highlight.Adornee = targetPlayer.Character
+                highlight.Enabled = true
+            else
+                highlight.Enabled = false
+                highlight.Adornee = nil
+            end
+        end
+    end)
+    
+    BToolGun.Tool = tool
+    return "FlingGun created!"
+end)
+
+-- Auto cleanup
+game.Players.LocalPlayer.CharacterRemoving:Connect(function()
+    if BToolGun.Tool then
+        BToolGun.Tool:Destroy()
+        BToolGun.Tool = nil
+    end
+end)
+
+local BToolGun = {
+    Tool = nil,
+    Sound = nil,
+    Animation = nil,
+    Highlight = nil,
+    Cooldown = false
+}
+
+AddCommand("btoolgun", {"bgun"}, "Really cool gun that uses btools to kill people [TOOL]", function()
+    local player = game.Players.LocalPlayer
+    local backpack = player:FindFirstChild("Backpack")
+    
+    if not backpack then
+        crx("Backpack not found!", 1.1, Color3.fromRGB(255, 0, 0), 138081500)
+        return
+    end
+    
+    -- Remove existing tool if any
+    if BToolGun.Tool then
+        BToolGun.Tool:Destroy()
+        BToolGun.Tool = nil
+    end
+    
+    -- Create the BToolGun
+    local tool = Instance.new("Tool")
+    tool.Name = "BtoolGun"
+    tool.ToolTip = "BtoolGun - Click players to kill them"
+    tool.RequiresHandle = true
+    tool.Parent = backpack
+    
+    -- Create tool handle
+    local handle = Instance.new("Part")
+    handle.Name = "Handle"
+    handle.Size = Vector3.new(1, 2, 1)
+    handle.BrickColor = BrickColor.new("Bright blue")
+    handle.Material = Enum.Material.Neon
+    handle.Parent = tool
+    
+    -- Create mesh
+    local mesh = Instance.new("SpecialMesh")
+    mesh.MeshType = Enum.MeshType.FileMesh
+    mesh.MeshId = "rbxassetid://94242777" -- Gun mesh
+    mesh.TextureId = "rbxassetid://94242778"
+    mesh.Scale = Vector3.new(0.5, 0.5, 0.5)
+    mesh.Parent = handle
+    
+    -- Create shoot sound
+    local shootSound = Instance.new("Sound")
+    shootSound.SoundId = "rbxassetid://7026894166"
+    shootSound.Volume = 1
+    shootSound.Parent = handle
+    
+    -- Create highlight for target
+    local highlight = Instance.new("Highlight")
+    highlight.Name = "TargetHighlight"
+    highlight.Enabled = false
+    highlight.FillColor = Color3.fromRGB(255, 255, 0) -- Yellow
+    highlight.OutlineColor = Color3.fromRGB(255, 200, 0)
+    highlight.FillTransparency = 0.5
+    highlight.Parent = tool
+    
+    -- Animation track
+    local animationTrack = nil
+    
+    -- Function to execute bkill on target
+    local function ExecuteBkill(targetPlayer)
+        local character = player.Character
+        if not character then return false end
+
+        local rootPart = character:FindFirstChild("HumanoidRootPart")
+        if not rootPart then return false end
+
+        -- Find Building Tools
+        local btools = player:FindFirstChild("Backpack") and 
+                      player.Backpack:FindFirstChild("Building Tools") or
+                      character:FindFirstChild("Building Tools")
+        
+        if not btools then return false end
+
+        local syncAPI = btools:FindFirstChild("SyncAPI")
+        local serverEndpoint = syncAPI and syncAPI:FindFirstChild("ServerEndpoint")
+        if not serverEndpoint then return false end
+
+        -- Execute kill on target
+        if targetPlayer and targetPlayer.Character then
+            local torso = targetPlayer.Character:FindFirstChild("Torso") or 
+                         targetPlayer.Character:FindFirstChild("UpperTorso")
+            if torso then
+                pcall(function()
+                    serverEndpoint:InvokeServer("Remove", {torso})
+                end)
+                return true
+            end
+        end
+        return false
+    end
+    
+    -- Tool equipped event
+    tool.Equipped:Connect(function()
+        -- Play equip sound
+        local equipSound = Instance.new("Sound")
+        equipSound.SoundId = "rbxassetid://7026893899"
+        equipSound.Volume = 0.5
+        equipSound.Parent = handle
+        equipSound:Play()
+        game:GetService("Debris"):AddItem(equipSound, 2)
+        
+        -- Load animation
+        local humanoid = player.Character:FindFirstChildOfClass("Humanoid")
+        if humanoid then
+            local animator = humanoid:FindFirstChildOfClass("Animator")
+            if animator then
+                local animation = Instance.new("Animation")
+                animation.AnimationId = "rbxassetid://94242777"
+                animationTrack = animator:LoadAnimation(animation)
+                animationTrack:Play()
+            end
+        end
+    end)
+    
+    -- Tool unequipped event
+    tool.Unequipped:Connect(function()
+        if animationTrack then
+            animationTrack:Stop()
+            animationTrack = nil
+        end
+        highlight.Enabled = false
+        highlight.Adornee = nil
+        BToolGun.Cooldown = false
+    end)
+    
+    -- Tool activated event (shooting)
+    tool.Activated:Connect(function()
+        if BToolGun.Cooldown then return end
+        BToolGun.Cooldown = true
+        
+        -- Play shoot sound
+        shootSound:Play()
+        
+        -- Get mouse target
+        local mouse = player:GetMouse()
+        local target = mouse.Target
+        local targetPlayer = nil
+        
+        -- Find if target is a player
+        if target then
+            local model = target:FindFirstAncestorOfClass("Model")
+            if model then
+                targetPlayer = game.Players:GetPlayerFromCharacter(model)
+            end
+        end
+        
+        if targetPlayer and targetPlayer ~= player then
+            -- Highlight target
+            highlight.Adornee = targetPlayer.Character
+            highlight.Enabled = true
+            
+            -- Visual effects
+            local function createMuzzleFlash()
+                local flash = Instance.new("Part")
+                flash.Size = Vector3.new(0.5, 0.5, 0.5)
+                flash.BrickColor = BrickColor.new("Bright yellow")
+                flash.Material = Enum.Material.Neon
+                flash.Anchored = true
+                flash.CanCollide = false
+                flash.CFrame = handle.CFrame * CFrame.new(0, 0, -1)
+                flash.Parent = workspace
+                
+                local pointLight = Instance.new("PointLight")
+                pointLight.Brightness = 10
+                pointLight.Range = 15
+                pointLight.Color = Color3.fromRGB(255, 255, 0)
+                pointLight.Parent = flash
+                
+                game:GetService("TweenService"):Create(flash, TweenInfo.new(0.3), {Size = Vector3.new(0, 0, 0)}):Play()
+                game:GetService("TweenService"):Create(pointLight, TweenInfo.new(0.3), {Brightness = 0}):Play()
+                game:GetService("Debris"):AddItem(flash, 0.4)
+            end
+            
+            -- Camera effects
+            local function applyCameraEffects()
+                local camera = workspace.CurrentCamera
+                local originalCFrame = camera.CFrame
+                
+                -- Camera shake
+                local shakeIntensity = 0.5
+                for i = 1, 10 do
+                    camera.CFrame = originalCFrame * CFrame.new(
+                        math.random(-shakeIntensity, shakeIntensity),
+                        math.random(-shakeIntensity, shakeIntensity),
+                        math.random(-shakeIntensity, shakeIntensity)
+                    )
+                    task.wait(0.02)
+                end
+                camera.CFrame = originalCFrame
+                
+                -- Camera blur (simulated with FOV change)
+                local originalFOV = camera.FieldOfView
+                camera.FieldOfView = originalFOV + 10
+                game:GetService("TweenService"):Create(camera, TweenInfo.new(0.5), {FieldOfView = originalFOV}):Play()
+            end
+            
+            -- Create visual effects
+            createMuzzleFlash()
+            applyCameraEffects()
+            
+            -- Execute bkill on target (ONCE)
+            local success = ExecuteBkill(targetPlayer)
+            
+            -- Remove highlight after delay
+            task.delay(2, function()
+                highlight.Enabled = false
+                highlight.Adornee = nil
+                BToolGun.Cooldown = false
+            end)
+            
+            if success then
+                return "Shot " .. targetPlayer.Name
+            else
+                return "Failed to bkill " .. targetPlayer.Name
+            end
+        else
+            -- Play empty click sound for missed shot
+            local clickSound = Instance.new("Sound")
+            clickSound.SoundId = "rbxassetid://131147845"
+            clickSound.Volume = 0.3
+            clickSound.Parent = handle
+            clickSound:Play()
+            game:GetService("Debris"):AddItem(clickSound, 2)
+            
+            BToolGun.Cooldown = false
+            return "Aim at a player to shoot!"
+        end
+    end)
+    
+    -- Mouse movement (target highlighting)
+    local mouse = player:GetMouse()
+    mouse.Move:Connect(function()
+        if tool.Parent == player.Character then
+            local target = mouse.Target
+            local targetPlayer = nil
+            
+            if target then
+                local model = target:FindFirstAncestorOfClass("Model")
+                if model then
+                    targetPlayer = game.Players:GetPlayerFromCharacter(model)
+                end
+            end
+            
+            if targetPlayer and targetPlayer ~= player then
+                highlight.Adornee = targetPlayer.Character
+                highlight.Enabled = true
+            else
+                highlight.Enabled = false
+                highlight.Adornee = nil
+            end
+        end
+    end)
+    
+    BToolGun.Tool = tool
+    return "BtoolGun created!"
+end)
+
+-- Auto cleanup
+game.Players.LocalPlayer.CharacterRemoving:Connect(function()
+    if BToolGun.Tool then
+        BToolGun.Tool:Destroy()
+        BToolGun.Tool = nil
+    end
+    BToolGun.Cooldown = false
 end)
 
 AddCommandWithPlayer("clientkill", {"ckill"}, "Kills players on the client (CLIENT)", function(name)
