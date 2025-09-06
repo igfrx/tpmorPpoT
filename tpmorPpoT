@@ -2837,14 +2837,17 @@ local function SkidFling(TargetPlayer)
 
     if not Character or not Humanoid or not RootPart then
         crx("Character not found!", 1.1, Color3.fromRGB(255, 0, 0), 138081500)
+        return
     end
 
     if not TCharacter or not THumanoid then
-        crx("Target not found!", 1.1, Color3.fromRGB(255, 0, 0), 138081500)
+        crx("Target not found!", 1.1, Color3.fromRGB(255, 0, 0), 138081500) 
+        return
     end
 
     if THumanoid.Sit then
         crx("Target is Sitting!", 1.1, Color3.fromRGB(255, 0, 0), 138081500)
+        return
     end
 
     -- Save original position
@@ -4971,25 +4974,28 @@ end)
 AddCommand("walkfling", {"wf"}, "Starts Touchfling", TFlingOn)
 AddCommand("unwalkfling", {"unwf"}, "Stops Touchfling", TFlingOff)
 
-AddCommandWithPlayer("fkill", {"fling"}, "Fling a player", function(name)
-    local target = GetPlayer(name)
-    if not target then crx("Target not found!", 1.1, Color3.fromRGB(255, 0, 0), 138081500) end
-    return SkidFling(target)
-end)
+AddCommandWithPlayer("fling", {"throw"}, "Fling a player or all players", function(name)
+    name = name:lower()
 
-AddCommand("killall", {"flingall"}, "Fling all players", function()
-    local players = Players:GetPlayers()
-    local count = 0
-    
-    for _, player in ipairs(players) do
-        if player ~= Player then
-            SkidFling(player)
-            count = count + 1
-            task.wait(0.5) -- Small delay between flings
+    if name == "all" then
+        local count = 0
+        for _, player in ipairs(Players:GetPlayers()) do
+            if player ~= Player then
+                SkidFling(player)
+                count += 1
+                task.wait(0.3) -- small delay so it doesn't break physics
+            end
         end
+        return "Flinged "..count.." players"
+    else
+        local target = GetPlayer(name)
+        if not target then 
+            crx("Target not found!", 1.1, Color3.fromRGB(255, 0, 0), 138081500)
+            return
+        end
+        SkidFling(target)
+        return "Flinged "..target.Name
     end
-    
-    return "Flinging\n"..count.." players"
 end)
 
 AddCommand("Invisible", {"invis"}, "Hides you [R6 RECOMMENDED]", invis2)
@@ -5100,6 +5106,7 @@ AddCommand("resetuagrav", {"rsug"}, "Resets unanchored Gravity", function()
     return string.format("Resetting gravity forces... (%d parts)", totalToProcess)
 end)
 
+
 local Buff = {
     Enabled = false,
     OriginalProperties = {}
@@ -5194,6 +5201,218 @@ game.Players.LocalPlayer.CharacterAdded:Connect(function(character)
             Buff.Connections = {}
         end
     end
+end)
+
+local CGod = {
+    Enabled = false,
+    Connections = {}
+}
+
+AddCommand("cgod", {"cgod"}, "Sets your health to inf (CLIENT)", function()
+    if CGod.Enabled then
+        crx("CGod is already enabled!", 1.1, Color3.fromRGB(255, 0, 0), 138081500)
+        return
+    end
+    
+    CGod.Enabled = true
+    local player = game.Players.LocalPlayer
+    
+    -- Function to set health to math.huge
+    local function setGodMode(character)
+        local humanoid = character:WaitForChild("Humanoid")
+        humanoid.Health = math.huge
+        humanoid.MaxHealth = math.huge
+        
+        -- Prevent health from being reduced
+        if CGod.Connections.healthChanged then
+            CGod.Connections.healthChanged:Disconnect()
+        end
+        
+        CGod.Connections.healthChanged = humanoid:GetPropertyChangedSignal("Health"):Connect(function()
+            if CGod.Enabled and humanoid.Health < math.huge then
+                humanoid.Health = math.huge
+            end
+        end)
+    end
+    
+    -- Apply to current character
+    if player.Character then
+        setGodMode(player.Character)
+    end
+    
+    -- Apply to new characters
+    if CGod.Connections.characterAdded then
+        CGod.Connections.characterAdded:Disconnect()
+    end
+    
+    CGod.Connections.characterAdded = player.CharacterAdded:Connect(function(character)
+        if CGod.Enabled then
+            setGodMode(character)
+        end
+    end)
+    
+    return "ClientGod enabled"
+end)
+
+AddCommand("unclientgod", {"uncgod"}, "Disables ClientGod mode", function()
+    if not CGod.Enabled then
+        crx("ClientGod wasn't active!", 1.1, Color3.fromRGB(255, 0, 0), 138081500)
+        return
+    end
+    
+    CGod.Enabled = false
+    
+    -- Disconnect connections
+    for _, connection in pairs(CGod.Connections) do
+        if connection then
+            connection:Disconnect()
+        end
+    end
+    CGod.Connections = {}
+    
+    -- Restore normal health if possible
+    local character = game.Players.LocalPlayer.Character
+    if character then
+        local humanoid = character:FindFirstChildOfClass("Humanoid")
+        if humanoid then
+            humanoid.MaxHealth = 100
+            humanoid.Health = 100
+        end
+    end
+    
+    return "ClientGod disabled"
+end)
+
+local PartAttachTool = {
+    Tool = nil,
+    Welds = {},
+    Connection = nil
+}
+
+AddCommand("partattachtool", {"pat"}, "Creates a PartAttachTool that welds parts to itself (click to weld)", function()
+    local player = game.Players.LocalPlayer
+    local backpack = player:FindFirstChild("Backpack")
+    
+    if not backpack then
+        crx("Backpack not found!", 1.1, Color3.fromRGB(255, 0, 0), 138081500)
+        return
+    end
+    
+    -- Remove existing tool if any
+    if PartAttachTool.Tool then
+        PartAttachTool.Tool:Destroy()
+        PartAttachTool.Tool = nil
+    end
+    
+    -- Clear any existing welds
+    for _, weld in pairs(PartAttachTool.Welds) do
+        if weld then
+            weld:Destroy()
+        end
+    end
+    PartAttachTool.Welds = {}
+    
+    if PartAttachTool.Connection then
+        PartAttachTool.Connection:Disconnect()
+        PartAttachTool.Connection = nil
+    end
+    
+    -- Create the tool with a handle
+    local tool = Instance.new("Tool")
+    tool.Name = "PartAttachTool"
+    tool.ToolTip = "Click on unanchored parts to weld to this tool"
+    tool.RequiresHandle = true
+    tool.Parent = backpack
+    
+    -- Create tool handle
+    local handle = Instance.new("Part")
+    handle.Name = "Handle"
+    handle.Size = Vector3.new(1, 1, 1)
+    handle.Transparency = 1  -- Invisible handle
+    handle.CanCollide = false
+    handle.Parent = tool
+    
+    -- Create selection box for visual feedback
+    local selectionBox = Instance.new("SelectionBox")
+    selectionBox.Name = "PartSelection"
+    selectionBox.Adornee = nil
+    selectionBox.Color3 = Color3.new(0, 1, 0) -- Green
+    selectionBox.LineThickness = 0.05
+    selectionBox.Parent = tool
+    
+    -- Tool activated event (when clicked on a part)
+    tool.Activated:Connect(function()
+        local mouse = player:GetMouse()
+        local targetPart = mouse.Target
+        
+        if targetPart and targetPart:IsA("BasePart") and not targetPart.Anchored then
+            -- Remove any existing weld for this part
+            if PartAttachTool.Welds[targetPart] then
+                PartAttachTool.Welds[targetPart]:Destroy()
+                PartAttachTool.Welds[targetPart] = nil
+            end
+            
+            -- Create weld between tool handle and target part
+            local weld = Instance.new("Weld")
+            weld.Name = "ToolAttachment"
+            weld.Part0 = handle
+            weld.Part1 = targetPart
+            weld.C0 = CFrame.new() -- Identity offset
+            weld.C1 = handle.CFrame:ToObjectSpace(targetPart.CFrame)
+            weld.Parent = handle
+            
+            -- Store the weld
+            PartAttachTool.Welds[targetPart] = weld
+            
+            -- Show visual feedback
+            selectionBox.Adornee = targetPart
+            
+            return "Welded " .. targetPart.Name .. " to tool"
+        else
+            return "Target must be an unanchored part!"
+        end
+    end)
+    
+    -- Tool unequipped event (remove all welds)
+    tool.Unequipped:Connect(function()
+        -- Remove all welds
+        for part, weld in pairs(PartAttachTool.Welds) do
+            if weld then
+                weld:Destroy()
+            end
+        end
+        PartAttachTool.Welds = {}
+        selectionBox.Adornee = nil
+    end)
+    
+    -- Cleanup when tool is removed
+    tool.Destroying:Connect(function()
+        for part, weld in pairs(PartAttachTool.Welds) do
+            if weld then
+                weld:Destroy()
+            end
+        end
+        PartAttachTool.Welds = {}
+        PartAttachTool.Tool = nil
+    end)
+    
+    PartAttachTool.Tool = tool
+    return "PartAttachTool Created!"
+end)
+
+-- Auto cleanup when player leaves
+game.Players.LocalPlayer.CharacterRemoving:Connect(function()
+    if PartAttachTool.Tool then
+        PartAttachTool.Tool:Destroy()
+        PartAttachTool.Tool = nil
+    end
+    
+    for part, weld in pairs(PartAttachTool.Welds) do
+        if weld then
+            weld:Destroy()
+        end
+    end
+    PartAttachTool.Welds = {}
 end)
 
 -- AntiTrip System (FIXED)
@@ -5408,6 +5627,118 @@ AddCommand("unautorespawn", {"unautore"}, "Disables AutoRespawn", function()
 end)
 
 -- FPS Commands
+
+local FPSCounter = {
+    Enabled = false,
+    Connection = nil,
+    Label = nil
+}
+
+
+-- Alternative simpler FPS command that always works
+AddCommand("showfps", {"sfps"}, "Shows FPS counter", function()
+    local player = game:GetService("Players").LocalPlayer
+    local playerGui = player:WaitForChild("PlayerGui")
+    
+    -- Remove any existing FPS counters
+    local oldGui = playerGui:FindFirstChild("SimpleFPSCounter")
+    if oldGui then
+        oldGui:Destroy()
+    end
+    
+    -- Create simple FPS counter
+    local screenGui = Instance.new("ScreenGui")
+    screenGui.Name = "SimpleFPSCounter"
+    screenGui.ResetOnSpawn = false
+    screenGui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
+    screenGui.Parent = playerGui
+    
+    local fpsLabel = Instance.new("TextLabel")
+    fpsLabel.Name = "FPSCounter"
+    fpsLabel.Text = "FPS: 0"
+    fpsLabel.TextColor3 = Color3.new(0, 1, 0)
+    fpsLabel.BackgroundColor3 = Color3.new(0, 0, 0)
+    fpsLabel.BackgroundTransparency = 0.5
+    fpsLabel.Size = UDim2.new(0, 80, 0, 25)
+    fpsLabel.Position = UDim2.new(0, 70, 0, 50)
+    fpsLabel.Font = Enum.Font.Arcade
+    fpsLabel.TextSize = 16
+    fpsLabel.TextXAlignment = Enum.TextXAlignment.Left
+    fpsLabel.Parent = screenGui
+    
+    -- FPS calculation
+    local lastTime = tick()
+    local frames = 0
+    local connection
+    
+    connection = game:GetService("RunService").RenderStepped:Connect(function()
+        frames = frames + 1
+        local currentTime = tick()
+        if currentTime - lastTime >= 1 then
+            fpsLabel.Text = "FPS: " .. math.floor(frames)
+            frames = 0
+            lastTime = currentTime
+        end
+    end)
+    
+    -- Make it draggable
+    local dragging = false
+    local dragInput, dragStart, startPos
+    
+    fpsLabel.InputBegan:Connect(function(input)
+        if input.UserInputType == Enum.UserInputType.MouseButton1 then
+            dragging = true
+            dragStart = input.Position
+            startPos = fpsLabel.Position
+            input.Changed:Connect(function()
+                if input.UserInputState == Enum.UserInputState.End then
+                    dragging = false
+                end
+            end)
+        end
+    end)
+    
+    fpsLabel.InputChanged:Connect(function(input)
+        if input.UserInputType == Enum.UserInputType.MouseMovement then
+            dragInput = input
+        end
+    end)
+    
+    game:GetService("UserInputService").InputChanged:Connect(function(input)
+        if dragging and input == dragInput then
+            local delta = input.Position - dragStart
+            fpsLabel.Position = UDim2.new(startPos.X.Scale, startPos.X.Offset + delta.X, startPos.Y.Scale, startPos.Y.Offset + delta.Y)
+        end
+    end)
+    
+    return "FPS counter shown"
+end)
+
+AddCommand("hidefps", {"hfps"}, "Hides FPS counter", function()
+    local player = game:GetService("Players").LocalPlayer
+    local playerGui = player:WaitForChild("PlayerGui")
+    
+    local oldGui = playerGui:FindFirstChild("SimpleFPSCounter")
+    if oldGui then
+        oldGui:Destroy()
+    end
+    
+    -- Also disable the toggle version
+    if FPSCounter.Enabled then
+        if FPSCounter.Connection then
+            FPSCounter.Connection:Disconnect()
+            FPSCounter.Connection = nil
+        end
+        if FPSCounter.Label then
+            FPSCounter.Label:Destroy()
+            FPSCounter.Label = nil
+        end
+        FPSCounter.Enabled = false
+    end
+    
+    return "FPS counter hidden"
+end)
+
 AddCommandWithValue("setfpscap", "value", {"sfc"}, "Sets the maximum FPS limit", function(value)
     local fps = tonumber(value)
     if not fps or fps <= 0 then
@@ -5432,6 +5763,151 @@ AddCommand("unlockfps", {"unlf"}, "Unlocks the FPS limit (1000)", function()
         crx("Unsupported Executor - Missing setfpscap function", 1.1, Color3.fromRGB(255, 0, 0), 138081500)
         return
     end
+end)
+
+local FPSBooster = {
+    Enabled = false,
+    Connections = {},
+    OriginalProperties = {}
+}
+
+AddCommand("fpsbooster", {"fpsb"}, "Lowers graphics for maximum FPS boost", function()
+    if FPSBooster.Enabled then
+        crx("FPS Booster is already enabled!", 1.1, Color3.fromRGB(255, 0, 0), 138081500)
+        return
+    end
+    
+    FPSBooster.Enabled = true
+    local destroyed = 0
+    local optimized = 0
+    
+    -- Function to aggressively optimize instances
+    local function optimizeInstance(instance)
+        if not instance or not instance.Parent then return end
+        
+        -- Store original properties for restoration
+        if not FPSBooster.OriginalProperties[instance] then
+            FPSBooster.OriginalProperties[instance] = {
+                Material = instance:IsA("BasePart") and instance.Material or nil,
+                Reflectance = instance:IsA("BasePart") and instance.Reflectance or nil,
+                Transparency = instance:IsA("BasePart") and instance.Transparency or nil,
+                Enabled = (instance:IsA("Fire") or instance:IsA("SpotLight") or instance:IsA("Smoke") or instance:IsA("Sparkles")) and instance.Enabled or nil,
+                Lifetime = (instance:IsA("ParticleEmitter") or instance:IsA("Trail")) and instance.Lifetime or nil
+            }
+        end
+        
+        -- Aggressive optimization
+        if instance:IsA("Texture") or instance:IsA("Decal") then
+            instance:Destroy()
+            destroyed = destroyed + 1
+        elseif instance:IsA("BasePart") then
+            instance.Material = Enum.Material.Plastic
+            instance.Reflectance = 0
+            instance.Transparency = instance.Transparency > 0.5 and 1 or 0 -- Make very transparent parts completely invisible
+            optimized = optimized + 1
+        elseif instance:IsA("ParticleEmitter") or instance:IsA("Trail") then
+            instance.Lifetime = NumberRange.new(0)
+            instance.Rate = 0
+            optimized = optimized + 1
+        elseif instance:IsA("Fire") or instance:IsA("SpotLight") or instance:IsA("Smoke") or instance:IsA("Sparkles") then
+            instance.Enabled = false
+            optimized = optimized + 1
+        elseif instance:IsA("SurfaceLight") or instance:IsA("PointLight") then
+            instance.Enabled = false
+            optimized = optimized + 1
+        elseif instance:IsA("MeshPart") then
+            instance.RenderFidelity = Enum.RenderFidelity.Performance
+            optimized = optimized + 1
+        elseif instance:IsA("GuiObject") and instance:IsDescendantOf(game:GetService("CoreGui")) then
+            instance.Visible = false
+            optimized = optimized + 1
+        end
+    end
+    
+    -- Optimize everything in workspace
+    for _, instance in ipairs(workspace:GetDescendants()) do
+        optimizeInstance(instance)
+    end
+    
+    -- Optimize lighting
+    local lighting = game:GetService("Lighting")
+    lighting.GlobalShadows = false
+    lighting.FogEnd = 9e9
+    lighting.Brightness = 1
+    lighting.Outlines = false
+    
+    -- Optimize CoreGui
+    for _, gui in ipairs(game:GetService("CoreGui"):GetDescendants()) do
+        if gui:IsA("GuiObject") then
+            gui.Visible = false
+            optimized = optimized + 1
+        end
+    end
+    
+    -- Listen for new instances
+    FPSBooster.Connections.descendantAdded = workspace.DescendantAdded:Connect(optimizeInstance)
+    FPSBooster.Connections.lightingChanged = lighting.Changed:Connect(function()
+        lighting.GlobalShadows = false
+        lighting.FogEnd = 9e9
+    end)
+    
+    -- Set graphics quality to minimum
+    settings().Rendering.QualityLevel = 1
+    settings().Rendering.MeshPartDetailLevel = Enum.MeshPartDetailLevel.Level01
+    
+    return "FPS Booster enabled - " .. destroyed .. " items destroyed, " .. optimized .. " items optimized"
+end)
+
+AddCommand("unfpsbooster", {"unfpsb", "lagify"}, "Restores original graphics quality", function()
+    if not FPSBooster.Enabled then
+        crx("FPS Booster wasn't active!", 1.1, Color3.fromRGB(255, 0, 0), 138081500)
+        return
+    end
+    
+    FPSBooster.Enabled = false
+    
+    -- Restore original properties
+    local restored = 0
+    for instance, properties in pairs(FPSBooster.OriginalProperties) do
+        if instance and instance.Parent then
+            if instance:IsA("BasePart") then
+                if properties.Material then instance.Material = properties.Material end
+                if properties.Reflectance then instance.Reflectance = properties.Reflectance end
+                if properties.Transparency then instance.Transparency = properties.Transparency end
+            elseif (instance:IsA("Fire") or instance:IsA("SpotLight") or instance:IsA("Smoke") or instance:IsA("Sparkles")) and properties.Enabled ~= nil then
+                instance.Enabled = properties.Enabled
+            elseif (instance:IsA("ParticleEmitter") or instance:IsA("Trail")) and properties.Lifetime then
+                instance.Lifetime = properties.Lifetime
+            end
+            restored = restored + 1
+        end
+    end
+    
+    -- Restore lighting
+    local lighting = game:GetService("Lighting")
+    lighting.GlobalShadows = true
+    lighting.FogEnd = 100000
+    lighting.Brightness = 2
+    
+    -- Restore CoreGui
+    for _, gui in ipairs(game:GetService("CoreGui"):GetDescendants()) do
+        if gui:IsA("GuiObject") then
+            gui.Visible = true
+        end
+    end
+    
+    -- Restore graphics settings
+    settings().Rendering.QualityLevel = 21
+    settings().Rendering.MeshPartDetailLevel = Enum.MeshPartDetailLevel.Level04
+    
+    -- Disconnect connections
+    for _, connection in pairs(FPSBooster.Connections) do
+        connection:Disconnect()
+    end
+    FPSBooster.Connections = {}
+    FPSBooster.OriginalProperties = {}
+    
+    return "FPS Booster disabled - " .. restored .. " items restored"
 end)
 
 -- AntiKick System
@@ -6105,7 +6581,7 @@ local FreeGamepasses = {
     OriginalFunction = nil
 }
 
-AddCommand("freegamepasses", {"freegp", "fgp"}, "Pretends you own every gamepass and fires purchase signals", function()
+AddCommand("freegamepass", {"freegp", "fgp"}, "Pretends you own every gamepass and fires purchase signals", function()
     if FreeGamepasses.Hooked then
         crx("FreeGamepasses is already enabled!", 1.1, Color3.fromRGB(255, 0, 0), 138081500)
         return
@@ -6163,7 +6639,7 @@ AddCommand("freegamepasses", {"freegp", "fgp"}, "Pretends you own every gamepass
     return "Free Gamepasses enabled - " .. signalsFired .. " purchase signals fired"
 end)
 
-AddCommand("unfreegamepasses", {"unfreegp", "unfgp"}, "Disables free gamepasses hook", function()
+AddCommand("unfreegamepass", {"unfreegp", "unfgp"}, "Disables free gamepasses hook", function()
     if not FreeGamepasses.Hooked then
         crx("FreeGamepasses wasn't active!", 1.1, Color3.fromRGB(255, 0, 0), 138081500)
         return
@@ -6712,6 +7188,89 @@ AddCommand("interacts", {"prop", "int"}, "Fires All ProximityPrompts", fireProxi
 AddCommand("loopInteracts", {"loopprop", "lint"}, "Loop Fires All ProximityPrompts", pploop)
 AddCommand("unloopInteracts", {"unloopprop", "unlint"}, "Stops Loop Fires All ProximityPrompts", pploop)
 
+local CartControl = {
+    Active = false,
+    Connections = {}
+}
+
+AddCommand("fastcarts", {"fastc"}, "Increases cart speed, making them go forward", function()
+    if CartControl.Active then
+        crx("Cart control is already active! Use 'stopcarts' first.", 1.1, Color3.fromRGB(255, 0, 0), 138081500)
+        return
+    end
+    
+    CartControl.Active = true
+    CartControl.Mode = "fast"
+    local cartsControlled = 0
+    
+    -- Find all cart models
+    for _, cart in ipairs(workspace:GetDescendants()) do
+        if cart:IsA("Model") then
+            local button = cart:FindFirstChild("Up")
+            local clickDetector = button and button:FindFirstChildOfClass("ClickDetector")
+            
+            if button and button:IsA("BasePart") and clickDetector then
+                cartsControlled = cartsControlled + 1
+                
+                -- Start rapid clicking
+                coroutine.wrap(function()
+                    while CartControl.Active and CartControl.Mode == "fast" and button and clickDetector and button.Parent do
+                        fireclickdetector(clickDetector)
+                        task.wait(0.05)
+                    end
+                end)()
+            end
+        end
+    end
+    
+    if cartsControlled == 0 then
+        CartControl.Active = false
+        crx("No carts with 'Up' buttons found!", 1.1, Color3.fromRGB(255, 0, 0), 138081500)
+        return
+    end
+    
+    return "Speeding up " .. cartsControlled .. " carts"
+end)
+
+AddCommand("slowcarts", {"slowc"}, "Decreases cart speed, making them go backwards", function()
+    if CartControl.Active then
+        crx("Cart control is already active! Use 'stopcarts' first.", 1.1, Color3.fromRGB(255, 0, 0), 138081500)
+        return
+    end
+    
+    CartControl.Active = true
+    CartControl.Mode = "slow"
+    local cartsControlled = 0
+    
+    -- Find all cart models
+    for _, cart in ipairs(workspace:GetDescendants()) do
+        if cart:IsA("Model") then
+            local button = cart:FindFirstChild("Down")
+            local clickDetector = button and button:FindFirstChildOfClass("ClickDetector")
+            
+            if button and button:IsA("BasePart") and clickDetector then
+                cartsControlled = cartsControlled + 1
+                
+                -- Start rapid clicking
+                coroutine.wrap(function()
+                    while CartControl.Active and CartControl.Mode == "slow" and button and clickDetector and button.Parent do
+                        fireclickdetector(clickDetector)
+                        task.wait(0.05)
+                    end
+                end)()
+            end
+        end
+    end
+    
+    if cartsControlled == 0 then
+        CartControl.Active = false
+        crx("No carts with 'Down' buttons found!", 1.1, Color3.fromRGB(255, 0, 0), 138081500)
+        return
+    end
+    
+    return "Slowing down " .. cartsControlled .. " carts"
+end)
+
 local Killbrick = {
     Enabled = false,
     Player = game.Players.LocalPlayer
@@ -6776,6 +7335,119 @@ AddCommand("toolcontrol", {"tc"}, "Control any tool! [TOOL]", function()
 end)
 
 -- stuffness
+
+local Fan = {
+    Enabled = false,
+    Connection = nil,
+    TargetPlayer = nil,
+    SpinAngle = 0
+}
+
+AddCommandWithPlayer("sillyorbit", nil, "Make a player dizzy", function(name)
+    if Fan.Enabled then
+        crx("sillyorbit is already active! Use 'unsillyorbit' to stop.", 1.1, Color3.fromRGB(255, 0, 0), 138081500)
+        return
+    end
+    
+    local targetPlayer = GetPlayer(name)
+    if not targetPlayer then
+        crx("Player not found!", 1.1, Color3.fromRGB(255, 0, 0), 138081500)
+        return
+    end
+    
+    Fan.Enabled = true
+    Fan.TargetPlayer = targetPlayer
+    Fan.SpinAngle = 0
+    
+    local localPlayer = game.Players.LocalPlayer
+    local character = localPlayer.Character
+    if not character then
+        crx("Character not found!", 1.1, Color3.fromRGB(255, 0, 0), 138081500)
+        return
+    end
+    
+    local rootPart = character:FindFirstChild("HumanoidRootPart")
+    if not rootPart then
+        crx("HumanoidRootPart not found!", 1.1, Color3.fromRGB(255, 0, 0), 138081500)
+        return
+    end
+    
+    -- Disconnect previous connection if any
+    if Fan.Connection then
+        Fan.Connection:Disconnect()
+        Fan.Connection = nil
+    end
+    
+    -- Start fan orbit and spin
+    Fan.Connection = game:GetService("RunService").Heartbeat:Connect(function(dt)
+        if not Fan.Enabled or not Fan.TargetPlayer or not Fan.TargetPlayer.Character then
+            if Fan.Connection then
+                Fan.Connection:Disconnect()
+                Fan.Connection = nil
+            end
+            return
+        end
+        
+        local targetCharacter = Fan.TargetPlayer.Character
+        local targetRoot = targetCharacter:FindFirstChild("HumanoidRootPart")
+        local localCharacter = localPlayer.Character
+        local localRoot = localCharacter and localCharacter:FindFirstChild("HumanoidRootPart")
+        
+        if not targetRoot or not localRoot then
+            return
+        end
+        
+        -- Update spin angle
+        Fan.SpinAngle = Fan.SpinAngle + (10 * dt) -- Spin speed
+        
+        -- Orbit calculations
+        local orbitRadius = 5 -- Distance from target
+        local orbitHeight = 2 -- Height above target
+        
+        -- Calculate orbit position
+        local orbitX = math.cos(Fan.SpinAngle) * orbitRadius
+        local orbitZ = math.sin(Fan.SpinAngle) * orbitRadius
+        local orbitOffset = Vector3.new(orbitX, orbitHeight, orbitZ)
+        
+        -- Set position (orbit around target)
+        localRoot.CFrame = CFrame.new(targetRoot.Position + orbitOffset, targetRoot.Position)
+        
+        -- Apply horizontal spinning (fan rotation)
+        localRoot.CFrame = localRoot.CFrame * CFrame.Angles(0, Fan.SpinAngle * 2, 0)
+    end)
+    
+    return "sillyorbit enabled " .. targetPlayer.Name
+end)
+
+AddCommand("unsillyorbit", nil, "Stops the haha orbit", function()
+    if not Fan.Enabled then
+        crx("Fan wasn't active!", 1.1, Color3.fromRGB(255, 0, 0), 138081500)
+        return
+    end
+    
+    Fan.Enabled = false
+    Fan.TargetPlayer = nil
+    Fan.SpinAngle = 0
+    
+    if Fan.Connection then
+        Fan.Connection:Disconnect()
+        Fan.Connection = nil
+    end
+    
+    return "sillyorbit disabled"
+end)
+
+-- Auto cleanup
+game.Players.LocalPlayer.CharacterRemoving:Connect(function()
+    if Fan.Enabled then
+        Fan.Enabled = false
+        Fan.TargetPlayer = nil
+        if Fan.Connection then
+            Fan.Connection:Disconnect()
+            Fan.Connection = nil
+        end
+    end
+end)
 
 local Orbit = {
     Active = false,
@@ -7210,6 +7882,102 @@ local function cleanup()
     originalSizes = {}
 end
 
+local NoFallDamage = {
+    Enabled = false,
+    Connections = {}
+}
+
+AddCommand("nofalldamage", {"nfd"}, "Prevents all fall damage", function()
+    if NoFallDamage.Enabled then
+        crx("NoFallDamage is already enabled!", 1.1, Color3.fromRGB(255, 0, 0), 138081500)
+        return
+    end
+    
+    NoFallDamage.Enabled = true
+    local player = game.Players.LocalPlayer
+    
+    -- Function to setup fall damage protection for a character
+    local function setupCharacter(character)
+        local humanoid = character:WaitForChild("Humanoid")
+        
+        -- Store original state
+        NoFallDamage.OriginalStates = NoFallDamage.OriginalStates or {}
+        NoFallDamage.OriginalStates[humanoid] = {
+            UseJumpPower = humanoid.UseJumpPower,
+            JumpPower = humanoid.JumpPower,
+            JumpHeight = humanoid.JumpHeight
+        }
+        
+        -- Prevent fall damage by making character float before hitting ground
+        if NoFallDamage.Connections.falling then
+            NoFallDamage.Connections.falling:Disconnect()
+        end
+        
+        NoFallDamage.Connections.falling = humanoid.StateChanged:Connect(function(oldState, newState)
+            if NoFallDamage.Enabled and newState == Enum.HumanoidStateType.Freefall then
+                -- When falling, reduce velocity before hitting ground
+                local rootPart = character:FindFirstChild("HumanoidRootPart")
+                if rootPart and rootPart.Velocity.Y < -50 then -- Only if falling fast
+                    rootPart.Velocity = Vector3.new(rootPart.Velocity.X, -25, rootPart.Velocity.Z)
+                end
+            end
+        end)
+        
+        -- Alternative method: Modify physics properties to reduce fall damage
+        humanoid:SetStateEnabled(Enum.HumanoidStateType.FallingDown, false)
+    end
+    
+    -- Setup current character
+    if player.Character then
+        setupCharacter(player.Character)
+    end
+    
+    -- Setup for new characters
+    if NoFallDamage.Connections.characterAdded then
+        NoFallDamage.Connections.characterAdded:Disconnect()
+    end
+    
+    NoFallDamage.Connections.characterAdded = player.CharacterAdded:Connect(function(character)
+        if NoFallDamage.Enabled then
+            setupCharacter(character)
+        end
+    end)
+    
+    return "NoFallDamage enabled"
+end)
+
+AddCommand("unnofalldamage", {"unnfd"}, "Allows fall damage again", function()
+    if not NoFallDamage.Enabled then
+        crx("NoFallDamage wasn't active!", 1.1, Color3.fromRGB(255, 0, 0), 138081500)
+        return
+    end
+    
+    NoFallDamage.Enabled = false
+    
+    -- Restore original states
+    if NoFallDamage.OriginalStates then
+        for humanoid, states in pairs(NoFallDamage.OriginalStates) do
+            if humanoid and humanoid.Parent then
+                humanoid.UseJumpPower = states.UseJumpPower
+                humanoid.JumpPower = states.JumpPower
+                humanoid.JumpHeight = states.JumpHeight
+                humanoid:SetStateEnabled(Enum.HumanoidStateType.FallingDown, true)
+            end
+        end
+        NoFallDamage.OriginalStates = {}
+    end
+    
+    -- Disconnect all connections
+    for _, connection in pairs(NoFallDamage.Connections) do
+        if connection then
+            connection:Disconnect()
+        end
+    end
+    NoFallDamage.Connections = {}
+    
+    return "NoFallDamage disabled"
+end)
+
 -- Main command
 AddCommandWithValue("hitbox", "amount", {"reach", "hb"}, "Changes other players hitbox size (0 to reset)", function(size)
     local sizeNum = tonumber(size)
@@ -7360,64 +8128,6 @@ end)
 AddCommand("ping", nil, "Show your current ping", function()
     local ping = math.floor(game:GetService("Stats").Network.ServerStatsItem["Data Ping"]:GetValue())
     return "Ping: " .. ping .. "ms"
-end)
-
-local fpsCounterEnabled = false
-local fpsCounterConnection = nil
-
--- Create or get existing ScreenGui
-local player = game:GetService("Players").LocalPlayer
-local playerGui = player:WaitForChild("PlayerGui")
-local screenGui = playerGui:FindFirstChild("ScreenGui") or Instance.new("ScreenGui")
-screenGui.Name = "ScreenGui"
-screenGui.Parent = playerGui
-
-AddCommand("fps", nil, "Toggles FPS counter", function()
-    fpsCounterEnabled = not fpsCounterEnabled
-
-    if fpsCounterEnabled then
-        -- Create label
-        local fpsLabel = Instance.new("TextLabel")
-        fpsLabel.Name = "FPSCounter"
-        fpsLabel.Text = "FPS: 0"
-        fpsLabel.TextColor3 = Color3.new(0,255,0)
-        fpsLabel.BackgroundTransparency = 1
-        fpsLabel.Size = UDim2.new(0, 100, 0, 30)  -- Changed height from 300 to 30 (more reasonable for text)
-        fpsLabel.Position = UDim2.new(0, 12, 0, 44)
-        fpsLabel.Font = Enum.Font.Arcade
-        fpsLabel.TextSize = 19
-        fpsLabel.TextXAlignment = Enum.TextXAlignment.Left
-        fpsLabel.Parent = screenGui
-
-        -- FPS logic
-        local lastTime = tick()
-        local frames = 0
-
-        fpsCounterConnection = game:GetService("RunService").RenderStepped:Connect(function()
-            frames += 1
-            local currentTime = tick()
-            if currentTime - lastTime >= 1 then
-                fpsLabel.Text = "FPS: " .. tostring(frames)
-                frames = 0
-                lastTime = currentTime
-            end
-        end)
-
-        return "FPS counter enabled"
-    else
-        -- Disable FPS
-        if fpsCounterConnection then
-            fpsCounterConnection:Disconnect()
-            fpsCounterConnection = nil
-        end
-
-        local existing = screenGui:FindFirstChild("FPSCounter")
-        if existing then
-            existing:Destroy()
-        end
-
-        return "FPS counter disabled"
-    end
 end)
 
 -- Fullbright command
@@ -7705,17 +8415,7 @@ local function FindPlayer(name)
     return nil
 end
 
-AddCommand("freezecam", {"frcam"}, "freezes your camera and turns it into a tripod lol", function()
-    workspace.CurrentCamera.CameraType = Enum.CameraType.Scriptable
-    workspace.CurrentCamera.CFrame = game.Players.LocalPlayer.Character.Head.CFrame
-    return "First person view enabled"
-end)
 
--- Third person view
-AddCommand("unfreezecam", {"unfrcam"}, "unFreezes your camera", function()
-    workspace.CurrentCamera.CameraType = Enum.CameraType.Custom
-    return "Third person view enabled"
-end)
 
 local currentViewConnection -- to disconnect old connections
 local currentViewedPlayer -- to track which player is being viewed
@@ -8433,7 +9133,7 @@ end
 
     local VersionLabel = Instance.new("TextLabel")
     VersionLabel.Name = "VersionLabel"
-    VersionLabel.Text = "V1.4"
+    VersionLabel.Text = "V1.5"
     VersionLabel.TextSize = 10
     VersionLabel.TextTransparency = 0.6
     VersionLabel.TextColor3 = Color3.fromRGB(0, 0, 0)
@@ -8884,7 +9584,7 @@ end
 
 -- Initialize and handle respawns
 local mainGUI = initializeMainGUI()
-crx("'151' Cmds Loaded!\nType 'cmds' for commands :D", 3, Color3.fromRGB(0, 255, 255), 12221831)
+crx("'200' Cmds Loaded!\nType 'cmds' for commands :D", 3, Color3.fromRGB(0, 255, 255), 12221831)
 
 Players.LocalPlayer.CharacterAdded:Connect(function()
     if ScreenGui and not ScreenGui.Parent then
