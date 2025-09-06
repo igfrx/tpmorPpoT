@@ -5244,11 +5244,12 @@ AddCommand("unbtoolkill", {"unbkill"}, "Stops the bkill process", function()
     return "Bkill stopped"
 end)
 
-local BToolGun = {
+local FlingGun = {
     Tool = nil,
     Sound = nil,
     Animation = nil,
-    Highlight = nil
+    Highlight = nil,
+    OriginalTransparency = {}
 }
 
 AddCommand("flinggun", {"fgun"}, "cool gun that flings people", function()
@@ -5261,12 +5262,12 @@ AddCommand("flinggun", {"fgun"}, "cool gun that flings people", function()
     end
     
     -- Remove existing tool if any
-    if BToolGun.Tool then
-        BToolGun.Tool:Destroy()
-        BToolGun.Tool = nil
+    if FlingGun.Tool then
+        FlingGun.Tool:Destroy()
+        FlingGun.Tool = nil
     end
     
-    -- Create the BToolGun
+    -- Create the FlingGun
     local tool = Instance.new("Tool")
     tool.Name = "FlingGun"
     tool.ToolTip = "FlingGun - Click players to fling them"
@@ -5307,6 +5308,48 @@ AddCommand("flinggun", {"fgun"}, "cool gun that flings people", function()
     -- Animation track
     local animationTrack = nil
     
+    -- Function to make player invisible
+    local function makeInvisible()
+        local character = player.Character
+        if not character then return end
+        
+        FlingGun.OriginalTransparency = {}
+        
+        -- Make all parts transparent
+        for _, part in ipairs(character:GetDescendants()) do
+            if part:IsA("BasePart") then
+                FlingGun.OriginalTransparency[part] = part.Transparency
+                part.Transparency = 1
+            elseif part:IsA("Decal") or part:IsA("Texture") then
+                FlingGun.OriginalTransparency[part] = part.Transparency
+                part.Transparency = 1
+            end
+        end
+        
+        -- Hide accessories
+        for _, accessory in ipairs(character:GetChildren()) do
+            if accessory:IsA("Accessory") and accessory:FindFirstChild("Handle") then
+                FlingGun.OriginalTransparency[accessory.Handle] = accessory.Handle.Transparency
+                accessory.Handle.Transparency = 1
+            end
+        end
+    end
+    
+    -- Function to make player visible again
+    local function makeVisible()
+        local character = player.Character
+        if not character then return end
+        
+        -- Restore original transparency
+        for object, transparency in pairs(FlingGun.OriginalTransparency) do
+            if object and object.Parent then
+                object.Transparency = transparency
+            end
+        end
+        
+        FlingGun.OriginalTransparency = {}
+    end
+    
     -- Tool equipped event
     tool.Equipped:Connect(function()
         -- Play equip sound
@@ -5338,6 +5381,7 @@ AddCommand("flinggun", {"fgun"}, "cool gun that flings people", function()
         end
         highlight.Enabled = false
         highlight.Adornee = nil
+        makeVisible() -- Ensure player becomes visible again
     end)
     
     -- Tool activated event (shooting)
@@ -5359,6 +5403,9 @@ AddCommand("flinggun", {"fgun"}, "cool gun that flings people", function()
         end
         
         if targetPlayer and targetPlayer ~= player then
+            -- Make player invisible
+            makeInvisible()
+            
             -- Highlight target
             highlight.Adornee = targetPlayer.Character
             highlight.Enabled = true
@@ -5412,13 +5459,14 @@ AddCommand("flinggun", {"fgun"}, "cool gun that flings people", function()
             createMuzzleFlash()
             applyCameraEffects()
             
-            -- Execute bkill on target
+            -- Execute fling on target
             SkidFling(targetPlayer)
             
-            -- Remove highlight after delay
+            -- Remove highlight and make visible after delay
             task.delay(2, function()
                 highlight.Enabled = false
                 highlight.Adornee = nil
+                makeVisible() -- Make player visible again after fling process
             end)
             
             return "flunged " .. targetPlayer.Name
@@ -5459,16 +5507,17 @@ AddCommand("flinggun", {"fgun"}, "cool gun that flings people", function()
         end
     end)
     
-    BToolGun.Tool = tool
+    FlingGun.Tool = tool
     return "FlingGun created!"
 end)
 
 -- Auto cleanup
 game.Players.LocalPlayer.CharacterRemoving:Connect(function()
-    if BToolGun.Tool then
-        BToolGun.Tool:Destroy()
-        BToolGun.Tool = nil
+    if FlingGun.Tool then
+        FlingGun.Tool:Destroy()
+        FlingGun.Tool = nil
     end
+    FlingGun.OriginalTransparency = {}
 end)
 
 local BToolGun = {
@@ -5837,28 +5886,96 @@ end)
 AddCommand("walkfling", {"wf"}, "Starts Touchfling", TFlingOn)
 AddCommand("unwalkfling", {"unwf"}, "Stops Touchfling", TFlingOff)
 
+local FlingCommand = {
+    OriginalTransparency = {}
+}
+
 AddCommandWithPlayer("fling", {"throw"}, "Fling a player or all players", function(name)
+    local player = game.Players.LocalPlayer
+    local character = player.Character
     name = name:lower()
+
+    -- Function to make player invisible
+    local function makeInvisible()
+        if not character then return end
+        
+        FlingCommand.OriginalTransparency = {}
+        
+        -- Make all parts transparent
+        for _, part in ipairs(character:GetDescendants()) do
+            if part:IsA("BasePart") then
+                FlingCommand.OriginalTransparency[part] = part.Transparency
+                part.Transparency = 1
+            elseif part:IsA("Decal") or part:IsA("Texture") then
+                FlingCommand.OriginalTransparency[part] = part.Transparency
+                part.Transparency = 1
+            end
+        end
+        
+        -- Hide accessories
+        for _, accessory in ipairs(character:GetChildren()) do
+            if accessory:IsA("Accessory") and accessory:FindFirstChild("Handle") then
+                FlingCommand.OriginalTransparency[accessory.Handle] = accessory.Handle.Transparency
+                accessory.Handle.Transparency = 1
+            end
+        end
+    end
+
+    -- Function to make player visible again
+    local function makeVisible()
+        if not character then return end
+        
+        -- Restore original transparency
+        for object, transparency in pairs(FlingCommand.OriginalTransparency) do
+            if object and object.Parent then
+                object.Transparency = transparency
+            end
+        end
+        
+        FlingCommand.OriginalTransparency = {}
+    end
+
+    -- Make player invisible before flinging
+    makeInvisible()
 
     if name == "all" then
         local count = 0
-        for _, player in ipairs(Players:GetPlayers()) do
-            if player ~= Player then
-                SkidFling(player)
-                count += 1
+        for _, targetPlayer in ipairs(game.Players:GetPlayers()) do
+            if targetPlayer ~= player then
+                SkidFling(targetPlayer)
+                count = count + 1
                 task.wait(0.3) -- small delay so it doesn't break physics
             end
         end
+        
+        -- Make visible after all flings complete
+        task.delay(2, function()
+            makeVisible()
+        end)
+        
         return "Flinged "..count.." players"
     else
         local target = GetPlayer(name)
         if not target then 
             crx("Target not found!", 1.1, Color3.fromRGB(255, 0, 0), 138081500)
+            makeVisible() -- Make visible again if target not found
             return
         end
+        
         SkidFling(target)
+        
+        -- Make visible after fling completes
+        task.delay(2, function()
+            makeVisible()
+        end)
+        
         return "Flinged "..target.Name
     end
+end)
+
+-- Auto cleanup in case of errors
+game.Players.LocalPlayer.CharacterRemoving:Connect(function()
+    FlingCommand.OriginalTransparency = {}
 end)
 
 AddCommand("Invisible", {"invis"}, "Hides you [R6 RECOMMENDED]", invis2)
