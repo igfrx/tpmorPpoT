@@ -5350,6 +5350,50 @@ AddCommand("flinggun", {"fgun"}, "cool gun that flings people", function()
         FlingGun.OriginalTransparency = {}
     end
     
+    -- Visual effects function (always shows)
+    local function createVisualEffects()
+        -- Muzzle flash
+        local flash = Instance.new("Part")
+        flash.Size = Vector3.new(0.5, 0.5, 0.5)
+        flash.BrickColor = BrickColor.new("Bright yellow")
+        flash.Material = Enum.Material.Neon
+        flash.Anchored = true
+        flash.CanCollide = false
+        flash.CFrame = handle.CFrame * CFrame.new(0, 0, -1)
+        flash.Parent = workspace
+        
+        local pointLight = Instance.new("PointLight")
+        pointLight.Brightness = 10
+        pointLight.Range = 15
+        pointLight.Color = Color3.fromRGB(255, 255, 0)
+        pointLight.Parent = flash
+        
+        game:GetService("TweenService"):Create(flash, TweenInfo.new(0.3), {Size = Vector3.new(0, 0, 0)}):Play()
+        game:GetService("TweenService"):Create(pointLight, TweenInfo.new(0.3), {Brightness = 0}):Play()
+        game:GetService("Debris"):AddItem(flash, 0.4)
+        
+        -- Camera effects
+        local camera = workspace.CurrentCamera
+        local originalCFrame = camera.CFrame
+        
+        -- Camera shake
+        local shakeIntensity = 0.5
+        for i = 1, 10 do
+            camera.CFrame = originalCFrame * CFrame.new(
+                math.random(-shakeIntensity, shakeIntensity),
+                math.random(-shakeIntensity, shakeIntensity),
+                math.random(-shakeIntensity, shakeIntensity)
+            )
+            task.wait(0.01) -- Faster shake
+        end
+        camera.CFrame = originalCFrame
+        
+        -- Camera blur (simulated with FOV change)
+        local originalFOV = camera.FieldOfView
+        camera.FieldOfView = originalFOV + 10
+        game:GetService("TweenService"):Create(camera, TweenInfo.new(0.3), {FieldOfView = originalFOV}):Play() -- Faster blur recovery
+    end
+    
     -- Tool equipped event
     tool.Equipped:Connect(function()
         -- Play equip sound
@@ -5389,6 +5433,9 @@ AddCommand("flinggun", {"fgun"}, "cool gun that flings people", function()
         -- Play shoot sound
         shootSound:Play()
         
+        -- Always show visual effects, even if not targeting player
+        createVisualEffects()
+        
         -- Get mouse target
         local mouse = player:GetMouse()
         local target = mouse.Target
@@ -5410,60 +5457,11 @@ AddCommand("flinggun", {"fgun"}, "cool gun that flings people", function()
             highlight.Adornee = targetPlayer.Character
             highlight.Enabled = true
             
-            -- Visual effects
-            local function createMuzzleFlash()
-                local flash = Instance.new("Part")
-                flash.Size = Vector3.new(0.5, 0.5, 0.5)
-                flash.BrickColor = BrickColor.new("Bright yellow")
-                flash.Material = Enum.Material.Neon
-                flash.Anchored = true
-                flash.CanCollide = false
-                flash.CFrame = handle.CFrame * CFrame.new(0, 0, -1)
-                flash.Parent = workspace
-                
-                local pointLight = Instance.new("PointLight")
-                pointLight.Brightness = 10
-                pointLight.Range = 15
-                pointLight.Color = Color3.fromRGB(255, 255, 0)
-                pointLight.Parent = flash
-                
-                game:GetService("TweenService"):Create(flash, TweenInfo.new(0.3), {Size = Vector3.new(0, 0, 0)}):Play()
-                game:GetService("TweenService"):Create(pointLight, TweenInfo.new(0.3), {Brightness = 0}):Play()
-                game:GetService("Debris"):AddItem(flash, 0.4)
-            end
-            
-            -- Camera effects
-            local function applyCameraEffects()
-                local camera = workspace.CurrentCamera
-                local originalCFrame = camera.CFrame
-                
-                -- Camera shake
-                local shakeIntensity = 0.5
-                for i = 1, 10 do
-                    camera.CFrame = originalCFrame * CFrame.new(
-                        math.random(-shakeIntensity, shakeIntensity),
-                        math.random(-shakeIntensity, shakeIntensity),
-                        math.random(-shakeIntensity, shakeIntensity)
-                    )
-                    task.wait(0.02)
-                end
-                camera.CFrame = originalCFrame
-                
-                -- Camera blur (simulated with FOV change)
-                local originalFOV = camera.FieldOfView
-                camera.FieldOfView = originalFOV + 10
-                game:GetService("TweenService"):Create(camera, TweenInfo.new(0.5), {FieldOfView = originalFOV}):Play()
-            end
-            
-            -- Create visual effects
-            createMuzzleFlash()
-            applyCameraEffects()
-            
             -- Execute fling on target
             SkidFling(targetPlayer)
             
-            -- Remove highlight and make visible after delay
-            task.delay(2, function()
+            -- Remove highlight and make visible after shorter delay
+            task.delay(1, function() -- Faster cooldown (1 second instead of 2)
                 highlight.Enabled = false
                 highlight.Adornee = nil
                 makeVisible() -- Make player visible again after fling process
@@ -5617,6 +5615,50 @@ AddCommand("btoolgun", {"bgun"}, "Really cool gun that uses btools to kill peopl
         return false
     end
     
+    -- Visual effects function (always shows)
+    local function createVisualEffects()
+        -- Muzzle flash
+        local flash = Instance.new("Part")
+        flash.Size = Vector3.new(0.5, 0.5, 0.5)
+        flash.BrickColor = BrickColor.new("Bright yellow")
+        flash.Material = Enum.Material.Neon
+        flash.Anchored = true
+        flash.CanCollide = false
+        flash.CFrame = handle.CFrame * CFrame.new(0, 0, -1)
+        flash.Parent = workspace
+        
+        local pointLight = Instance.new("PointLight")
+        pointLight.Brightness = 10
+        pointLight.Range = 15
+        pointLight.Color = Color3.fromRGB(255, 255, 0)
+        pointLight.Parent = flash
+        
+        game:GetService("TweenService"):Create(flash, TweenInfo.new(0.3), {Size = Vector3.new(0, 0, 0)}):Play()
+        game:GetService("TweenService"):Create(pointLight, TweenInfo.new(0.3), {Brightness = 0}):Play()
+        game:GetService("Debris"):AddItem(flash, 0.4)
+        
+        -- Camera effects
+        local camera = workspace.CurrentCamera
+        local originalCFrame = camera.CFrame
+        
+        -- Camera shake
+        local shakeIntensity = 0.5
+        for i = 1, 10 do
+            camera.CFrame = originalCFrame * CFrame.new(
+                math.random(-shakeIntensity, shakeIntensity),
+                math.random(-shakeIntensity, shakeIntensity),
+                math.random(-shakeIntensity, shakeIntensity)
+            )
+            task.wait(0.01) -- Faster shake
+        end
+        camera.CFrame = originalCFrame
+        
+        -- Camera blur (simulated with FOV change)
+        local originalFOV = camera.FieldOfView
+        camera.FieldOfView = originalFOV + 10
+        game:GetService("TweenService"):Create(camera, TweenInfo.new(0.3), {FieldOfView = originalFOV}):Play() -- Faster blur recovery
+    end
+    
     -- Tool equipped event
     tool.Equipped:Connect(function()
         -- Play equip sound
@@ -5659,6 +5701,9 @@ AddCommand("btoolgun", {"bgun"}, "Really cool gun that uses btools to kill peopl
         -- Play shoot sound
         shootSound:Play()
         
+        -- Always show visual effects, even if not targeting player
+        createVisualEffects()
+        
         -- Get mouse target
         local mouse = player:GetMouse()
         local target = mouse.Target
@@ -5677,60 +5722,11 @@ AddCommand("btoolgun", {"bgun"}, "Really cool gun that uses btools to kill peopl
             highlight.Adornee = targetPlayer.Character
             highlight.Enabled = true
             
-            -- Visual effects
-            local function createMuzzleFlash()
-                local flash = Instance.new("Part")
-                flash.Size = Vector3.new(0.5, 0.5, 0.5)
-                flash.BrickColor = BrickColor.new("Bright yellow")
-                flash.Material = Enum.Material.Neon
-                flash.Anchored = true
-                flash.CanCollide = false
-                flash.CFrame = handle.CFrame * CFrame.new(0, 0, -1)
-                flash.Parent = workspace
-                
-                local pointLight = Instance.new("PointLight")
-                pointLight.Brightness = 10
-                pointLight.Range = 15
-                pointLight.Color = Color3.fromRGB(255, 255, 0)
-                pointLight.Parent = flash
-                
-                game:GetService("TweenService"):Create(flash, TweenInfo.new(0.3), {Size = Vector3.new(0, 0, 0)}):Play()
-                game:GetService("TweenService"):Create(pointLight, TweenInfo.new(0.3), {Brightness = 0}):Play()
-                game:GetService("Debris"):AddItem(flash, 0.4)
-            end
-            
-            -- Camera effects
-            local function applyCameraEffects()
-                local camera = workspace.CurrentCamera
-                local originalCFrame = camera.CFrame
-                
-                -- Camera shake
-                local shakeIntensity = 0.5
-                for i = 1, 10 do
-                    camera.CFrame = originalCFrame * CFrame.new(
-                        math.random(-shakeIntensity, shakeIntensity),
-                        math.random(-shakeIntensity, shakeIntensity),
-                        math.random(-shakeIntensity, shakeIntensity)
-                    )
-                    task.wait(0.02)
-                end
-                camera.CFrame = originalCFrame
-                
-                -- Camera blur (simulated with FOV change)
-                local originalFOV = camera.FieldOfView
-                camera.FieldOfView = originalFOV + 10
-                game:GetService("TweenService"):Create(camera, TweenInfo.new(0.5), {FieldOfView = originalFOV}):Play()
-            end
-            
-            -- Create visual effects
-            createMuzzleFlash()
-            applyCameraEffects()
-            
             -- Execute bkill on target (ONCE)
             local success = ExecuteBkill(targetPlayer)
             
-            -- Remove highlight after delay
-            task.delay(2, function()
+            -- Remove highlight after shorter delay
+            task.delay(1, function() -- Faster cooldown (1 second instead of 2)
                 highlight.Enabled = false
                 highlight.Adornee = nil
                 BToolGun.Cooldown = false
