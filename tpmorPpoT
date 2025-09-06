@@ -5268,7 +5268,7 @@ AddCommand("flinggun", {"fgun"}, "cool gun that flings people", function()
     
     -- Create the BToolGun
     local tool = Instance.new("Tool")
-    tool.Name = "BToolGun"
+    tool.Name = "FlingGun"
     tool.ToolTip = "FlingGun - Click players to fling them"
     tool.RequiresHandle = true
     tool.Parent = backpack
