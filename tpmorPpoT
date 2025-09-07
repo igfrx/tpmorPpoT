@@ -5240,7 +5240,7 @@ function CreateSwordGun()
     -- Create the SwordGun
     local tool = Instance.new("Tool")
     tool.Name = "SwordGun"
-    tool.ToolTip = "SwordGun - Shoot players to sword fight them"
+    tool.ToolTip = "SwordGun - Shoot players to kill them"
     tool.RequiresHandle = true
     tool.Parent = backpack
     
