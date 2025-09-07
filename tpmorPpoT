@@ -342,7 +342,7 @@ AddCommandWithValue("setprefix", "new_prefix", "setp", "Changes the command pref
 end)
 
 -- Also add an alias for checking current prefix
-AddCommand("prefix", "p", "Shows curren command prefix", function()
+AddCommand("prefix", "p", "Shows current command prefix", function()
     return "Current prefix: '"..COMMAND_PREFIX.."'"
 end)
 
@@ -4491,6 +4491,1152 @@ end
 return "TelekinesisTool Created!"
 end
 
+-- FlingGun Tool Creation Function
+function CreateFlingGun()
+    local player = game.Players.LocalPlayer
+    local backpack = player:FindFirstChild("Backpack")
+    
+    if not backpack then
+        warn("Backpack not found!")
+        return
+    end
+    
+    -- Remove existing tool if any
+    local existingTool = backpack:FindFirstChild("FlingGun")
+    if existingTool then
+        existingTool:Destroy()
+    end
+    
+    -- Create the FlingGun
+    local tool = Instance.new("Tool")
+    tool.Name = "FlingGun"
+    tool.ToolTip = "FlingGun - Click players to fling them"
+    tool.RequiresHandle = true
+    tool.Parent = backpack
+    
+    -- Create tool handle
+    local handle = Instance.new("Part")
+    handle.Name = "Handle"
+    handle.Size = Vector3.new(1, 2, 1)
+    handle.BrickColor = BrickColor.new("Bright blue")
+    handle.Material = Enum.Material.Neon
+    handle.Parent = tool
+    
+    -- Create mesh
+    local mesh = Instance.new("SpecialMesh")
+    mesh.MeshType = Enum.MeshType.FileMesh
+    mesh.MeshId = "rbxassetid://94242777" -- Gun mesh
+    mesh.TextureId = "rbxassetid://94242778"
+    mesh.Scale = Vector3.new(0.5, 0.5, 0.5)
+    mesh.Parent = handle
+    
+    -- Create shoot sound
+    local shootSound = Instance.new("Sound")
+    shootSound.SoundId = "rbxassetid://7026894166"
+    shootSound.Volume = 1
+    shootSound.Parent = handle
+    
+    -- Create highlight for target
+    local highlight = Instance.new("Highlight")
+    highlight.Name = "TargetHighlight"
+    highlight.Enabled = false
+    highlight.FillColor = Color3.fromRGB(255, 255, 0) -- Yellow
+    highlight.OutlineColor = Color3.fromRGB(255, 200, 0)
+    highlight.FillTransparency = 0.5
+    highlight.Parent = tool
+    
+    -- Animation track
+    local animationTrack = nil
+    
+    -- Store original transparency values
+    local originalTransparency = {}
+    
+    -- Function to make player invisible
+    local function makeInvisible()
+        local character = player.Character
+        if not character then return end
+        
+        originalTransparency = {}
+        
+        -- Make all parts transparent
+        for _, part in ipairs(character:GetDescendants()) do
+            if part:IsA("BasePart") then
+                originalTransparency[part] = part.Transparency
+                part.Transparency = 1
+            elseif part:IsA("Decal") or part:IsA("Texture") then
+                originalTransparency[part] = part.Transparency
+                part.Transparency = 1
+            end
+        end
+        
+        -- Hide accessories
+        for _, accessory in ipairs(character:GetChildren()) do
+            if accessory:IsA("Accessory") and accessory:FindFirstChild("Handle") then
+                originalTransparency[accessory.Handle] = accessory.Handle.Transparency
+                accessory.Handle.Transparency = 1
+            end
+        end
+    end
+    
+    -- Function to make player visible again
+    local function makeVisible()
+        local character = player.Character
+        if not character then return end
+        
+        -- Restore original transparency
+        for object, transparency in pairs(originalTransparency) do
+            if object and object.Parent then
+                object.Transparency = transparency
+            end
+        end
+        
+        originalTransparency = {}
+    end
+    
+    -- Visual effects function (always shows)
+    local function createVisualEffects()
+        -- Muzzle flash
+        local flash = Instance.new("Part")
+        flash.Size = Vector3.new(0.5, 0.5, 0.5)
+        flash.BrickColor = BrickColor.new("Bright yellow")
+        flash.Material = Enum.Material.Neon
+        flash.Anchored = true
+        flash.CanCollide = false
+        flash.CFrame = handle.CFrame * CFrame.new(0, 0, -1)
+        flash.Parent = workspace
+        
+        local pointLight = Instance.new("PointLight")
+        pointLight.Brightness = 10
+        pointLight.Range = 15
+        pointLight.Color = Color3.fromRGB(255, 255, 0)
+        pointLight.Parent = flash
+        
+        game:GetService("TweenService"):Create(flash, TweenInfo.new(0.3), {Size = Vector3.new(0, 0, 0)}):Play()
+        game:GetService("TweenService"):Create(pointLight, TweenInfo.new(0.3), {Brightness = 0}):Play()
+        game:GetService("Debris"):AddItem(flash, 0.4)
+        
+        -- Camera effects
+        local camera = workspace.CurrentCamera
+        local originalCFrame = camera.CFrame
+        
+        -- Camera shake
+        local shakeIntensity = 0.5
+        for i = 1, 10 do
+            camera.CFrame = originalCFrame * CFrame.new(
+                math.random(-shakeIntensity, shakeIntensity),
+                math.random(-shakeIntensity, shakeIntensity),
+                math.random(-shakeIntensity, shakeIntensity)
+            )
+            task.wait(0.01) -- Faster shake
+        end
+        camera.CFrame = originalCFrame
+        
+        -- Camera blur (simulated with FOV change)
+        local originalFOV = camera.FieldOfView
+        camera.FieldOfView = originalFOV + 10
+        game:GetService("TweenService"):Create(camera, TweenInfo.new(0.3), {FieldOfView = originalFOV}):Play() -- Faster blur recovery
+    end
+    
+    -- Tool equipped event
+    tool.Equipped:Connect(function()
+        -- Play equip sound
+        local equipSound = Instance.new("Sound")
+        equipSound.SoundId = "rbxassetid://7026893899"
+        equipSound.Volume = 0.5
+        equipSound.Parent = handle
+        equipSound:Play()
+        game:GetService("Debris"):AddItem(equipSound, 2)
+        
+        -- Load animation
+        local humanoid = player.Character:FindFirstChildOfClass("Humanoid")
+        if humanoid then
+            local animator = humanoid:FindFirstChildOfClass("Animator")
+            if animator then
+                local animation = Instance.new("Animation")
+                animation.AnimationId = "rbxassetid://94242777"
+                animationTrack = animator:LoadAnimation(animation)
+                animationTrack:Play()
+            end
+        end
+    end)
+    
+    -- Tool unequipped event
+    tool.Unequipped:Connect(function()
+        if animationTrack then
+            animationTrack:Stop()
+            animationTrack = nil
+        end
+        highlight.Enabled = false
+        highlight.Adornee = nil
+        makeVisible() -- Ensure player becomes visible again
+    end)
+    
+    -- Tool activated event (shooting)
+    tool.Activated:Connect(function()
+        -- Play shoot sound
+        shootSound:Play()
+        
+        -- Always show visual effects, even if not targeting player
+        createVisualEffects()
+        
+        -- Get mouse target
+        local mouse = player:GetMouse()
+        local target = mouse.Target
+        local targetPlayer = nil
+        
+        -- Find if target is a player
+        if target then
+            local model = target:FindFirstAncestorOfClass("Model")
+            if model then
+                targetPlayer = game.Players:GetPlayerFromCharacter(model)
+            end
+        end
+        
+        if targetPlayer and targetPlayer ~= player then
+            -- Make player invisible
+            makeInvisible()
+            
+            -- Highlight target
+            highlight.Adornee = targetPlayer.Character
+            highlight.Enabled = true
+            
+            -- Execute fling on target
+            SkidFling(targetPlayer)
+            
+            -- Remove highlight and make visible after shorter delay
+            task.delay(1, function() -- Faster cooldown (1 second instead of 2)
+                highlight.Enabled = false
+                highlight.Adornee = nil
+                makeVisible() -- Make player visible again after fling process
+            end)
+        else
+            -- Play empty click sound for missed shot
+            local clickSound = Instance.new("Sound")
+            clickSound.SoundId = "rbxassetid://131147845"
+            clickSound.Volume = 0.3
+            clickSound.Parent = handle
+            clickSound:Play()
+            game:GetService("Debris"):AddItem(clickSound, 2)
+        end
+    end)
+    
+    -- Mouse movement (target highlighting)
+    local mouse = player:GetMouse()
+    mouse.Move:Connect(function()
+        if tool.Parent == player.Character then
+            local target = mouse.Target
+            local targetPlayer = nil
+            
+            if target then
+                local model = target:FindFirstAncestorOfClass("Model")
+                if model then
+                    targetPlayer = game.Players:GetPlayerFromCharacter(model)
+                end
+            end
+            
+            if targetPlayer and targetPlayer ~= player then
+                highlight.Adornee = targetPlayer.Character
+                highlight.Enabled = true
+            else
+                highlight.Enabled = false
+                highlight.Adornee = nil
+            end
+        end
+    end)
+    
+    return tool
+end
+
+-- BtoolGun Tool Creation Function
+function CreateBtoolGun()
+    local player = game.Players.LocalPlayer
+    local backpack = player:FindFirstChild("Backpack")
+    
+    if not backpack then
+        warn("Backpack not found!")
+        return
+    end
+    
+    -- Remove existing tool if any
+    local existingTool = backpack:FindFirstChild("BtoolGun")
+    if existingTool then
+        existingTool:Destroy()
+    end
+    
+    -- Create the BToolGun
+    local tool = Instance.new("Tool")
+    tool.Name = "BtoolGun"
+    tool.ToolTip = "BtoolGun - Click players to kill them"
+    tool.RequiresHandle = true
+    tool.Parent = backpack
+    
+    -- Create tool handle
+    local handle = Instance.new("Part")
+    handle.Name = "Handle"
+    handle.Size = Vector3.new(1, 2, 1)
+    handle.BrickColor = BrickColor.new("Bright blue")
+    handle.Material = Enum.Material.Neon
+    handle.Parent = tool
+    
+    -- Create mesh
+    local mesh = Instance.new("SpecialMesh")
+    mesh.MeshType = Enum.MeshType.FileMesh
+    mesh.MeshId = "rbxassetid://94242777" -- Gun mesh
+    mesh.TextureId = "rbxassetid://94242778"
+    mesh.Scale = Vector3.new(0.5, 0.5, 0.5)
+    mesh.Parent = handle
+    
+    -- Create shoot sound
+    local shootSound = Instance.new("Sound")
+    shootSound.SoundId = "rbxassetid://7026894166"
+    shootSound.Volume = 1
+    shootSound.Parent = handle
+    
+    -- Create highlight for target
+    local highlight = Instance.new("Highlight")
+    highlight.Name = "TargetHighlight"
+    highlight.Enabled = false
+    highlight.FillColor = Color3.fromRGB(255, 255, 0) -- Yellow
+    highlight.OutlineColor = Color3.fromRGB(255, 200, 0)
+    highlight.FillTransparency = 0.5
+    highlight.Parent = tool
+    
+    -- Animation track
+    local animationTrack = nil
+    
+    -- Cooldown state
+    local cooldown = false
+    
+    -- Function to execute bkill on target
+    local function ExecuteBkill(targetPlayer)
+        local character = player.Character
+        if not character then return false end
+
+        local rootPart = character:FindFirstChild("HumanoidRootPart")
+        if not rootPart then return false end
+
+        -- Find Building Tools
+        local btools = player:FindFirstChild("Backpack") and 
+                      player.Backpack:FindFirstChild("Building Tools") or
+                      character:FindFirstChild("Building Tools")
+        
+        if not btools then return false end
+
+        local syncAPI = btools:FindFirstChild("SyncAPI")
+        local serverEndpoint = syncAPI and syncAPI:FindFirstChild("ServerEndpoint")
+        if not serverEndpoint then return false end
+
+        -- Execute kill on target
+        if targetPlayer and targetPlayer.Character then
+            local torso = targetPlayer.Character:FindFirstChild("Torso") or 
+                         targetPlayer.Character:FindFirstChild("UpperTorso")
+            if torso then
+                pcall(function()
+                    serverEndpoint:InvokeServer("Remove", {torso})
+                end)
+                return true
+            end
+        end
+        return false
+    end
+    
+    -- Visual effects function (always shows)
+    local function createVisualEffects()
+        -- Muzzle flash
+        local flash = Instance.new("Part")
+        flash.Size = Vector3.new(0.5, 0.5, 0.5)
+        flash.BrickColor = BrickColor.new("Bright yellow")
+        flash.Material = Enum.Material.Neon
+        flash.Anchored = true
+        flash.CanCollide = false
+        flash.CFrame = handle.CFrame * CFrame.new(0, 0, -1)
+        flash.Parent = workspace
+        
+        local pointLight = Instance.new("PointLight")
+        pointLight.Brightness = 10
+        pointLight.Range = 15
+        pointLight.Color = Color3.fromRGB(255, 255, 0)
+        pointLight.Parent = flash
+        
+        game:GetService("TweenService"):Create(flash, TweenInfo.new(0.3), {Size = Vector3.new(0, 0, 0)}):Play()
+        game:GetService("TweenService"):Create(pointLight, TweenInfo.new(0.3), {Brightness = 0}):Play()
+        game:GetService("Debris"):AddItem(flash, 0.4)
+        
+        -- Camera effects
+        local camera = workspace.CurrentCamera
+        local originalCFrame = camera.CFrame
+        
+        -- Camera shake
+        local shakeIntensity = 0.5
+        for i = 1, 10 do
+            camera.CFrame = originalCFrame * CFrame.new(
+                math.random(-shakeIntensity, shakeIntensity),
+                math.random(-shakeIntensity, shakeIntensity),
+                math.random(-shakeIntensity, shakeIntensity)
+            )
+            task.wait(0.01) -- Faster shake
+        end
+        camera.CFrame = originalCFrame
+        
+        -- Camera blur (simulated with FOV change)
+        local originalFOV = camera.FieldOfView
+        camera.FieldOfView = originalFOV + 10
+        game:GetService("TweenService"):Create(camera, TweenInfo.new(0.3), {FieldOfView = originalFOV}):Play() -- Faster blur recovery
+    end
+    
+    -- Tool equipped event
+    tool.Equipped:Connect(function()
+        -- Play equip sound
+        local equipSound = Instance.new("Sound")
+        equipSound.SoundId = "rbxassetid://7026893899"
+        equipSound.Volume = 0.5
+        equipSound.Parent = handle
+        equipSound:Play()
+        game:GetService("Debris"):AddItem(equipSound, 2)
+        
+        -- Load animation
+        local humanoid = player.Character:FindFirstChildOfClass("Humanoid")
+        if humanoid then
+            local animator = humanoid:FindFirstChildOfClass("Animator")
+            if animator then
+                local animation = Instance.new("Animation")
+                animation.AnimationId = "rbxassetid://94242777"
+                animationTrack = animator:LoadAnimation(animation)
+                animationTrack:Play()
+            end
+        end
+    end)
+    
+    -- Tool unequipped event
+    tool.Unequipped:Connect(function()
+        if animationTrack then
+            animationTrack:Stop()
+            animationTrack = nil
+        end
+        highlight.Enabled = false
+        highlight.Adornee = nil
+        cooldown = false
+    end)
+    
+    -- Tool activated event (shooting)
+    tool.Activated:Connect(function()
+        if cooldown then return end
+        cooldown = true
+        
+        -- Play shoot sound
+        shootSound:Play()
+        
+        -- Always show visual effects, even if not targeting player
+        createVisualEffects()
+        
+        -- Get mouse target
+        local mouse = player:GetMouse()
+        local target = mouse.Target
+        local targetPlayer = nil
+        
+        -- Find if target is a player
+        if target then
+            local model = target:FindFirstAncestorOfClass("Model")
+            if model then
+                targetPlayer = game.Players:GetPlayerFromCharacter(model)
+            end
+        end
+        
+        if targetPlayer and targetPlayer ~= player then
+            -- Highlight target
+            highlight.Adornee = targetPlayer.Character
+            highlight.Enabled = true
+            
+            -- Execute bkill on target (ONCE)
+            ExecuteBkill(targetPlayer)
+            
+            -- Remove highlight after shorter delay
+            task.delay(1, function() -- Faster cooldown (1 second instead of 2)
+                highlight.Enabled = false
+                highlight.Adornee = nil
+                cooldown = false
+            end)
+        else
+            -- Play empty click sound for missed shot
+            local clickSound = Instance.new("Sound")
+            clickSound.SoundId = "rbxassetid://131147845"
+            clickSound.Volume = 0.3
+            clickSound.Parent = handle
+            clickSound:Play()
+            game:GetService("Debris"):AddItem(clickSound, 2)
+            
+            cooldown = false
+        end
+    end)
+    
+    -- Mouse movement (target highlighting)
+    local mouse = player:GetMouse()
+    mouse.Move:Connect(function()
+        if tool.Parent == player.Character then
+            local target = mouse.Target
+            local targetPlayer = nil
+            
+            if target then
+                local model = target:FindFirstAncestorOfClass("Model")
+                if model then
+                    targetPlayer = game.Players:GetPlayerFromCharacter(model)
+                end
+            end
+            
+            if targetPlayer and targetPlayer ~= player then
+                highlight.Adornee = targetPlayer.Character
+                highlight.Enabled = true
+            else
+                highlight.Enabled = false
+                highlight.Adornee = nil
+            end
+        end
+    end)
+    
+    return tool
+end
+
+-- NPCGun Function (Fixed with Visual Effects)
+function CreateNpcGun()
+    local player = game.Players.LocalPlayer
+    local backpack = player:FindFirstChild("Backpack")
+    
+    if not backpack then
+        warn("Backpack not found!")
+        return
+    end
+    
+    -- Remove existing tool if any
+    local existingTool = backpack:FindFirstChild("NPCGun")
+    if existingTool then
+        existingTool:Destroy()
+    end
+    
+    -- Create the NPCGun
+    local tool = Instance.new("Tool")
+    tool.Name = "NPCGun"
+    tool.ToolTip = "NPCGun - Click NPCs to kill them"
+    tool.RequiresHandle = true
+    tool.Parent = backpack
+    
+    -- Create tool handle
+    local handle = Instance.new("Part")
+    handle.Name = "Handle"
+    handle.Size = Vector3.new(1, 2, 1)
+    handle.BrickColor = BrickColor.new("Bright red")
+    handle.Material = Enum.Material.Neon
+    handle.Parent = tool
+    
+    -- Create mesh (same as BToolGun)
+    local mesh = Instance.new("SpecialMesh")
+    mesh.MeshType = Enum.MeshType.FileMesh
+    mesh.MeshId = "rbxassetid://94242777"
+    mesh.TextureId = "rbxassetid://94242778"
+    mesh.Scale = Vector3.new(0.5, 0.5, 0.5)
+    mesh.Parent = handle
+    
+    -- Create shoot sound (same as BToolGun)
+    local shootSound = Instance.new("Sound")
+    shootSound.SoundId = "rbxassetid://7026894166"
+    shootSound.Volume = 1
+    shootSound.Parent = handle
+    
+    -- Create highlight for target (same as BToolGun)
+    local highlight = Instance.new("Highlight")
+    highlight.Name = "TargetHighlight"
+    highlight.Enabled = false
+    highlight.FillColor = Color3.fromRGB(255, 0, 0)
+    highlight.OutlineColor = Color3.fromRGB(200, 0, 0)
+    highlight.FillTransparency = 0.5
+    highlight.Parent = tool
+    
+    -- Animation track (same as BToolGun)
+    local animationTrack = nil
+    
+    -- Cooldown state
+    local cooldown = false
+    
+    -- Visual effects function (same as BToolGun)
+    local function createVisualEffects()
+        -- Muzzle flash
+        local flash = Instance.new("Part")
+        flash.Size = Vector3.new(0.5, 0.5, 0.5)
+        flash.BrickColor = BrickColor.new("Bright yellow")
+        flash.Material = Enum.Material.Neon
+        flash.Anchored = true
+        flash.CanCollide = false
+        flash.CFrame = handle.CFrame * CFrame.new(0, 0, -1)
+        flash.Parent = workspace
+        
+        local pointLight = Instance.new("PointLight")
+        pointLight.Brightness = 10
+        pointLight.Range = 15
+        pointLight.Color = Color3.fromRGB(255, 255, 0)
+        pointLight.Parent = flash
+        
+        game:GetService("TweenService"):Create(flash, TweenInfo.new(0.3), {Size = Vector3.new(0, 0, 0)}):Play()
+        game:GetService("TweenService"):Create(pointLight, TweenInfo.new(0.3), {Brightness = 0}):Play()
+        game:GetService("Debris"):AddItem(flash, 0.4)
+        
+        -- Camera effects
+        local camera = workspace.CurrentCamera
+        local originalCFrame = camera.CFrame
+        
+        -- Camera shake
+        local shakeIntensity = 0.5
+        for i = 1, 10 do
+            camera.CFrame = originalCFrame * CFrame.new(
+                math.random(-shakeIntensity, shakeIntensity),
+                math.random(-shakeIntensity, shakeIntensity),
+                math.random(-shakeIntensity, shakeIntensity)
+            )
+            task.wait(0.01)
+        end
+        camera.CFrame = originalCFrame
+        
+        -- Camera FOV effect
+        local originalFOV = camera.FieldOfView
+        camera.FieldOfView = originalFOV + 10
+        game:GetService("TweenService"):Create(camera, TweenInfo.new(0.3), {FieldOfView = originalFOV}):Play()
+    end
+    
+    -- Tool equipped event (same as BToolGun)
+    tool.Equipped:Connect(function()
+        -- Play equip sound
+        local equipSound = Instance.new("Sound")
+        equipSound.SoundId = "rbxassetid://7026893899"
+        equipSound.Volume = 0.5
+        equipSound.Parent = handle
+        equipSound:Play()
+        game:GetService("Debris"):AddItem(equipSound, 2)
+        
+        -- Load animation (same as BToolGun)
+        local humanoid = player.Character:FindFirstChildOfClass("Humanoid")
+        if humanoid then
+            local animator = humanoid:FindFirstChildOfClass("Animator")
+            if animator then
+                local animation = Instance.new("Animation")
+                animation.AnimationId = "rbxassetid://94242777"
+                animationTrack = animator:LoadAnimation(animation)
+                animationTrack:Play()
+            end
+        end
+    end)
+    
+    -- Tool unequipped event (same as BToolGun)
+    tool.Unequipped:Connect(function()
+        if animationTrack then
+            animationTrack:Stop()
+            animationTrack = nil
+        end
+        highlight.Enabled = false
+        highlight.Adornee = nil
+        cooldown = false
+    end)
+    
+    -- Tool activated event (shooting)
+    tool.Activated:Connect(function()
+        if cooldown then return end
+        cooldown = true
+        
+        -- Play shoot sound
+        shootSound:Play()
+        
+        -- Always show visual effects (same as BToolGun)
+        createVisualEffects()
+        
+        -- Get mouse target
+        local mouse = player:GetMouse()
+        local target = mouse.Target
+        local targetNPC = nil
+        
+        -- Find if target is an NPC
+        if target then
+            local model = target:FindFirstAncestorOfClass("Model")
+            if model then
+                local humanoid = model:FindFirstChildOfClass("Humanoid")
+                if humanoid and not game.Players:GetPlayerFromCharacter(model) then
+                    targetNPC = model
+                end
+            end
+        end
+        
+        if targetNPC then
+            -- Highlight target
+            highlight.Adornee = targetNPC
+            highlight.Enabled = true
+            
+            -- Kill the NPC
+            local humanoid = targetNPC:FindFirstChildOfClass("Humanoid")
+            if humanoid then
+                humanoid.Health = 0
+            end
+            
+            -- Remove highlight after delay
+            task.delay(1, function()
+                highlight.Enabled = false
+                highlight.Adornee = nil
+                cooldown = false
+            end)
+        else
+            -- Play empty click sound for missed shot (same as BToolGun)
+            local clickSound = Instance.new("Sound")
+            clickSound.SoundId = "rbxassetid://131147845"
+            clickSound.Volume = 0.3
+            clickSound.Parent = handle
+            clickSound:Play()
+            game:GetService("Debris"):AddItem(clickSound, 2)
+            
+            cooldown = false
+        end
+    end)
+    
+    -- Mouse movement (target highlighting) - Same as BToolGun
+    local mouse = player:GetMouse()
+    mouse.Move:Connect(function()
+        if tool.Parent == player.Character then
+            local target = mouse.Target
+            local targetNPC = nil
+            
+            if target then
+                local model = target:FindFirstAncestorOfClass("Model")
+                if model then
+                    local humanoid = model:FindFirstChildOfClass("Humanoid")
+                    if humanoid and not game.Players:GetPlayerFromCharacter(model) then
+                        targetNPC = model
+                    end
+                end
+            end
+            
+            if targetNPC then
+                highlight.Adornee = targetNPC
+                highlight.Enabled = true
+            else
+                highlight.Enabled = false
+                highlight.Adornee = nil
+            end
+        end
+    end)
+    
+    return tool
+end
+
+-- SwordGun Function (Fixed Highlight, Targeting, and Re-equip)
+function CreateSwordGun()
+    local player = game.Players.LocalPlayer
+    local backpack = player:FindFirstChild("Backpack")
+    
+    if not backpack then
+        warn("Backpack not found!")
+        return
+    end
+    
+    -- Remove existing tool if any
+    local existingTool = backpack:FindFirstChild("SwordGun")
+    if existingTool then
+        existingTool:Destroy()
+    end
+    
+    -- Create the SwordGun
+    local tool = Instance.new("Tool")
+    tool.Name = "SwordGun"
+    tool.ToolTip = "SwordGun - Shoot players to sword fight them"
+    tool.RequiresHandle = true
+    tool.Parent = backpack
+    
+    -- Create tool handle
+    local handle = Instance.new("Part")
+    handle.Name = "Handle"
+    handle.Size = Vector3.new(1, 2, 1)
+    handle.BrickColor = BrickColor.new("Bright green")
+    handle.Material = Enum.Material.Neon
+    handle.Parent = tool
+    
+    -- Create mesh
+    local mesh = Instance.new("SpecialMesh")
+    mesh.MeshType = Enum.MeshType.FileMesh
+    mesh.MeshId = "rbxassetid://94242777"
+    mesh.TextureId = "rbxassetid://94242778"
+    mesh.Scale = Vector3.new(0.5, 0.5, 0.5)
+    mesh.Parent = handle
+    
+    -- Create shoot sound
+    local shootSound = Instance.new("Sound")
+    shootSound.SoundId = "rbxassetid://7026894166"
+    shootSound.Volume = 1
+    shootSound.Parent = handle
+    
+    -- Create highlight for target (IMPROVED)
+    local highlight = Instance.new("Highlight")
+    highlight.Name = "TargetHighlight"
+    highlight.Enabled = false
+    highlight.FillColor = Color3.fromRGB(0, 255, 0)
+    highlight.OutlineColor = Color3.fromRGB(0, 200, 0)
+    highlight.FillTransparency = 0.3  -- More visible
+    highlight.OutlineTransparency = 0  -- Solid outline
+    highlight.DepthMode = Enum.HighlightDepthMode.AlwaysOnTop  -- Always visible
+    highlight.Parent = tool
+    
+    -- Animation track
+    local animationTrack = nil
+    
+    -- Sword detection functions
+    local SWORD_NAMES = {
+        "sword", "foil", "blade", "katana", "saber", "rapier", "cutlass", "dagger",
+        "knife", "longsword", "shortsword", "scimitar", "falchion", "broadsword"
+    }
+
+    local function isSword(toolObj)
+        if not toolObj then return false end
+        local toolName = toolObj.Name:lower()
+        for _, name in ipairs(SWORD_NAMES) do
+            if toolName:find(name) then
+                return true
+            end
+        end
+        return false
+    end
+
+    local function findSword()
+        local character = player.Character
+        if not character then return nil end
+        
+        -- Check character first
+        for _, toolObj in ipairs(character:GetChildren()) do
+            if toolObj:IsA("Tool") and isSword(toolObj) then
+                return toolObj
+            end
+        end
+        
+        -- Check backpack
+        if backpack then
+            for _, toolObj in ipairs(backpack:GetChildren()) do
+                if toolObj:IsA("Tool") and isSword(toolObj) then
+                    return toolObj
+                end
+            end
+        end
+        
+        return nil
+    end
+
+    -- Swordkill system integration
+    local swordkillActive = false
+    local swordkillTarget = nil
+    local originalTool = nil
+    local originalToolParent = nil
+
+    local function forceEquipSword(sword)
+        if not sword then return nil end
+        
+        -- Save current tool
+        local character = player.Character
+        if not character then return nil end
+        
+        originalTool = character:FindFirstChildOfClass("Tool")
+        if originalTool then
+            originalToolParent = originalTool.Parent
+        end
+        
+        -- Equip the sword
+        sword.Parent = character
+        task.wait(0.1)
+        return sword
+    end
+
+    local function restoreOriginalTool()
+        if originalTool and originalToolParent then
+            originalTool.Parent = originalToolParent
+            originalTool = nil
+            originalToolParent = nil
+        end
+    end
+
+    local function reEquipSwordGun()
+        -- Wait a moment before re-equipping
+        task.wait(0.5)
+        
+        local character = player.Character
+        if character and tool and tool.Parent == backpack then
+            -- Re-equip the SwordGun
+            tool.Parent = character
+        end
+    end
+
+    local function startSwordKill(targetPlayer)
+        swordkillActive = true
+        swordkillTarget = targetPlayer
+        
+        -- Find sword
+        local sword = findSword()
+        if not sword then
+            warn("No sword found for swordkill!")
+            reEquipSwordGun()
+            return
+        end
+        
+        -- Force equip sword
+        sword = forceEquipSword(sword)
+        if not sword then 
+            reEquipSwordGun()
+            return
+        end
+        
+        -- Start swordkill process
+        coroutine.wrap(function()
+            while swordkillActive and swordkillTarget and swordkillTarget.Character do
+                local targetCharacter = swordkillTarget.Character
+                local humanoid = targetCharacter:FindFirstChildOfClass("Humanoid")
+                
+                if humanoid and humanoid.Health > 0 then
+                    -- Activate sword
+                    sword:Activate()
+                    
+                    -- Touch all parts of the target character
+                    local handle = sword:FindFirstChild("Handle")
+                    if handle then
+                        for _, part in ipairs(targetCharacter:GetChildren()) do
+                            if part:IsA("BasePart") and part.Name ~= "HumanoidRootPart" then
+                                firetouchinterest(handle, part, 0)
+                                task.wait()
+                                firetouchinterest(handle, part, 1)
+                            end
+                        end
+                    end
+                else
+                    -- Target died, stop swordkill
+                    swordkillActive = false
+                    break
+                end
+                
+                task.wait(0.1)
+            end
+            
+            -- Cleanup and re-equip SwordGun
+            restoreOriginalTool()
+            swordkillActive = false
+            swordkillTarget = nil
+            
+            if highlight then
+                highlight.Enabled = false
+                highlight.Adornee = nil
+            end
+            
+            -- Re-equip SwordGun after target dies
+            reEquipSwordGun()
+        end)()
+    end
+
+    -- Visual effects function
+    local function createVisualEffects()
+        -- Muzzle flash
+        local flash = Instance.new("Part")
+        flash.Size = Vector3.new(0.5, 0.5, 0.5)
+        flash.BrickColor = BrickColor.new("Bright yellow")
+        flash.Material = Enum.Material.Neon
+        flash.Anchored = true
+        flash.CanCollide = false
+        flash.CFrame = handle.CFrame * CFrame.new(0, 0, -1)
+        flash.Parent = workspace
+        
+        local pointLight = Instance.new("PointLight")
+        pointLight.Brightness = 10
+        pointLight.Range = 15
+        pointLight.Color = Color3.fromRGB(255, 255, 0)
+        pointLight.Parent = flash
+        
+        game:GetService("TweenService"):Create(flash, TweenInfo.new(0.3), {Size = Vector3.new(0, 0, 0)}):Play()
+        game:GetService("TweenService"):Create(pointLight, TweenInfo.new(0.3), {Brightness = 0}):Play()
+        game:GetService("Debris"):AddItem(flash, 0.4)
+        
+        -- Camera effects
+        local camera = workspace.CurrentCamera
+        local originalCFrame = camera.CFrame
+        
+        -- Camera shake
+        local shakeIntensity = 0.5
+        for i = 1, 10 do
+            camera.CFrame = originalCFrame * CFrame.new(
+                math.random(-shakeIntensity, shakeIntensity),
+                math.random(-shakeIntensity, shakeIntensity),
+                math.random(-shakeIntensity, shakeIntensity)
+            )
+            task.wait(0.01)
+        end
+        camera.CFrame = originalCFrame
+        
+        -- Camera FOV effect
+        local originalFOV = camera.FieldOfView
+        camera.FieldOfView = originalFOV + 10
+        game:GetService("TweenService"):Create(camera, TweenInfo.new(0.3), {FieldOfView = originalFOV}):Play()
+    end
+    
+    -- Cooldown state
+    local cooldown = false
+    
+    -- Death listener
+    local function setupDeathListener(targetPlayer)
+        if targetPlayer.Character then
+            local humanoid = targetPlayer.Character:FindFirstChildOfClass("Humanoid")
+            if humanoid then
+                humanoid.Died:Connect(function()
+                    if swordkillTarget == targetPlayer then
+                        swordkillActive = false
+                        restoreOriginalTool()
+                        swordkillTarget = nil
+                        reEquipSwordGun()
+                    end
+                end)
+            end
+        end
+        
+        targetPlayer.CharacterAdded:Connect(function(character)
+            local humanoid = character:WaitForChild("Humanoid")
+            humanoid.Died:Connect(function()
+                if swordkillTarget == targetPlayer then
+                    swordkillActive = false
+                    restoreOriginalTool()
+                    swordkillTarget = nil
+                    reEquipSwordGun()
+                end
+            end)
+        end)
+    end
+
+    -- Improved targeting function
+    local function getTargetPlayer()
+        local mouse = player:GetMouse()
+        local target = mouse.Target
+        local targetPlayer = nil
+        
+        -- Use mouse.Hit instead of mouse.Target for better accuracy
+        if mouse.Target then
+            local model = mouse.Target:FindFirstAncestorOfClass("Model")
+            if model then
+                targetPlayer = game.Players:GetPlayerFromCharacter(model)
+            end
+        end
+        
+        -- Fallback: check if mouse is over a player character
+        if not targetPlayer then
+            local characters = workspace:GetChildren()
+            for _, char in ipairs(characters) do
+                if char:IsA("Model") then
+                    local hum = char:FindFirstChildOfClass("Humanoid")
+                    local root = char:FindFirstChild("HumanoidRootPart")
+                    if hum and root then
+                        local distance = (mouse.Hit.Position - root.Position).Magnitude
+                        if distance < 10 then  -- 10 stud radius around cursor
+                            targetPlayer = game.Players:GetPlayerFromCharacter(char)
+                            if targetPlayer then break end
+                        end
+                    end
+                end
+            end
+        end
+        
+        return targetPlayer
+    end
+
+    -- Tool equipped event
+    tool.Equipped:Connect(function()
+        -- Play equip sound
+        local equipSound = Instance.new("Sound")
+        equipSound.SoundId = "rbxassetid://7026893899"
+        equipSound.Volume = 0.5
+        equipSound.Parent = handle
+        equipSound:Play()
+        game:GetService("Debris"):AddItem(equipSound, 2)
+        
+        -- Load animation
+        local humanoid = player.Character:FindFirstChildOfClass("Humanoid")
+        if humanoid then
+            local animator = humanoid:FindFirstChildOfClass("Animator")
+            if animator then
+                local animation = Instance.new("Animation")
+                animation.AnimationId = "rbxassetid://94242777"
+                animationTrack = animator:LoadAnimation(animation)
+                animationTrack:Play()
+            end
+        end
+    end)
+
+    -- Tool unequipped event
+    tool.Unequipped:Connect(function()
+        if animationTrack then
+            animationTrack:Stop()
+            animationTrack = nil
+        end
+        highlight.Enabled = false
+        highlight.Adornee = nil
+        cooldown = false
+        
+        -- Stop swordkill if active
+        if swordkillActive then
+            swordkillActive = false
+            restoreOriginalTool()
+        end
+    end)
+
+    -- Tool activated event
+    tool.Activated:Connect(function()
+        if cooldown or swordkillActive then return end
+        cooldown = true
+        
+        -- Play shoot sound
+        shootSound:Play()
+        
+        -- Always show visual effects
+        createVisualEffects()
+        
+        -- Get target player with improved targeting
+        local targetPlayer = getTargetPlayer()
+        
+        if targetPlayer and targetPlayer ~= player then
+            -- Set current target
+            swordkillTarget = targetPlayer
+            
+            -- Highlight target
+            highlight.Adornee = targetPlayer.Character
+            highlight.Enabled = true
+            
+            -- Setup death listener
+            setupDeathListener(targetPlayer)
+            
+            -- Unequip SwordGun and start swordkill
+            tool.Parent = backpack  -- Unequip the gun
+            startSwordKill(targetPlayer)
+        else
+            -- Play empty click sound for missed shot
+            local clickSound = Instance.new("Sound")
+            clickSound.SoundId = "rbxassetid://131147845"
+            clickSound.Volume = 0.3
+            clickSound.Parent = handle
+            clickSound:Play()
+            game:GetService("Debris"):AddItem(clickSound, 2)
+        end
+        
+        cooldown = false
+    end)
+
+    -- Improved mouse movement with better highlighting
+    local mouse = player:GetMouse()
+    mouse.Move:Connect(function()
+        if tool.Parent == player.Character then
+            local targetPlayer = getTargetPlayer()
+            
+            if targetPlayer and targetPlayer ~= player then
+                highlight.Adornee = targetPlayer.Character
+                highlight.Enabled = true
+            else
+                highlight.Enabled = false
+                highlight.Adornee = nil
+            end
+        end
+    end)
+    
+    return tool
+end
 
 local function Vcban()
     game:GetService("VoiceChatService"):joinVoice()
@@ -4573,12 +5719,6 @@ local function DAT()
     end
     
     return "Dropped:\n" .. #tools .. " tools"
-end
-
-
-local function ref()
-Services.Players:Chat(Format("!clear"))
-return "Filter Resetted!"
 end
 
 -- Variables
@@ -5244,549 +6384,34 @@ AddCommand("unbtoolkill", {"unbkill"}, "Stops the bkill process", function()
     return "Bkill stopped"
 end)
 
-local FlingGun = {
-    Tool = nil,
-    Sound = nil,
-    Animation = nil,
-    Highlight = nil,
-    OriginalTransparency = {}
-}
-
-AddCommand("flinggun", {"fgun"}, "cool gun that flings people", function()
-    local player = game.Players.LocalPlayer
-    local backpack = player:FindFirstChild("Backpack")
-    
-    if not backpack then
-        crx("Backpack not found!", 1.1, Color3.fromRGB(255, 0, 0), 138081500)
-        return
-    end
-    
-    -- Remove existing tool if any
-    if FlingGun.Tool then
-        FlingGun.Tool:Destroy()
-        FlingGun.Tool = nil
-    end
-    
-    -- Create the FlingGun
-    local tool = Instance.new("Tool")
-    tool.Name = "FlingGun"
-    tool.ToolTip = "FlingGun - Click players to fling them"
-    tool.RequiresHandle = true
-    tool.Parent = backpack
-    
-    -- Create tool handle
-    local handle = Instance.new("Part")
-    handle.Name = "Handle"
-    handle.Size = Vector3.new(1, 2, 1)
-    handle.BrickColor = BrickColor.new("Bright blue")
-    handle.Material = Enum.Material.Neon
-    handle.Parent = tool
-    
-    -- Create mesh
-    local mesh = Instance.new("SpecialMesh")
-    mesh.MeshType = Enum.MeshType.FileMesh
-    mesh.MeshId = "rbxassetid://94242777" -- Gun mesh
-    mesh.TextureId = "rbxassetid://94242778"
-    mesh.Scale = Vector3.new(0.5, 0.5, 0.5)
-    mesh.Parent = handle
-    
-    -- Create shoot sound
-    local shootSound = Instance.new("Sound")
-    shootSound.SoundId = "rbxassetid://7026894166"
-    shootSound.Volume = 1
-    shootSound.Parent = handle
-    
-    -- Create highlight for target
-    local highlight = Instance.new("Highlight")
-    highlight.Name = "TargetHighlight"
-    highlight.Enabled = false
-    highlight.FillColor = Color3.fromRGB(255, 255, 0) -- Yellow
-    highlight.OutlineColor = Color3.fromRGB(255, 200, 0)
-    highlight.FillTransparency = 0.5
-    highlight.Parent = tool
-    
-    -- Animation track
-    local animationTrack = nil
-    
-    -- Function to make player invisible
-    local function makeInvisible()
-        local character = player.Character
-        if not character then return end
-        
-        FlingGun.OriginalTransparency = {}
-        
-        -- Make all parts transparent
-        for _, part in ipairs(character:GetDescendants()) do
-            if part:IsA("BasePart") then
-                FlingGun.OriginalTransparency[part] = part.Transparency
-                part.Transparency = 1
-            elseif part:IsA("Decal") or part:IsA("Texture") then
-                FlingGun.OriginalTransparency[part] = part.Transparency
-                part.Transparency = 1
-            end
-        end
-        
-        -- Hide accessories
-        for _, accessory in ipairs(character:GetChildren()) do
-            if accessory:IsA("Accessory") and accessory:FindFirstChild("Handle") then
-                FlingGun.OriginalTransparency[accessory.Handle] = accessory.Handle.Transparency
-                accessory.Handle.Transparency = 1
-            end
-        end
-    end
-    
-    -- Function to make player visible again
-    local function makeVisible()
-        local character = player.Character
-        if not character then return end
-        
-        -- Restore original transparency
-        for object, transparency in pairs(FlingGun.OriginalTransparency) do
-            if object and object.Parent then
-                object.Transparency = transparency
-            end
-        end
-        
-        FlingGun.OriginalTransparency = {}
-    end
-    
-    -- Visual effects function (always shows)
-    local function createVisualEffects()
-        -- Muzzle flash
-        local flash = Instance.new("Part")
-        flash.Size = Vector3.new(0.5, 0.5, 0.5)
-        flash.BrickColor = BrickColor.new("Bright yellow")
-        flash.Material = Enum.Material.Neon
-        flash.Anchored = true
-        flash.CanCollide = false
-        flash.CFrame = handle.CFrame * CFrame.new(0, 0, -1)
-        flash.Parent = workspace
-        
-        local pointLight = Instance.new("PointLight")
-        pointLight.Brightness = 10
-        pointLight.Range = 15
-        pointLight.Color = Color3.fromRGB(255, 255, 0)
-        pointLight.Parent = flash
-        
-        game:GetService("TweenService"):Create(flash, TweenInfo.new(0.3), {Size = Vector3.new(0, 0, 0)}):Play()
-        game:GetService("TweenService"):Create(pointLight, TweenInfo.new(0.3), {Brightness = 0}):Play()
-        game:GetService("Debris"):AddItem(flash, 0.4)
-        
-        -- Camera effects
-        local camera = workspace.CurrentCamera
-        local originalCFrame = camera.CFrame
-        
-        -- Camera shake
-        local shakeIntensity = 0.5
-        for i = 1, 10 do
-            camera.CFrame = originalCFrame * CFrame.new(
-                math.random(-shakeIntensity, shakeIntensity),
-                math.random(-shakeIntensity, shakeIntensity),
-                math.random(-shakeIntensity, shakeIntensity)
-            )
-            task.wait(0.01) -- Faster shake
-        end
-        camera.CFrame = originalCFrame
-        
-        -- Camera blur (simulated with FOV change)
-        local originalFOV = camera.FieldOfView
-        camera.FieldOfView = originalFOV + 10
-        game:GetService("TweenService"):Create(camera, TweenInfo.new(0.3), {FieldOfView = originalFOV}):Play() -- Faster blur recovery
-    end
-    
-    -- Tool equipped event
-    tool.Equipped:Connect(function()
-        -- Play equip sound
-        local equipSound = Instance.new("Sound")
-        equipSound.SoundId = "rbxassetid://7026893899"
-        equipSound.Volume = 0.5
-        equipSound.Parent = handle
-        equipSound:Play()
-        game:GetService("Debris"):AddItem(equipSound, 2)
-        
-        -- Load animation
-        local humanoid = player.Character:FindFirstChildOfClass("Humanoid")
-        if humanoid then
-            local animator = humanoid:FindFirstChildOfClass("Animator")
-            if animator then
-                local animation = Instance.new("Animation")
-                animation.AnimationId = "rbxassetid://94242777"
-                animationTrack = animator:LoadAnimation(animation)
-                animationTrack:Play()
-            end
-        end
-    end)
-    
-    -- Tool unequipped event
-    tool.Unequipped:Connect(function()
-        if animationTrack then
-            animationTrack:Stop()
-            animationTrack = nil
-        end
-        highlight.Enabled = false
-        highlight.Adornee = nil
-        makeVisible() -- Ensure player becomes visible again
-    end)
-    
-    -- Tool activated event (shooting)
-    tool.Activated:Connect(function()
-        -- Play shoot sound
-        shootSound:Play()
-        
-        -- Always show visual effects, even if not targeting player
-        createVisualEffects()
-        
-        -- Get mouse target
-        local mouse = player:GetMouse()
-        local target = mouse.Target
-        local targetPlayer = nil
-        
-        -- Find if target is a player
-        if target then
-            local model = target:FindFirstAncestorOfClass("Model")
-            if model then
-                targetPlayer = game.Players:GetPlayerFromCharacter(model)
-            end
-        end
-        
-        if targetPlayer and targetPlayer ~= player then
-            -- Make player invisible
-            makeInvisible()
-            
-            -- Highlight target
-            highlight.Adornee = targetPlayer.Character
-            highlight.Enabled = true
-            
-            -- Execute fling on target
-            SkidFling(targetPlayer)
-            
-            -- Remove highlight and make visible after shorter delay
-            task.delay(1, function() -- Faster cooldown (1 second instead of 2)
-                highlight.Enabled = false
-                highlight.Adornee = nil
-                makeVisible() -- Make player visible again after fling process
-            end)
-            
-            return "flunged " .. targetPlayer.Name
-        else
-            -- Play empty click sound for missed shot
-            local clickSound = Instance.new("Sound")
-            clickSound.SoundId = "rbxassetid://131147845"
-            clickSound.Volume = 0.3
-            clickSound.Parent = handle
-            clickSound:Play()
-            game:GetService("Debris"):AddItem(clickSound, 2)
-            
-            return "Aim at a player to shoot!"
-        end
-    end)
-    
-    -- Mouse movement (target highlighting)
-    local mouse = player:GetMouse()
-    mouse.Move:Connect(function()
-        if tool.Parent == player.Character then
-            local target = mouse.Target
-            local targetPlayer = nil
-            
-            if target then
-                local model = target:FindFirstAncestorOfClass("Model")
-                if model then
-                    targetPlayer = game.Players:GetPlayerFromCharacter(model)
-                end
-            end
-            
-            if targetPlayer and targetPlayer ~= player then
-                highlight.Adornee = targetPlayer.Character
-                highlight.Enabled = true
-            else
-                highlight.Enabled = false
-                highlight.Adornee = nil
-            end
-        end
-    end)
-    
-    FlingGun.Tool = tool
-    return "FlingGun created!"
+AddCommand("flinggun", {"fgun"}, "Cool gun flings people", function()
+CreateFlingGun()
+return "Created FlingGun"
 end)
 
--- Auto cleanup
-game.Players.LocalPlayer.CharacterRemoving:Connect(function()
-    if FlingGun.Tool then
-        FlingGun.Tool:Destroy()
-        FlingGun.Tool = nil
-    end
-    FlingGun.OriginalTransparency = {}
+AddCommand("npcgun", {"ngun"}, "Cool gun kills npc", function()
+CreateNpcGun()
+return "Created NpcGun"
 end)
 
-local BToolGun = {
-    Tool = nil,
-    Sound = nil,
-    Animation = nil,
-    Highlight = nil,
-    Cooldown = false
-}
-
-AddCommand("btoolgun", {"bgun"}, "Really cool gun that uses btools to kill people [TOOL]", function()
-    local player = game.Players.LocalPlayer
-    local backpack = player:FindFirstChild("Backpack")
-    
-    if not backpack then
-        crx("Backpack not found!", 1.1, Color3.fromRGB(255, 0, 0), 138081500)
-        return
-    end
-    
-    -- Remove existing tool if any
-    if BToolGun.Tool then
-        BToolGun.Tool:Destroy()
-        BToolGun.Tool = nil
-    end
-    
-    -- Create the BToolGun
-    local tool = Instance.new("Tool")
-    tool.Name = "BtoolGun"
-    tool.ToolTip = "BtoolGun - Click players to kill them"
-    tool.RequiresHandle = true
-    tool.Parent = backpack
-    
-    -- Create tool handle
-    local handle = Instance.new("Part")
-    handle.Name = "Handle"
-    handle.Size = Vector3.new(1, 2, 1)
-    handle.BrickColor = BrickColor.new("Bright blue")
-    handle.Material = Enum.Material.Neon
-    handle.Parent = tool
-    
-    -- Create mesh
-    local mesh = Instance.new("SpecialMesh")
-    mesh.MeshType = Enum.MeshType.FileMesh
-    mesh.MeshId = "rbxassetid://94242777" -- Gun mesh
-    mesh.TextureId = "rbxassetid://94242778"
-    mesh.Scale = Vector3.new(0.5, 0.5, 0.5)
-    mesh.Parent = handle
-    
-    -- Create shoot sound
-    local shootSound = Instance.new("Sound")
-    shootSound.SoundId = "rbxassetid://7026894166"
-    shootSound.Volume = 1
-    shootSound.Parent = handle
-    
-    -- Create highlight for target
-    local highlight = Instance.new("Highlight")
-    highlight.Name = "TargetHighlight"
-    highlight.Enabled = false
-    highlight.FillColor = Color3.fromRGB(255, 255, 0) -- Yellow
-    highlight.OutlineColor = Color3.fromRGB(255, 200, 0)
-    highlight.FillTransparency = 0.5
-    highlight.Parent = tool
-    
-    -- Animation track
-    local animationTrack = nil
-    
-    -- Function to execute bkill on target
-    local function ExecuteBkill(targetPlayer)
-        local character = player.Character
-        if not character then return false end
-
-        local rootPart = character:FindFirstChild("HumanoidRootPart")
-        if not rootPart then return false end
-
-        -- Find Building Tools
-        local btools = player:FindFirstChild("Backpack") and 
-                      player.Backpack:FindFirstChild("Building Tools") or
-                      character:FindFirstChild("Building Tools")
-        
-        if not btools then return false end
-
-        local syncAPI = btools:FindFirstChild("SyncAPI")
-        local serverEndpoint = syncAPI and syncAPI:FindFirstChild("ServerEndpoint")
-        if not serverEndpoint then return false end
-
-        -- Execute kill on target
-        if targetPlayer and targetPlayer.Character then
-            local torso = targetPlayer.Character:FindFirstChild("Torso") or 
-                         targetPlayer.Character:FindFirstChild("UpperTorso")
-            if torso then
-                pcall(function()
-                    serverEndpoint:InvokeServer("Remove", {torso})
-                end)
-                return true
-            end
-        end
-        return false
-    end
-    
-    -- Visual effects function (always shows)
-    local function createVisualEffects()
-        -- Muzzle flash
-        local flash = Instance.new("Part")
-        flash.Size = Vector3.new(0.5, 0.5, 0.5)
-        flash.BrickColor = BrickColor.new("Bright yellow")
-        flash.Material = Enum.Material.Neon
-        flash.Anchored = true
-        flash.CanCollide = false
-        flash.CFrame = handle.CFrame * CFrame.new(0, 0, -1)
-        flash.Parent = workspace
-        
-        local pointLight = Instance.new("PointLight")
-        pointLight.Brightness = 10
-        pointLight.Range = 15
-        pointLight.Color = Color3.fromRGB(255, 255, 0)
-        pointLight.Parent = flash
-        
-        game:GetService("TweenService"):Create(flash, TweenInfo.new(0.3), {Size = Vector3.new(0, 0, 0)}):Play()
-        game:GetService("TweenService"):Create(pointLight, TweenInfo.new(0.3), {Brightness = 0}):Play()
-        game:GetService("Debris"):AddItem(flash, 0.4)
-        
-        -- Camera effects
-        local camera = workspace.CurrentCamera
-        local originalCFrame = camera.CFrame
-        
-        -- Camera shake
-        local shakeIntensity = 0.5
-        for i = 1, 10 do
-            camera.CFrame = originalCFrame * CFrame.new(
-                math.random(-shakeIntensity, shakeIntensity),
-                math.random(-shakeIntensity, shakeIntensity),
-                math.random(-shakeIntensity, shakeIntensity)
-            )
-            task.wait(0.01) -- Faster shake
-        end
-        camera.CFrame = originalCFrame
-        
-        -- Camera blur (simulated with FOV change)
-        local originalFOV = camera.FieldOfView
-        camera.FieldOfView = originalFOV + 10
-        game:GetService("TweenService"):Create(camera, TweenInfo.new(0.3), {FieldOfView = originalFOV}):Play() -- Faster blur recovery
-    end
-    
-    -- Tool equipped event
-    tool.Equipped:Connect(function()
-        -- Play equip sound
-        local equipSound = Instance.new("Sound")
-        equipSound.SoundId = "rbxassetid://7026893899"
-        equipSound.Volume = 0.5
-        equipSound.Parent = handle
-        equipSound:Play()
-        game:GetService("Debris"):AddItem(equipSound, 2)
-        
-        -- Load animation
-        local humanoid = player.Character:FindFirstChildOfClass("Humanoid")
-        if humanoid then
-            local animator = humanoid:FindFirstChildOfClass("Animator")
-            if animator then
-                local animation = Instance.new("Animation")
-                animation.AnimationId = "rbxassetid://94242777"
-                animationTrack = animator:LoadAnimation(animation)
-                animationTrack:Play()
-            end
-        end
-    end)
-    
-    -- Tool unequipped event
-    tool.Unequipped:Connect(function()
-        if animationTrack then
-            animationTrack:Stop()
-            animationTrack = nil
-        end
-        highlight.Enabled = false
-        highlight.Adornee = nil
-        BToolGun.Cooldown = false
-    end)
-    
-    -- Tool activated event (shooting)
-    tool.Activated:Connect(function()
-        if BToolGun.Cooldown then return end
-        BToolGun.Cooldown = true
-        
-        -- Play shoot sound
-        shootSound:Play()
-        
-        -- Always show visual effects, even if not targeting player
-        createVisualEffects()
-        
-        -- Get mouse target
-        local mouse = player:GetMouse()
-        local target = mouse.Target
-        local targetPlayer = nil
-        
-        -- Find if target is a player
-        if target then
-            local model = target:FindFirstAncestorOfClass("Model")
-            if model then
-                targetPlayer = game.Players:GetPlayerFromCharacter(model)
-            end
-        end
-        
-        if targetPlayer and targetPlayer ~= player then
-            -- Highlight target
-            highlight.Adornee = targetPlayer.Character
-            highlight.Enabled = true
-            
-            -- Execute bkill on target (ONCE)
-            local success = ExecuteBkill(targetPlayer)
-            
-            -- Remove highlight after shorter delay
-            task.delay(1, function() -- Faster cooldown (1 second instead of 2)
-                highlight.Enabled = false
-                highlight.Adornee = nil
-                BToolGun.Cooldown = false
-            end)
-            
-            if success then
-                return "Shot " .. targetPlayer.Name
-            else
-                return "Failed to bkill " .. targetPlayer.Name
-            end
-        else
-            -- Play empty click sound for missed shot
-            local clickSound = Instance.new("Sound")
-            clickSound.SoundId = "rbxassetid://131147845"
-            clickSound.Volume = 0.3
-            clickSound.Parent = handle
-            clickSound:Play()
-            game:GetService("Debris"):AddItem(clickSound, 2)
-            
-            BToolGun.Cooldown = false
-            return "Aim at a player to shoot!"
-        end
-    end)
-    
-    -- Mouse movement (target highlighting)
-    local mouse = player:GetMouse()
-    mouse.Move:Connect(function()
-        if tool.Parent == player.Character then
-            local target = mouse.Target
-            local targetPlayer = nil
-            
-            if target then
-                local model = target:FindFirstAncestorOfClass("Model")
-                if model then
-                    targetPlayer = game.Players:GetPlayerFromCharacter(model)
-                end
-            end
-            
-            if targetPlayer and targetPlayer ~= player then
-                highlight.Adornee = targetPlayer.Character
-                highlight.Enabled = true
-            else
-                highlight.Enabled = false
-                highlight.Adornee = nil
-            end
-        end
-    end)
-    
-    BToolGun.Tool = tool
-    return "BtoolGun created!"
+AddCommand("swordgun", {"sgun"}, "Cooler gun kills players with sword [TOOL]", function()
+CreateSwordGun()
+return "Created SwordGun"
 end)
 
--- Auto cleanup
-game.Players.LocalPlayer.CharacterRemoving:Connect(function()
-    if BToolGun.Tool then
-        BToolGun.Tool:Destroy()
-        BToolGun.Tool = nil
-    end
-    BToolGun.Cooldown = false
+AddCommand("btoolgun", {"bgun"}, "Coolller gun that kills people with btools [TOOL]", function()
+CreateBtoolGun()
+return "Created BtoolGun"
 end)
+
+AddCommand("guns", nil, "gives u all da guns [TOOL]", function()
+CreateFlingGun()
+CreateNpcGun()
+CreateSwordGun()
+CreateBtoolGun()
+return "Created all guns"
+end)
+
 
 AddCommandWithPlayer("clientkill", {"ckill"}, "Kills players on the client (CLIENT)", function(name)
     local targets = {}
@@ -10095,7 +10720,7 @@ end
 
     local VersionLabel = Instance.new("TextLabel")
     VersionLabel.Name = "VersionLabel"
-    VersionLabel.Text = "V1.5"
+    VersionLabel.Text = "V1.6"
     VersionLabel.TextSize = 10
     VersionLabel.TextTransparency = 0.6
     VersionLabel.TextColor3 = Color3.fromRGB(0, 0, 0)
@@ -10546,7 +11171,7 @@ end
 
 -- Initialize and handle respawns
 local mainGUI = initializeMainGUI()
-crx("'200' Cmds Loaded!\nType 'cmds' for commands :D", 3, Color3.fromRGB(0, 255, 255), 12221831)
+crx("'232' Cmds Loaded!\nType 'cmds' for commands :D", 3, Color3.fromRGB(0, 255, 255), 12221831)
 
 Players.LocalPlayer.CharacterAdded:Connect(function()
     if ScreenGui and not ScreenGui.Parent then
