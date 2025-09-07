@@ -8095,6 +8095,75 @@ game.Players.LocalPlayer.CharacterAdded:Connect(function(character)
     end
 end)
 
+AddCommandWithPlayer("scare", {"boo"}, "Tps behind a target and tps you back somehow scares them lol", function(name)
+    local target = GetPlayer(name)
+    if not target then
+        crx("Player not found!", 1.1, Color3.fromRGB(255, 0, 0), 138081500)
+        return
+    end
+    
+    local player = game.Players.LocalPlayer
+    local character = player.Character
+    if not character then
+        crx("Character not found!", 1.1, Color3.fromRGB(255, 0, 0), 138081500)
+        return
+    end
+    
+    local targetCharacter = target.Character
+    if not targetCharacter then
+        crx("Target has no character!", 1.1, Color3.fromRGB(255, 0, 0), 138081500)
+        return
+    end
+    
+    local targetRoot = targetCharacter:FindFirstChild("HumanoidRootPart")
+    local localRoot = character:FindFirstChild("HumanoidRootPart")
+    local humanoid = character:FindFirstChildOfClass("Humanoid")
+    
+    if not targetRoot or not localRoot or not humanoid then
+        crx("Required parts not found!", 1.1, Color3.fromRGB(255, 0, 0), 138081500)
+        return
+    end
+    
+    -- Store original position
+    local originalPosition = localRoot.CFrame
+    local originalAnimationSpeed = humanoid.WalkSpeed
+    
+    -- Load and play scary animation
+    local animator = humanoid:FindFirstChildOfClass("Animator")
+    if not animator then
+        crx("Animaton not found!", 1.1, Color3.fromRGB(255, 0, 0), 138081500)
+        return
+    end
+    
+    local animation = Instance.new("Animation")
+    animation.AnimationId = "rbxassetid://429703734"
+    
+    local animationTrack = animator:LoadAnimation(animation)
+    animationTrack:Play()
+    animationTrack:AdjustSpeed(3) -- 3x speed
+    
+    -- Calculate position behind target (2 studs away)
+    local targetCFrame = targetRoot.CFrame
+    local behindPosition = targetCFrame * CFrame.new(0, 0, 3) -- 2 studs behind
+    
+    -- Teleport behind target
+    localRoot.CFrame = behindPosition
+    
+    -- Wait 0.5 seconds
+    task.wait(0.5)
+    
+    -- Teleport back to original position
+    localRoot.CFrame = originalPosition
+    
+    -- Reset animation speed to normal
+    animationTrack:AdjustSpeed(1)
+    
+    -- Stop animation after a brief moment
+    task.wait(0.2)
+    animationTrack:Stop()
+    
+    return "Scared " .. target.Name .. "!"
+end)
 
 AddCommand("telekinesis", {"kineis", "tele"}, "Move any unanchored parts [UPDATED]", pmg)
 
@@ -8178,6 +8247,8 @@ game.Players.LocalPlayer.CharacterRemoving:Connect(function()
     end
     Spazz.Enabled = false
 end)
+
+
 
 local FreeGamepasses = {
     Hooked = false,
@@ -8721,7 +8792,7 @@ AddCommand("wallwalk", {"ww"}, "Enables wall walking (Rejoin to fully disable)",
     
     if success then
         _G.WallWalkExecuted = true
-        return "WallWalk enabled!"
+        return "WallWalk Started!"
     else
         crx("Failed To Load!", 1.1, Color3.fromRGB(255, 0, 0), 138081500)
     end
