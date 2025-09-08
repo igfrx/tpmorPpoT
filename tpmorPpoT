@@ -4524,7 +4524,7 @@ function CreateFlingGun()
     -- Create mesh
     local mesh = Instance.new("SpecialMesh")
     mesh.MeshType = Enum.MeshType.FileMesh
-    mesh.MeshId = "rbxassetid://94242777" -- Gun mesh
+    mesh.MeshId = "rbxassetid://135128080" -- Gun mesh
     mesh.TextureId = "rbxassetid://94242778"
     mesh.Scale = Vector3.new(0.5, 0.5, 0.5)
     mesh.Parent = handle
@@ -4780,6 +4780,211 @@ function CreateFlingGun()
         if invisibilityCheck then
             invisibilityCheck:Disconnect()
             invisibilityCheck = nil
+        end
+    end)
+    
+    return tool
+end
+
+-- BToolPunch Tool Creation Function
+function CreateBToolPunch()
+    local player = game.Players.LocalPlayer
+    local backpack = player:FindFirstChild("Backpack")
+    
+    if not backpack then
+        warn("Backpack not found!")
+        return
+    end
+    
+    -- Remove existing tool if any
+    local existingTool = backpack:FindFirstChild("BToolPunch")
+    if existingTool then
+        existingTool:Destroy()
+    end
+    
+    -- Create the BToolPunch
+    local tool = Instance.new("Tool")
+    tool.Name = "BToolPunch"
+    tool.ToolTip = "BToolPunch - Punch players to kill"
+    tool.RequiresHandle = false
+    tool.Parent = backpack
+    
+    -- Create punch sound
+    local punchSound = Instance.new("Sound")
+    punchSound.SoundId = "rbxassetid://1033173157" -- Punch sound
+    punchSound.Volume = 0.7
+    punchSound.Parent = handle
+    
+    -- Animation track
+    local animationTrack = nil
+    
+    -- Cooldown state
+    local cooldown = false
+    local punchRange = 10 -- Studs range
+    
+    -- Function to execute bkill on target
+    local function ExecuteBkill(targetPlayer)
+        local character = player.Character
+        if not character then return false end
+
+        local rootPart = character:FindFirstChild("HumanoidRootPart")
+        if not rootPart then return false end
+
+        -- Find Building Tools
+        local btools = player:FindFirstChild("Backpack") and 
+                      player.Backpack:FindFirstChild("Building Tools") or
+                      character:FindFirstChild("Building Tools")
+        
+        if not btools then 
+            warn("Building Tools not found!")
+            return false 
+        end
+
+        local syncAPI = btools:FindFirstChild("SyncAPI")
+        local serverEndpoint = syncAPI and syncAPI:FindFirstChild("ServerEndpoint")
+        if not serverEndpoint then 
+            warn("ServerEndpoint not found!")
+            return false 
+        end
+
+        -- Execute kill on target
+        if targetPlayer and targetPlayer.Character then
+            local torso = targetPlayer.Character:FindFirstChild("Torso") or 
+                         targetPlayer.Character:FindFirstChild("UpperTorso")
+            if torso then
+                pcall(function()
+                    serverEndpoint:InvokeServer("Remove", {torso})
+                end)
+                return true
+            end
+        end
+        return false
+    end
+    
+    -- Function to check if target is in range
+    local function isTargetInRange(targetCharacter)
+        local character = player.Character
+        if not character or not targetCharacter then return false end
+        
+        local localRoot = character:FindFirstChild("HumanoidRootPart")
+        local targetRoot = targetCharacter:FindFirstChild("HumanoidRootPart")
+        
+        if not localRoot or not targetRoot then return false end
+        
+        local distance = (localRoot.Position - targetRoot.Position).Magnitude
+        return distance <= punchRange
+    end
+    
+    -- Tool equipped event
+    tool.Equipped:Connect(function()
+        -- Load punch animation
+        local humanoid = player.Character:FindFirstChildOfClass("Humanoid")
+        if humanoid then
+            local animator = humanoid:FindFirstChildOfClass("Animator")
+            if animator then
+                local animation = Instance.new("Animation")
+                animation.AnimationId = "rbxassetid://204062532" -- Punch animation
+                animationTrack = animator:LoadAnimation(animation)
+            end
+        end
+    end)
+    
+    -- Tool unequipped event
+    tool.Unequipped:Connect(function()
+        if animationTrack then
+            animationTrack:Stop()
+            animationTrack = nil
+        end
+        cooldown = false
+    end)
+    
+    -- Tool activated event (punching)
+    tool.Activated:Connect(function()
+        if cooldown then return end
+        cooldown = true
+        
+        -- Play punch sound
+        punchSound:Play()
+        
+        -- Play punch animation
+        if animationTrack then
+            animationTrack:Stop()
+            animationTrack:Play()
+        end
+        
+        -- Find closest player in range
+        local closestPlayer = nil
+        local closestDistance = punchRange + 1
+        
+        for _, targetPlayer in ipairs(game.Players:GetPlayers()) do
+            if targetPlayer ~= player and targetPlayer.Character then
+                if isTargetInRange(targetPlayer.Character) then
+                    local targetRoot = targetPlayer.Character:FindFirstChild("HumanoidRootPart")
+                    local localRoot = player.Character and player.Character:FindFirstChild("HumanoidRootPart")
+                    
+                    if targetRoot and localRoot then
+                        local distance = (localRoot.Position - targetRoot.Position).Magnitude
+                        if distance < closestDistance then
+                            closestDistance = distance
+                            closestPlayer = targetPlayer
+                        end
+                    end
+                end
+            end
+        end
+        
+        if closestPlayer then
+            -- Execute bkill on closest player
+            local success = ExecuteBkill(closestPlayer)
+            if success then
+                warn("Punched " .. closestPlayer.Name)
+            else
+                warn("Failed to punch " .. closestPlayer.Name)
+            end
+        else
+            warn("No player in punching range!")
+        end
+        
+        -- Cooldown
+        task.wait(0.5)
+        cooldown = false
+    end)
+    
+    -- Visual range indicator (optional)
+    local rangeSphere = Instance.new("Part")
+    rangeSphere.Name = "RangeIndicator"
+    rangeSphere.Size = Vector3.new(punchRange * 2, 0.1, punchRange * 2)
+    rangeSphere.Transparency = 1
+    rangeSphere.BrickColor = BrickColor.new("Bright orange")
+    rangeSphere.Material = Enum.Material.Neon
+    rangeSphere.Anchored = true
+    rangeSphere.CanCollide = false
+    rangeSphere.Parent = tool
+    rangeSphere.Visible = false
+    
+    -- Show range when equipped
+    tool.Equipped:Connect(function()
+        rangeSphere.Visible = true
+        local character = player.Character
+        if character then
+            local rootPart = character:FindFirstChild("HumanoidRootPart")
+            if rootPart then
+                rangeSphere.CFrame = rootPart.CFrame * CFrame.new(0, -3, 0)
+            end
+        end
+    end)
+    
+    tool.Unequipped:Connect(function()
+        rangeSphere.Visible = false
+    end)
+    
+    -- Update range indicator position
+    game:GetService("RunService").Heartbeat:Connect(function()
+        if rangeSphere.Visible and player.Character then
+            local rootPart = player.Character:FindFirstChild("HumanoidRootPart")
+            if rootPart then
+                rangeSphere.CFrame = rootPart.CFrame * CFrame.new(0, -3, 0)
+            end
         end
     end)
     
@@ -6451,6 +6656,10 @@ CreateBtoolGun()
 return "Created all guns"
 end)
 
+AddCommand("btoolpunch", {"bpunch", "bfist"}, "Cool punch tool that kills people with btools [TOOL]", function()
+    CreateBToolPunch()
+    return "Created BtoolPunch"
+end)
 
 AddCommandWithPlayer("clientkill", {"ckill"}, "Kills players on the client (CLIENT)", function(name)
     local targets = {}
