@@ -4491,7 +4491,6 @@ end
 return "TelekinesisTool Created!"
 end
 
--- FlingGun Tool Creation Function
 function CreateFlingGun()
     local player = game.Players.LocalPlayer
     local backpack = player:FindFirstChild("Backpack")
@@ -4550,11 +4549,20 @@ function CreateFlingGun()
     
     -- Store original transparency values
     local originalTransparency = {}
+    local invisibleTimer = 0
+    local maxInvisibleTime = 3 -- 5 seconds max invisibility
+    local invisibilityCheck = nil
     
     -- Function to make player invisible
     local function makeInvisible()
         local character = player.Character
         if not character then return end
+        
+        -- Stop any existing invisibility check
+        if invisibilityCheck then
+            invisibilityCheck:Disconnect()
+            invisibilityCheck = nil
+        end
         
         originalTransparency = {}
         
@@ -4576,12 +4584,33 @@ function CreateFlingGun()
                 accessory.Handle.Transparency = 1
             end
         end
+        
+        -- Start invisibility timer
+        invisibleTimer = 0
+        invisibilityCheck = game:GetService("RunService").Heartbeat:Connect(function(dt)
+            invisibleTimer = invisibleTimer + dt
+            
+            -- Auto make visible if invisible for too long
+            if invisibleTimer >= maxInvisibleTime then
+                makeVisible()
+                if invisibilityCheck then
+                    invisibilityCheck:Disconnect()
+                    invisibilityCheck = nil
+                end
+            end
+        end)
     end
     
     -- Function to make player visible again
     local function makeVisible()
         local character = player.Character
         if not character then return end
+        
+        -- Stop invisibility check
+        if invisibilityCheck then
+            invisibilityCheck:Disconnect()
+            invisibilityCheck = nil
+        end
         
         -- Restore original transparency
         for object, transparency in pairs(originalTransparency) do
@@ -4591,6 +4620,7 @@ function CreateFlingGun()
         end
         
         originalTransparency = {}
+        invisibleTimer = 0
     end
     
     -- Visual effects function (always shows)
@@ -4627,14 +4657,14 @@ function CreateFlingGun()
                 math.random(-shakeIntensity, shakeIntensity),
                 math.random(-shakeIntensity, shakeIntensity)
             )
-            task.wait(0.01) -- Faster shake
+            task.wait(0.01)
         end
         camera.CFrame = originalCFrame
         
-        -- Camera blur (simulated with FOV change)
+        -- Camera FOV effect
         local originalFOV = camera.FieldOfView
         camera.FieldOfView = originalFOV + 10
-        game:GetService("TweenService"):Create(camera, TweenInfo.new(0.3), {FieldOfView = originalFOV}):Play() -- Faster blur recovery
+        game:GetService("TweenService"):Create(camera, TweenInfo.new(0.3), {FieldOfView = originalFOV}):Play()
     end
     
     -- Tool equipped event
@@ -4704,7 +4734,7 @@ function CreateFlingGun()
             SkidFling(targetPlayer)
             
             -- Remove highlight and make visible after shorter delay
-            task.delay(1, function() -- Faster cooldown (1 second instead of 2)
+            task.delay(1, function()
                 highlight.Enabled = false
                 highlight.Adornee = nil
                 makeVisible() -- Make player visible again after fling process
@@ -4741,6 +4771,15 @@ function CreateFlingGun()
                 highlight.Enabled = false
                 highlight.Adornee = nil
             end
+        end
+    end)
+    
+    -- Auto cleanup if character is lost
+    game.Players.LocalPlayer.CharacterRemoving:Connect(function()
+        makeVisible() -- Ensure visibility is restored
+        if invisibilityCheck then
+            invisibilityCheck:Disconnect()
+            invisibilityCheck = nil
         end
     end)
     
@@ -6508,7 +6547,10 @@ AddCommand("walkfling", {"wf"}, "Starts Touchfling", TFlingOn)
 AddCommand("unwalkfling", {"unwf"}, "Stops Touchfling", TFlingOff)
 
 local FlingCommand = {
-    OriginalTransparency = {}
+    OriginalTransparency = {},
+    InvisibleTimer = 0,
+    MaxInvisibleTime = 5, -- 5 seconds max invisibility
+    InvisibilityCheck = nil
 }
 
 AddCommandWithPlayer("fling", {"throw"}, "Fling a player or all players", function(name)
@@ -6519,6 +6561,12 @@ AddCommandWithPlayer("fling", {"throw"}, "Fling a player or all players", functi
     -- Function to make player invisible
     local function makeInvisible()
         if not character then return end
+        
+        -- Stop any existing invisibility check
+        if FlingCommand.InvisibilityCheck then
+            FlingCommand.InvisibilityCheck:Disconnect()
+            FlingCommand.InvisibilityCheck = nil
+        end
         
         FlingCommand.OriginalTransparency = {}
         
@@ -6540,11 +6588,32 @@ AddCommandWithPlayer("fling", {"throw"}, "Fling a player or all players", functi
                 accessory.Handle.Transparency = 1
             end
         end
+        
+        -- Start invisibility timer
+        FlingCommand.InvisibleTimer = 0
+        FlingCommand.InvisibilityCheck = game:GetService("RunService").Heartbeat:Connect(function(dt)
+            FlingCommand.InvisibleTimer = FlingCommand.InvisibleTimer + dt
+            
+            -- Auto make visible if invisible for too long
+            if FlingCommand.InvisibleTimer >= FlingCommand.MaxInvisibleTime then
+                makeVisible()
+                if FlingCommand.InvisibilityCheck then
+                    FlingCommand.InvisibilityCheck:Disconnect()
+                    FlingCommand.InvisibilityCheck = nil
+                end
+            end
+        end)
     end
 
     -- Function to make player visible again
     local function makeVisible()
         if not character then return end
+        
+        -- Stop invisibility check
+        if FlingCommand.InvisibilityCheck then
+            FlingCommand.InvisibilityCheck:Disconnect()
+            FlingCommand.InvisibilityCheck = nil
+        end
         
         -- Restore original transparency
         for object, transparency in pairs(FlingCommand.OriginalTransparency) do
@@ -6554,6 +6623,7 @@ AddCommandWithPlayer("fling", {"throw"}, "Fling a player or all players", functi
         end
         
         FlingCommand.OriginalTransparency = {}
+        FlingCommand.InvisibleTimer = 0
     end
 
     -- Make player invisible before flinging
@@ -6569,7 +6639,7 @@ AddCommandWithPlayer("fling", {"throw"}, "Fling a player or all players", functi
             end
         end
         
-        -- Make visible after all flings complete
+        -- Make visible after all flings complete (with safety timer)
         task.delay(2, function()
             makeVisible()
         end)
@@ -6585,7 +6655,7 @@ AddCommandWithPlayer("fling", {"throw"}, "Fling a player or all players", functi
         
         SkidFling(target)
         
-        -- Make visible after fling completes
+        -- Make visible after fling completes (with safety timer)
         task.delay(2, function()
             makeVisible()
         end)
@@ -6594,9 +6664,53 @@ AddCommandWithPlayer("fling", {"throw"}, "Fling a player or all players", functi
     end
 end)
 
--- Auto cleanup in case of errors
+-- Auto cleanup in case of errors or character removal
 game.Players.LocalPlayer.CharacterRemoving:Connect(function()
-    FlingCommand.OriginalTransparency = {}
+    -- Make visible again if character is removed
+    local function restoreVisibility()
+        local player = game.Players.LocalPlayer
+        local character = player.Character
+        if character then
+            for object, transparency in pairs(FlingCommand.OriginalTransparency) do
+                if object and object.Parent then
+                    object.Transparency = transparency
+                end
+            end
+        end
+        FlingCommand.OriginalTransparency = {}
+    end
+    
+    restoreVisibility()
+    
+    if FlingCommand.InvisibilityCheck then
+        FlingCommand.InvisibilityCheck:Disconnect()
+        FlingCommand.InvisibilityCheck = nil
+    end
+    FlingCommand.InvisibleTimer = 0
+end)
+
+-- Additional safety: Auto visible if command somehow gets stuck
+task.spawn(function()
+    while true do
+        task.wait(1)
+        if FlingCommand.InvisibleTimer > 0 and FlingCommand.InvisibleTimer >= FlingCommand.MaxInvisibleTime then
+            local player = game.Players.LocalPlayer
+            local character = player.Character
+            if character then
+                for object, transparency in pairs(FlingCommand.OriginalTransparency) do
+                    if object and object.Parent then
+                        object.Transparency = transparency
+                    end
+                end
+                FlingCommand.OriginalTransparency = {}
+            end
+            FlingCommand.InvisibleTimer = 0
+            if FlingCommand.InvisibilityCheck then
+                FlingCommand.InvisibilityCheck:Disconnect()
+                FlingCommand.InvisibilityCheck = nil
+            end
+        end
+    end
 end)
 
 AddCommand("Invisible", {"invis"}, "Hides you [R6 RECOMMENDED]", invis2)
