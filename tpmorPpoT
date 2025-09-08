@@ -6549,7 +6549,7 @@ AddCommand("unwalkfling", {"unwf"}, "Stops Touchfling", TFlingOff)
 local FlingCommand = {
     OriginalTransparency = {},
     InvisibleTimer = 0,
-    MaxInvisibleTime = 5, -- 5 seconds max invisibility
+    MaxInvisibleTime = 10, -- 5 seconds max invisibility
     InvisibilityCheck = nil
 }
 
