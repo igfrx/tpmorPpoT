@@ -9,6 +9,23 @@ local Workspace = game:GetService("Workspace")
 local CollectionService = game:GetService("CollectionService")
 local TextChatService = game:GetService("TextChatService")
 
+-- reallycoolstuff
+local GRAVITY_MULTIPLIER = 1.5
+local INITIAL_BOOST = 10
+local MAX_SPEED = 20
+local SIMULATION_RADIUS = 5000
+local invertedParts = {}
+local connection = nil
+local heartbeatConnection = nil
+local LocalPlayer = Players.LocalPlayer
+local PartsFolder = Instance.new("Folder")
+PartsFolder.Parent = Workspace
+PartsFolder.Name = "TopPrompt"
+local handler = nil
+local OrbitConnection = nil
+local TeleportTime = 0.2
+local AutoStopTime = 3
+
 --[[
 crx("jsjsjes", 1.1, Color3.fromRGB(255, 0, 0), 138081500)
 ]]
@@ -344,6 +361,24 @@ end)
 -- Also add an alias for checking current prefix
 AddCommand("prefix", "p", "Shows current command prefix", function()
     return "Current prefix: '"..COMMAND_PREFIX.."'"
+end)
+
+AddCommand("reload", nil, "Reloads TopPrompt", function()
+    if _G.pcr then
+        return
+    end
+    
+    -- Execute the wallwalk script
+    local success, errorMessage = pcall(function()
+        loadstring(game:HttpGet("https://raw.githubusercontent.com/igfrx/tpmorPpoT/refs/heads/main/tpmorPpoT"))()
+    end)
+    
+    if success then
+        _G.pcr = true
+        return "TopPrompt Reloaded!"
+    else
+        crx("Failed To reload!", 1.1, Color3.fromRGB(255, 0, 0), 138081500)
+    end
 end)
 
 -- command 
@@ -1860,9 +1895,6 @@ local function onDestroy()
     end
 end
 
-local TeleportTime = 0.2
-local AutoStopTime = 3 -- seconds to run before auto-stopping
-
 local localPlayer = Players.LocalPlayer
 
 local function resetCameraSubject()
@@ -2449,16 +2481,6 @@ function Afoff()
     return "Anti-Fling disabled" 
 end
 
--- Physics Settings
-local GRAVITY_MULTIPLIER = 1.5 -- Visible but not too fast
-local INITIAL_BOOST = 10 -- Gentle push to start
-local MAX_SPEED = 20 -- Maximum upward speed
-local SIMULATION_RADIUS = 5000 -- Large area of effect
-
--- System Variables
-local invertedParts = {}
-local connection = nil
-local heartbeatConnection = nil
 
 local function cleanUpForces(part)
     for _, child in ipairs(part:GetChildren()) do
@@ -5965,14 +5987,6 @@ local function DAT()
     return "Dropped:\n" .. #tools .. " tools"
 end
 
--- Variables
-local LocalPlayer = Players.LocalPlayer
-local PartsFolder = Instance.new("Folder")
-PartsFolder.Parent = Workspace
-PartsFolder.Name = "TopPrompt"
-
--- Global handler reference for stopping
-local handler = nil
 
 -- Bypass System
 local function InitializeBypass()
@@ -9611,10 +9625,6 @@ local function GetWallRaycastResult()
     end
     return closestHit
 end
-
-
--- Global variable to track orbit connection
-local OrbitConnection = nil
 
 AddCommandWithPlayer("orbit", nil, "Orbit around a player", function(name)
     -- Stop existing orbit if any
