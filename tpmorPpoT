@@ -26,6 +26,108 @@ local OrbitConnection = nil
 local TeleportTime = 0.2
 local AutoStopTime = 3
 
+local SilentSwordkill = {
+    Active = false,
+    Target = nil,
+    OriginalGrip = {},
+    OriginalMassless = {},
+    Tools = {},
+    DeadPlayers = {}
+}
+
+local Freeze = {
+    Enabled = false,
+    Connections = {}
+}
+
+local WallHop = {
+    Enabled = false,
+    Debounce = true,
+    RaycastParams = RaycastParams.new()
+}
+
+local AntiTripSystem = {
+    Enabled = false,
+    Connections = {}
+}
+
+local AutoRejoin = {
+    Enabled = false,
+    Connection = nil
+}
+
+local FPSCounter = {
+    Enabled = false,
+    Connection = nil,
+    Label = nil
+}
+
+local AutoRespawn = {
+    Enabled = false,
+    Connections = {},
+    DeathPosition = nil
+}
+
+local FPSCounter = {
+    Enabled = false,
+    Connection = nil,
+    Label = nil
+}
+
+local Buff = {
+    Enabled = false,
+    OriginalProperties = {}
+}
+
+local CGod = {
+    Enabled = false,
+    Connections = {}
+}
+
+local Spazz = {
+    Enabled = false,
+    BodyVelocity = nil
+}
+
+local FreeGamepasses = {
+    Hooked = false,
+    OriginalFunction = nil
+}
+
+local Orbit = {
+    Active = false,
+    Connection = nil,
+    Radius = 5,
+    Speed = 6,
+    Angles = {},
+    OriginalPositions = {},
+    Players = game:GetService("Players"),
+    RunService = game:GetService("RunService"),
+    LocalPlayer = game:GetService("Players").LocalPlayer
+}
+
+local AirWalk = {
+    Enabled = false,
+    AirPart = nil,
+    Connection = nil
+}
+
+local AntiTeleport = {
+    Enabled = false,
+    OriginalFunctions = {}
+}
+
+local AntiKick = {
+    Enabled = false,
+    OriginalFunctions = {}
+}
+
+local FPSBooster = {
+    Enabled = false,
+    Connections = {},
+    OriginalProperties = {}
+}
+
 --[[
 crx("jsjsjes", 1.1, Color3.fromRGB(255, 0, 0), 138081500)
 ]]
@@ -5487,7 +5589,7 @@ function CreateNpcGun()
     return tool
 end
 
--- SwordGun Function (Fixed Highlight, Targeting, and Re-equip)
+-- SwordGun Function with Silent Swordkill Integration
 function CreateSwordGun()
     local player = game.Players.LocalPlayer
     local backpack = player:FindFirstChild("Backpack")
@@ -5506,7 +5608,7 @@ function CreateSwordGun()
     -- Create the SwordGun
     local tool = Instance.new("Tool")
     tool.Name = "SwordGun"
-    tool.ToolTip = "SwordGun - Shoot players to kill them"
+    tool.ToolTip = "SwordGun - click on players to kill them"
     tool.RequiresHandle = true
     tool.Parent = backpack
     
@@ -5538,9 +5640,9 @@ function CreateSwordGun()
     highlight.Enabled = false
     highlight.FillColor = Color3.fromRGB(0, 255, 0)
     highlight.OutlineColor = Color3.fromRGB(0, 200, 0)
-    highlight.FillTransparency = 0.3  -- More visible
-    highlight.OutlineTransparency = 0  -- Solid outline
-    highlight.DepthMode = Enum.HighlightDepthMode.AlwaysOnTop  -- Always visible
+    highlight.FillTransparency = 0.3
+    highlight.OutlineTransparency = 0
+    highlight.DepthMode = Enum.HighlightDepthMode.AlwaysOnTop
     highlight.Parent = tool
     
     -- Animation track
@@ -5586,87 +5688,124 @@ function CreateSwordGun()
         return nil
     end
 
-    -- Swordkill system integration
+    -- Silent swordkill system
     local swordkillActive = false
     local swordkillTarget = nil
-    local originalTool = nil
-    local originalToolParent = nil
+    local originalGrip = nil
+    local originalMassless = nil
+
+    -- Function to disable tool animations
+    local function disableToolAnim()
+        local humanoid = player.Character and player.Character:FindFirstChildOfClass("Humanoid")
+        if humanoid then
+            humanoid:SetStateEnabled(Enum.HumanoidStateType.Running, false)
+            humanoid:SetStateEnabled(Enum.HumanoidStateType.Jumping, false)
+            humanoid:SetStateEnabled(Enum.HumanoidStateType.Climbing, false)
+        end
+    end
+
+    -- Function to enable tool animations
+    local function enableToolAnim()
+        local humanoid = player.Character and player.Character:FindFirstChildOfClass("Humanoid")
+        if humanoid then
+            humanoid:SetStateEnabled(Enum.HumanoidStateType.Running, true)
+            humanoid:SetStateEnabled(Enum.HumanoidStateType.Jumping, true)
+            humanoid:SetStateEnabled(Enum.HumanoidStateType.Climbing, true)
+        end
+    end
+
+    -- Function to stop sounds in object
+    local function stopSoundsInObject(obj)
+        if not obj then return end
+        for _, sound in ipairs(obj:GetDescendants()) do
+            if sound:IsA("Sound") then
+                sound:Stop()
+            end
+        end
+    end
+
+    -- Function to touch parts (silent version)
+    local function silentTouch(part1, part2)
+        if part1 and part2 then
+            firetouchinterest(part1, part2, 0)
+            task.wait()
+            firetouchinterest(part1, part2, 1)
+        end
+    end
 
     local function forceEquipSword(sword)
         if not sword then return nil end
         
-        -- Save current tool
-        local character = player.Character
-        if not character then return nil end
+        -- Store original properties
+        originalGrip = sword.Grip
+        originalMassless = sword.Handle.Massless
         
-        originalTool = character:FindFirstChildOfClass("Tool")
-        if originalTool then
-            originalToolParent = originalTool.Parent
-        end
+        -- Make sword invisible and silent
+        sword.Handle.Massless = true
+        sword.Grip = CFrame.new(0, 5774, 0)
+        stopSoundsInObject(sword)
         
         -- Equip the sword
-        sword.Parent = character
+        sword.Parent = player.Character
         task.wait(0.1)
         return sword
     end
 
-    local function restoreOriginalTool()
-        if originalTool and originalToolParent then
-            originalTool.Parent = originalToolParent
-            originalTool = nil
-            originalToolParent = nil
+    local function restoreSwordProperties(sword)
+        if sword and sword.Parent then
+            sword.Grip = originalGrip
+            sword.Handle.Massless = originalMassless
+            stopSoundsInObject(sword)
         end
     end
 
     local function reEquipSwordGun()
-        -- Wait a moment before re-equipping
         task.wait(0.5)
-        
         local character = player.Character
         if character and tool and tool.Parent == backpack then
-            -- Re-equip the SwordGun
             tool.Parent = character
         end
     end
 
-    local function startSwordKill(targetPlayer)
+    local function startSilentSwordKill(targetPlayer)
         swordkillActive = true
         swordkillTarget = targetPlayer
         
         -- Find sword
         local sword = findSword()
         if not sword then
-            warn("No sword found for swordkill!")
+            warn("No sword found for silent swordkill!")
             reEquipSwordGun()
             return
         end
         
-        -- Force equip sword
+        -- Force equip sword with silent properties
         sword = forceEquipSword(sword)
         if not sword then 
             reEquipSwordGun()
             return
         end
         
-        -- Start swordkill process
+        -- Disable animations for complete silence
+        disableToolAnim()
+        
+        -- Start silent kill process
         coroutine.wrap(function()
             while swordkillActive and swordkillTarget and swordkillTarget.Character do
                 local targetCharacter = swordkillTarget.Character
                 local humanoid = targetCharacter:FindFirstChildOfClass("Humanoid")
                 
                 if humanoid and humanoid.Health > 0 then
-                    -- Activate sword
-                    sword:Activate()
+                    -- Silent touch the target's parts
+                    local targetRoot = targetCharacter:FindFirstChild("HumanoidRootPart")
+                    if targetRoot and sword.Handle then
+                        silentTouch(targetRoot, sword.Handle)
+                    end
                     
-                    -- Touch all parts of the target character
-                    local handle = sword:FindFirstChild("Handle")
-                    if handle then
-                        for _, part in ipairs(targetCharacter:GetChildren()) do
-                            if part:IsA("BasePart") and part.Name ~= "HumanoidRootPart" then
-                                firetouchinterest(handle, part, 0)
-                                task.wait()
-                                firetouchinterest(handle, part, 1)
-                            end
+                    -- Touch other body parts for reliability
+                    for _, part in ipairs(targetCharacter:GetChildren()) do
+                        if part:IsA("BasePart") and part.Name ~= "HumanoidRootPart" then
+                            silentTouch(part, sword.Handle)
                         end
                     end
                 else
@@ -5679,7 +5818,14 @@ function CreateSwordGun()
             end
             
             -- Cleanup and re-equip SwordGun
-            restoreOriginalTool()
+            enableToolAnim()
+            restoreSwordProperties(sword)
+            
+            -- Unequip sword
+            if sword and sword.Parent == player.Character then
+                sword.Parent = backpack
+            end
+            
             swordkillActive = false
             swordkillTarget = nil
             
@@ -5691,6 +5837,33 @@ function CreateSwordGun()
             -- Re-equip SwordGun after target dies
             reEquipSwordGun()
         end)()
+    end
+
+    -- Death listener
+    local function setupDeathListener(targetPlayer)
+        if targetPlayer.Character then
+            local humanoid = targetPlayer.Character:FindFirstChildOfClass("Humanoid")
+            if humanoid then
+                humanoid.Died:Connect(function()
+                    if swordkillTarget == targetPlayer then
+                        swordkillActive = false
+                        enableToolAnim()
+                        swordkillTarget = nil
+                    end
+                end)
+            end
+        end
+        
+        targetPlayer.CharacterAdded:Connect(function(character)
+            local humanoid = character:WaitForChild("Humanoid")
+            humanoid.Died:Connect(function()
+                if swordkillTarget == targetPlayer then
+                    swordkillActive = false
+                    enableToolAnim()
+                    swordkillTarget = nil
+                end
+            end)
+        end)
     end
 
     -- Visual effects function
@@ -5740,42 +5913,12 @@ function CreateSwordGun()
     -- Cooldown state
     local cooldown = false
     
-    -- Death listener
-    local function setupDeathListener(targetPlayer)
-        if targetPlayer.Character then
-            local humanoid = targetPlayer.Character:FindFirstChildOfClass("Humanoid")
-            if humanoid then
-                humanoid.Died:Connect(function()
-                    if swordkillTarget == targetPlayer then
-                        swordkillActive = false
-                        restoreOriginalTool()
-                        swordkillTarget = nil
-                        reEquipSwordGun()
-                    end
-                end)
-            end
-        end
-        
-        targetPlayer.CharacterAdded:Connect(function(character)
-            local humanoid = character:WaitForChild("Humanoid")
-            humanoid.Died:Connect(function()
-                if swordkillTarget == targetPlayer then
-                    swordkillActive = false
-                    restoreOriginalTool()
-                    swordkillTarget = nil
-                    reEquipSwordGun()
-                end
-            end)
-        end)
-    end
-
     -- Improved targeting function
     local function getTargetPlayer()
         local mouse = player:GetMouse()
         local target = mouse.Target
         local targetPlayer = nil
         
-        -- Use mouse.Hit instead of mouse.Target for better accuracy
         if mouse.Target then
             local model = mouse.Target:FindFirstAncestorOfClass("Model")
             if model then
@@ -5783,7 +5926,6 @@ function CreateSwordGun()
             end
         end
         
-        -- Fallback: check if mouse is over a player character
         if not targetPlayer then
             local characters = workspace:GetChildren()
             for _, char in ipairs(characters) do
@@ -5792,7 +5934,7 @@ function CreateSwordGun()
                     local root = char:FindFirstChild("HumanoidRootPart")
                     if hum and root then
                         local distance = (mouse.Hit.Position - root.Position).Magnitude
-                        if distance < 10 then  -- 10 stud radius around cursor
+                        if distance < 10 then
                             targetPlayer = game.Players:GetPlayerFromCharacter(char)
                             if targetPlayer then break end
                         end
@@ -5806,7 +5948,6 @@ function CreateSwordGun()
 
     -- Tool equipped event
     tool.Equipped:Connect(function()
-        -- Play equip sound
         local equipSound = Instance.new("Sound")
         equipSound.SoundId = "rbxassetid://7026893899"
         equipSound.Volume = 0.5
@@ -5814,7 +5955,6 @@ function CreateSwordGun()
         equipSound:Play()
         game:GetService("Debris"):AddItem(equipSound, 2)
         
-        -- Load animation
         local humanoid = player.Character:FindFirstChildOfClass("Humanoid")
         if humanoid then
             local animator = humanoid:FindFirstChildOfClass("Animator")
@@ -5837,10 +5977,9 @@ function CreateSwordGun()
         highlight.Adornee = nil
         cooldown = false
         
-        -- Stop swordkill if active
         if swordkillActive then
             swordkillActive = false
-            restoreOriginalTool()
+            enableToolAnim()
         end
     end)
 
@@ -5849,31 +5988,20 @@ function CreateSwordGun()
         if cooldown or swordkillActive then return end
         cooldown = true
         
-        -- Play shoot sound
         shootSound:Play()
-        
-        -- Always show visual effects
         createVisualEffects()
         
-        -- Get target player with improved targeting
         local targetPlayer = getTargetPlayer()
         
         if targetPlayer and targetPlayer ~= player then
-            -- Set current target
             swordkillTarget = targetPlayer
-            
-            -- Highlight target
             highlight.Adornee = targetPlayer.Character
             highlight.Enabled = true
             
-            -- Setup death listener
             setupDeathListener(targetPlayer)
-            
-            -- Unequip SwordGun and start swordkill
-            tool.Parent = backpack  -- Unequip the gun
-            startSwordKill(targetPlayer)
+            tool.Parent = backpack
+            startSilentSwordKill(targetPlayer)
         else
-            -- Play empty click sound for missed shot
             local clickSound = Instance.new("Sound")
             clickSound.SoundId = "rbxassetid://131147845"
             clickSound.Volume = 0.3
@@ -5885,7 +6013,7 @@ function CreateSwordGun()
         cooldown = false
     end)
 
-    -- Improved mouse movement with better highlighting
+    -- Mouse movement
     local mouse = player:GetMouse()
     mouse.Move:Connect(function()
         if tool.Parent == player.Character then
@@ -6187,11 +6315,6 @@ AddCommand("shiftlock", {"sl"}, "Gives you shiftlock", sl)
 AddCommand("noclip", {"nc"}, "Walk thru walls", ModeOn)
 AddCommand("clip", {"noc"}, "Stops Noclip", ModeOff)
 
-local Freeze = {
-    Enabled = false,
-    Connections = {}
-}
-
 -- Freeze/Anchor command
 AddCommand("freeze", {"anchor", "fr"}, "Freezes/anchors your character completely", function()
     if Freeze.Enabled then
@@ -6304,14 +6427,7 @@ game:GetService("UserInputService").WindowFocused:Connect(function()
     end
 end)
 
-local swordkillActive = false
-local swordkillTarget = "all"
-local swordkillSilent = false
-local originalTool = nil
-local originalToolParent = nil
-local deadPlayers = {} -- Track dead players
-
--- List of tool names that should be considered as swords
+-- List of sword names to look for
 local SWORD_NAMES = {
     "sword", "foil", "blade", "katana", "saber", "rapier", "cutlass", "dagger",
     "knife", "longsword", "shortsword", "scimitar", "falchion", "broadsword"
@@ -6329,10 +6445,14 @@ local function isSword(tool)
     return false
 end
 
--- Function to find the first sword in player's inventory
-local function findSword(player)
+-- Function to find a sword in player's inventory
+local function findSword()
+    local player = game.Players.LocalPlayer
+    local character = player.Character
+    if not character then return nil end
+    
     -- Check character first
-    for _, tool in ipairs(player.Character:GetChildren()) do
+    for _, tool in ipairs(character:GetChildren()) do
         if tool:IsA("Tool") and isSword(tool) then
             return tool
         end
@@ -6351,52 +6471,59 @@ local function findSword(player)
     return nil
 end
 
--- Function to force equip a tool
-local function forceEquip(tool)
-    if not tool then return end
-    local player = game:GetService("Players").LocalPlayer
-    if not player.Character then return end
-    
-    -- Save current tool if it's different
-    if not originalTool or originalTool ~= tool then
-        originalTool = player.Character:FindFirstChildOfClass("Tool")
-        if originalTool then
-            originalToolParent = originalTool.Parent
-        end
+-- Function to disable tool animations
+local function disableToolAnim()
+    local player = game.Players.LocalPlayer
+    local humanoid = player.Character and player.Character:FindFirstChildOfClass("Humanoid")
+    if humanoid then
+        humanoid:SetStateEnabled(Enum.HumanoidStateType.Running, false)
+        humanoid:SetStateEnabled(Enum.HumanoidStateType.Jumping, false)
+        humanoid:SetStateEnabled(Enum.HumanoidStateType.Climbing, false)
     end
-    
-    -- Equip the new tool
-    if tool.Parent ~= player.Character then
-        tool.Parent = player.Character
-    end
-    
-    -- Wait for tool to equip
-    task.wait(0.1)
-    return tool
 end
 
--- Function to restore original tool
-local function restoreOriginalTool()
-    if originalTool and originalToolParent then
-        originalTool.Parent = originalToolParent
-        originalTool = nil
-        originalToolParent = nil
+-- Function to enable tool animations
+local function enableToolAnim()
+    local player = game.Players.LocalPlayer
+    local humanoid = player.Character and player.Character:FindFirstChildOfClass("Humanoid")
+    if humanoid then
+        humanoid:SetStateEnabled(Enum.HumanoidStateType.Running, true)
+        humanoid:SetStateEnabled(Enum.HumanoidStateType.Jumping, true)
+        humanoid:SetStateEnabled(Enum.HumanoidStateType.Climbing, true)
+    end
+end
+
+-- Function to stop sounds in object
+local function stopSoundsInObject(obj)
+    if not obj then return end
+    for _, sound in ipairs(obj:GetDescendants()) do
+        if sound:IsA("Sound") then
+            sound:Stop()
+        end
+    end
+end
+
+-- Function to touch parts (silent version)
+local function silentTouch(part1, part2)
+    if part1 and part2 then
+        firetouchinterest(part1, part2, 0)
+        task.wait()
+        firetouchinterest(part1, part2, 1)
     end
 end
 
 -- Function to setup death listener for a player
 local function setupDeathListener(player)
-    if deadPlayers[player] then return end
+    if SilentSwordkill.DeadPlayers[player] then return end
     
     local function onCharacterAdded(character)
-        if not swordkillActive then return end
+        if not SilentSwordkill.Active then return end
         
         local humanoid = character:WaitForChild("Humanoid", 5)
         if humanoid then
-            deadPlayers[player] = nil -- Player respawned
-            
+            SilentSwordkill.DeadPlayers[player] = nil -- Player respawned
             humanoid.Died:Connect(function()
-                deadPlayers[player] = true
+                SilentSwordkill.DeadPlayers[player] = true
             end)
         end
     end
@@ -6405,7 +6532,7 @@ local function setupDeathListener(player)
         local humanoid = player.Character:FindFirstChildOfClass("Humanoid")
         if humanoid then
             humanoid.Died:Connect(function()
-                deadPlayers[player] = true
+                SilentSwordkill.DeadPlayers[player] = true
             end)
         end
     end
@@ -6413,15 +6540,20 @@ local function setupDeathListener(player)
     player.CharacterAdded:Connect(onCharacterAdded)
 end
 
-AddCommandWithPlayer("swordkill", "skill", "Kills players using a sword tool [TOOL]", function(name)
+AddCommandWithPlayer("swordkill", {"skill"}, "Kill players with swords [TOOL]", function(name)
+    if SilentSwordkill.Active then
+        crx("swordkill is already active!", 1.1, Color3.fromRGB(255, 0, 0), 138081500)
+        return
+    end
+    
     local Players = game:GetService("Players")
     local player = Players.LocalPlayer
-    swordkillActive = true
-    deadPlayers = {} -- Reset dead players tracking
+    SilentSwordkill.Active = true
+    SilentSwordkill.DeadPlayers = {}
     
     -- Set target
-    if name == "all" then
-        swordkillTarget = "all"
+    if not name or name == "all" then
+        SilentSwordkill.Target = "all"
         -- Setup death listeners for all players
         for _, target in ipairs(Players:GetPlayers()) do
             if target ~= player then
@@ -6430,115 +6562,178 @@ AddCommandWithPlayer("swordkill", "skill", "Kills players using a sword tool [TO
         end
     else
         local target = GetPlayer(name)
-        if not target then crx("Target not found!", 1.1, Color3.fromRGB(255, 0, 0), 138081500) end
+        if not target then 
+            crx("Target not found!", 1.1, Color3.fromRGB(255, 0, 0), 138081500)
+            SilentSwordkill.Active = false
+            return
+        end
         if typeof(target) == "table" then target = target[1] end
-        swordkillTarget = target.Name
+        SilentSwordkill.Target = target.Name
         setupDeathListener(target)
     end
     
-    -- Check if we have a sword
-    local sword = findSword(player)
+    -- Check if we have a sword first
+    local sword = findSword()
     if not sword then
-        -- Try to find any tool that might work
-        sword = player.Character:FindFirstChildOfClass("Tool") or 
-               (player.Backpack and player.Backpack:FindFirstChildOfClass("Tool"))
-        if not sword then
-            crx("Sword not found!", 1.1, Color3.fromRGB(255, 0, 0), 138081500)
-        end
+        crx("No sword found in inventory!", 1.1, Color3.fromRGB(255, 0, 0), 138081500)
+        SilentSwordkill.Active = false
+        return
     end
     
-    -- Start kill loop
+    -- Disable animations
+    disableToolAnim()
+    
+    -- Start silent kill loop
     coroutine.wrap(function()
-        while swordkillActive do
+        while SilentSwordkill.Active do
             local character = player.Character
-            if not character then task.wait(0.1) continue end
-            
-            -- Find sword (in case it changed)
-            local sword = findSword(player) or character:FindFirstChildOfClass("Tool")
-            if not sword or not sword:FindFirstChild("Handle") then 
+            if not character then 
                 task.wait(0.1) 
                 continue 
             end
             
-            if swordkillTarget == "all" then
+            -- Find a sword (only use swords, not any tool)
+            local sword = findSword()
+            if not sword then 
+                crx("Sword not found anymore!", 1.1, Color3.fromRGB(255, 0, 0), 138081500)
+                SilentSwordkill.Active = false
+                break
+            end
+            
+            -- Store original properties if not already stored
+            if not SilentSwordkill.OriginalGrip[sword] then
+                SilentSwordkill.OriginalGrip[sword] = sword.Grip
+                SilentSwordkill.OriginalMassless[sword] = sword.Handle.Massless
+                SilentSwordkill.Tools[sword] = true
+                
+                -- Make sword invisible and silent
+                sword.Handle.Massless = true
+                sword.Grip = CFrame.new(0, 5774, 0) -- Move sword far away visually
+                stopSoundsInObject(sword)
+            end
+            
+            -- Equip sword silently if not already equipped
+            if sword.Parent ~= character then
+                sword.Parent = character
+            end
+            
+            if SilentSwordkill.Target == "all" then
                 -- Kill all players except yourself
                 for _, target in ipairs(Players:GetPlayers()) do
-                    if target ~= player and target.Character and not deadPlayers[target] then
+                    if target ~= player and target.Character and not SilentSwordkill.DeadPlayers[target] then
                         local humanoid = target.Character:FindFirstChildOfClass("Humanoid")
                         if humanoid and humanoid.Health > 0 then
-                            -- Only equip sword when needed
-                            sword = forceEquip(sword)
-                            local handle = sword.Handle
-                            
-                            if not swordkillSilent then
-                                sword:Activate()
+                            -- Silent touch the target's parts
+                            local targetRoot = target.Character:FindFirstChild("HumanoidRootPart")
+                            if targetRoot and sword.Handle then
+                                silentTouch(targetRoot, sword.Handle)
                             end
                             
-                            -- Touch all parts of the character
+                            -- Touch other body parts for reliability
                             for _, part in ipairs(target.Character:GetChildren()) do
-                                if part:IsA("BasePart") then
-                                    firetouchinterest(handle, part, 0)
-                                    firetouchinterest(handle, part, 1)
+                                if part:IsA("BasePart") and part.Name ~= "HumanoidRootPart" then
+                                    silentTouch(part, sword.Handle)
                                 end
                             end
                         end
-                    elseif deadPlayers[target] then
-                        -- Player is dead, unequip sword
-                        if sword.Parent == player.Character then
-                            sword.Parent = player.Backpack
-                        end
+                    elseif SilentSwordkill.DeadPlayers[target] then
+                        -- Player is dead, do nothing (loop continues for others)
                     end
                 end
             else
                 -- Kill specific target
-                local target = Players:FindFirstChild(swordkillTarget)
-                if target and target.Character and not deadPlayers[target] then
+                local target = Players:FindFirstChild(SilentSwordkill.Target)
+                if target and target.Character and not SilentSwordkill.DeadPlayers[target] then
                     local humanoid = target.Character:FindFirstChildOfClass("Humanoid")
                     if humanoid and humanoid.Health > 0 then
-                        -- Equip sword only when attacking
-                        sword = forceEquip(sword)
-                        local handle = sword.Handle
-                        
-                        if not swordkillSilent then
-                            sword:Activate()
+                        -- Silent touch the target's parts
+                        local targetRoot = target.Character:FindFirstChild("HumanoidRootPart")
+                        if targetRoot and sword.Handle then
+                            silentTouch(targetRoot, sword.Handle)
                         end
                         
-                        -- Touch all parts of the character
+                        -- Touch other body parts for reliability
                         for _, part in ipairs(target.Character:GetChildren()) do
-                            if part:IsA("BasePart") then
-                                firetouchinterest(handle, part, 0)
-                                firetouchinterest(handle, part, 1)
+                            if part:IsA("BasePart") and part.Name ~= "HumanoidRootPart" then
+                                silentTouch(part, sword.Handle)
                             end
                         end
                     end
-                elseif target and deadPlayers[target] then
-                    -- Target is dead, unequip sword
-                    if sword.Parent == player.Character then
-                        sword.Parent = player.Backpack
-                    end
+                elseif target and SilentSwordkill.DeadPlayers[target] then
+                    -- Target is dead, do nothing (loop continues)
                 end
             end
             
             task.wait(0.1)
         end
         
-        -- Restore original tool when done
-        restoreOriginalTool()
+        -- Cleanup when loop ends
+        enableToolAnim()
+        
+        -- Restore all sword properties
+        for sword, _ in pairs(SilentSwordkill.Tools) do
+            if sword and sword.Parent then
+                sword.Grip = SilentSwordkill.OriginalGrip[sword]
+                sword.Handle.Massless = SilentSwordkill.OriginalMassless[sword]
+                stopSoundsInObject(sword)
+            end
+        end
+        
+        -- Unequip all tools
+        local character = player.Character
+        if character then
+            local humanoid = character:FindFirstChildOfClass("Humanoid")
+            if humanoid then
+                humanoid:UnequipTools()
+            end
+        end
+        
+        -- Clear stored data
+        SilentSwordkill.OriginalGrip = {}
+        SilentSwordkill.OriginalMassless = {}
+        SilentSwordkill.Tools = {}
+        SilentSwordkill.DeadPlayers = {}
     end)()
     
-    return "Sword killed\n" .. (swordkillTarget == "all" and "all players" or swordkillTarget)
+    return "Swordkilled " .. (SilentSwordkill.Target == "all" and "all players" or "target: " .. SilentSwordkill.Target)
 end)
 
-AddCommand("unswordkill ", "unskill", "Stops the sword kill process", function()
-    swordkillActive = false
-    restoreOriginalTool()
-    return "Sword kill stopped"
+AddCommand("unswordkill", {"unskill"}, "Stops silent swordkill loop", function()
+    if not SilentSwordkill.Active then
+        crx("swordkill wasn't active!", 1.1, Color3.fromRGB(255, 0, 0), 138081500)
+        return
+    end
+    
+    SilentSwordkill.Active = false
+    return "swordkill stopped"
 end)
 
 -- Setup player tracking
 game:GetService("Players").PlayerAdded:Connect(function(player)
-    if swordkillActive and swordkillTarget == "all" then
+    if SilentSwordkill.Active and SilentSwordkill.Target == "all" then
         setupDeathListener(player)
+    end
+end)
+
+-- Auto cleanup
+game.Players.LocalPlayer.CharacterRemoving:Connect(function()
+    if SilentSwordkill.Active then
+        SilentSwordkill.Active = false
+        enableToolAnim()
+        
+        -- Restore all sword properties
+        for sword, _ in pairs(SilentSwordkill.Tools) do
+            if sword and sword.Parent then
+                sword.Grip = SilentSwordkill.OriginalGrip[sword]
+                sword.Handle.Massless = SilentSwordkill.OriginalMassless[sword]
+                stopSoundsInObject(sword)
+            end
+        end
+        
+        SilentSwordkill.OriginalGrip = {}
+        SilentSwordkill.OriginalMassless = {}
+        SilentSwordkill.Tools = {}
+        SilentSwordkill.DeadPlayers = {}
     end
 end)
 
@@ -7045,10 +7240,6 @@ AddCommand("resetuagrav", {"rsug"}, "Resets unanchored Gravity", function()
 end)
 
 
-local Buff = {
-    Enabled = false,
-    OriginalProperties = {}
-}
 
 AddCommand("buff", {}, "Easier to move unanchored parts", function()
     if Buff.Enabled then
@@ -7140,11 +7331,6 @@ game.Players.LocalPlayer.CharacterAdded:Connect(function(character)
         end
     end
 end)
-
-local CGod = {
-    Enabled = false,
-    Connections = {}
-}
 
 AddCommand("cgod", {"cgod"}, "Sets your health to inf (CLIENT)", function()
     if CGod.Enabled then
@@ -7354,10 +7540,7 @@ game.Players.LocalPlayer.CharacterRemoving:Connect(function()
 end)
 
 -- AntiTrip System (FIXED)
-local AntiTripSystem = {
-    Enabled = false,
-    Connections = {}
-}
+
 
 AddCommand("antitrip", {"at"}, "Prevents sitting and tripping", function()
     if AntiTripSystem.Enabled then
@@ -7431,11 +7614,6 @@ AddCommand("unantitrip", {"unat"}, "Allows sitting and tripping again", function
     return "AntiTrip disabled"
 end)
 
-local AutoRejoin = {
-    Enabled = false,
-    Connection = nil
-}
-
 AddCommand("autorejoin", {"autorj", "arj"}, "Automatically rejoins if you get kicked", function()
     if AutoRejoin.Enabled then
         crx("AutoRejoin is already enabled!", 1.1, Color3.fromRGB(255, 0, 0), 138081500)
@@ -7476,11 +7654,6 @@ AddCommand("unautorejoin", {"unautorj", "unarj"}, "Disables AutoRejoin", functio
     return "AutoRejoin disabled"
 end)
 
-local AutoRespawn = {
-    Enabled = false,
-    Connections = {},
-    DeathPosition = nil
-}
 
 AddCommand("autorespawn", {"autore"}, "Automatically teleports you back to your death location", function()
     if AutoRespawn.Enabled then
@@ -7564,14 +7737,7 @@ AddCommand("unautorespawn", {"unautore"}, "Disables AutoRespawn", function()
     return "AutoRespawn disabled"
 end)
 
--- FPS Commands
-
-local FPSCounter = {
-    Enabled = false,
-    Connection = nil,
-    Label = nil
-}
-
+-- FPS Commandslll
 
 -- Alternative simpler FPS command that always works
 AddCommand("showfps", {"sfps"}, "Shows FPS counter", function()
@@ -7702,12 +7868,6 @@ AddCommand("unlockfps", {"unlf"}, "Unlocks the FPS limit (1000)", function()
         return
     end
 end)
-
-local FPSBooster = {
-    Enabled = false,
-    Connections = {},
-    OriginalProperties = {}
-}
 
 AddCommand("fpsbooster", {"fpsb"}, "Lowers graphics for maximum FPS boost", function()
     if FPSBooster.Enabled then
@@ -7849,10 +8009,6 @@ AddCommand("unfpsbooster", {"unfpsb", "lagify"}, "Restores original graphics qua
 end)
 
 -- AntiKick System
-local AntiKick = {
-    Enabled = false,
-    OriginalFunctions = {}
-}
 
 AddCommand("antikick", {"ak"}, "Prevents (client) scripts from kicking you", function()
     if AntiKick.Enabled then
@@ -7907,10 +8063,7 @@ AddCommand("unantikick", {"unak"}, "Disables AntiKick", function()
 end)
 
 -- AntiTeleport System
-local AntiTeleport = {
-    Enabled = false,
-    OriginalFunctions = {}
-}
+
 
 AddCommand("antiteleport", {"ant"}, "Prevents you from getting teleported to other games", function()
     if AntiTeleport.Enabled then
@@ -8045,11 +8198,6 @@ AddCommand("loadtools", {"lt"}, "Receives all the tools you've saved", function(
 end)
 
 -- AirWalk System
-local AirWalk = {
-    Enabled = false,
-    AirPart = nil,
-    Connection = nil
-}
 
 AddCommand("airwalk", {"aw"}, "Allows you to walk on air; jump to go up", function()
     if AirWalk.Enabled then
@@ -8309,129 +8457,6 @@ AddCommand("unsetspawn", {"unss"}, "Deletes the spawn location you've saved", fu
     return "Spawnpoint removed"
 end)
 
-local FreezeWalk = {
-    Enabled = false,
-    OriginalParts = {},
-    Clones = {}
-}
-
-AddCommand("freezewalk", {"frwalk"}, "Freezes your character server-side but not client-side", function()
-    if FreezeWalk.Enabled then
-        crx("FreezeWalk is already enabled!", 1.1, Color3.fromRGB(255, 0, 0), 138081500)
-        return
-    end
-    
-    FreezeWalk.Enabled = true
-    local player = game.Players.LocalPlayer
-    local character = player.Character
-    if not character then
-        crx("Character not found!", 1.1, Color3.fromRGB(255, 0, 0), 138081500)
-        return
-    end
-    
-    local humanoid = character:FindFirstChildOfClass("Humanoid")
-    if not humanoid then
-        crx("Humanoid not found!", 1.1, Color3.fromRGB(255, 0, 0), 138081500)
-        return
-    end
-    
-    -- Store original parts and create clones
-    if humanoid.RigType == Enum.HumanoidRigType.R6 then
-        -- R6 Character (RootPart based)
-        local rootPart = character:FindFirstChild("HumanoidRootPart")
-        if rootPart then
-            FreezeWalk.OriginalParts[rootPart] = rootPart:Clone()
-            local clone = rootPart:Clone()
-            clone.Parent = character
-            rootPart:Destroy()
-            FreezeWalk.Clones[rootPart] = clone
-        end
-    else
-        -- R15 Character (LowerTorso based)
-        local lowerTorso = character:FindFirstChild("LowerTorso")
-        if lowerTorso then
-            -- Store original state
-            FreezeWalk.OriginalParts[lowerTorso] = {
-                Anchored = lowerTorso.Anchored,
-                Root = lowerTorso:FindFirstChild("Root")
-            }
-            
-            -- Anchor and remove root
-            lowerTorso.Anchored = true
-            local root = lowerTorso:FindFirstChild("Root")
-            if root then
-                root:Destroy()
-            end
-        end
-    end
-    
-    return "FreezeWalk enabledl"
-end)
-
-AddCommand("unfreezewalk", {"unfrwalk"}, "Disables FreezeWalk and restores normal movement", function()
-    if not FreezeWalk.Enabled then
-        crx("FreezeWalk wasn't active!", 1.1, Color3.fromRGB(255, 0, 0), 138081500)
-        return
-    end
-    
-    FreezeWalk.Enabled = false
-    local player = game.Players.LocalPlayer
-    local character = player.Character
-    
-    if character then
-        local humanoid = character:FindFirstChildOfClass("Humanoid")
-        if humanoid then
-            if humanoid.RigType == Enum.HumanoidRigType.R6 then
-                -- Restore R6 character
-                for originalPart, clone in pairs(FreezeWalk.Clones) do
-                    if clone and clone.Parent then
-                        clone:Destroy()
-                    end
-                    if originalPart and not originalPart.Parent then
-                        originalPart.Parent = character
-                    end
-                end
-            else
-                -- Restore R15 character
-                local lowerTorso = character:FindFirstChild("LowerTorso")
-                if lowerTorso then
-                    -- Restore anchored state
-                    lowerTorso.Anchored = FreezeWalk.OriginalParts[lowerTorso] and 
-                                         FreezeWalk.OriginalParts[lowerTorso].Anchored or false
-                    
-                    -- Restore root if it was removed
-                    if FreezeWalk.OriginalParts[lowerTorso] and 
-                       FreezeWalk.OriginalParts[lowerTorso].Root and 
-                       not lowerTorso:FindFirstChild("Root") then
-                        local root = Instance.new("Motor6D")
-                        root.Name = "Root"
-                        root.Part0 = lowerTorso
-                        root.Part1 = character:FindFirstChild("UpperTorso")
-                        root.C0 = CFrame.new(0, 0, 0)
-                        root.C1 = CFrame.new(0, 0, 0)
-                        root.Parent = lowerTorso
-                    end
-                end
-            end
-        end
-    end
-    
-    -- Clear stored data
-    FreezeWalk.OriginalParts = {}
-    FreezeWalk.Clones = {}
-    
-    return "FreezeWalk disabled - Normal movement restored"
-end)
-
--- Auto cleanup on character respawn
-game.Players.LocalPlayer.CharacterAdded:Connect(function(character)
-    if FreezeWalk.Enabled then
-        FreezeWalk.Enabled = false
-        FreezeWalk.OriginalParts = {}
-        FreezeWalk.Clones = {}
-    end
-end)
-
 AddCommandWithPlayer("scare", {"boo"}, "Tps behind a target and tps you back somehow scares them lol", function(name)
     local target = GetPlayer(name)
     if not target then
@@ -8503,11 +8528,6 @@ AddCommandWithPlayer("scare", {"boo"}, "Tps behind a target and tps you back som
 end)
 
 AddCommand("telekinesis", {"kineis", "tele"}, "Move any unanchored parts [UPDATED]", pmg)
-
-local Spazz = {
-    Enabled = false,
-    BodyVelocity = nil
-}
 
 AddCommand("spazz", {"sillyspin"}, "silly spin :p", function()
     if Spazz.Enabled then
@@ -8584,13 +8604,6 @@ game.Players.LocalPlayer.CharacterRemoving:Connect(function()
     end
     Spazz.Enabled = false
 end)
-
-
-
-local FreeGamepasses = {
-    Hooked = false,
-    OriginalFunction = nil
-}
 
 AddCommand("freegamepass", {"freegp", "fgp"}, "Pretends you own every gamepass and fires purchase signals", function()
     if FreeGamepasses.Hooked then
@@ -9443,18 +9456,6 @@ game.Players.LocalPlayer.CharacterRemoving:Connect(function()
         end
     end
 end)
-
-local Orbit = {
-    Active = false,
-    Connection = nil,
-    Radius = 5,
-    Speed = 6,
-    Angles = {},
-    OriginalPositions = {},
-    Players = game:GetService("Players"),
-    RunService = game:GetService("RunService"),
-    LocalPlayer = game:GetService("Players").LocalPlayer
-}
 
 -- Save original position of a player
 local function SaveOriginalPosition(player)
@@ -11124,7 +11125,7 @@ end
 
     local VersionLabel = Instance.new("TextLabel")
     VersionLabel.Name = "VersionLabel"
-    VersionLabel.Text = "V1.6"
+    VersionLabel.Text = "V1.7"
     VersionLabel.TextSize = 10
     VersionLabel.TextTransparency = 0.6
     VersionLabel.TextColor3 = Color3.fromRGB(0, 0, 0)
@@ -11575,7 +11576,7 @@ end
 
 -- Initialize and handle respawns
 local mainGUI = initializeMainGUI()
-crx("'232' Cmds Loaded!\nType 'cmds' for commands :D", 3, Color3.fromRGB(0, 255, 255), 12221831)
+crx("'235' Cmds Loaded!\nType 'cmds' for commands :D", 3, Color3.fromRGB(0, 255, 255), 12221831)
 
 Players.LocalPlayer.CharacterAdded:Connect(function()
     if ScreenGui and not ScreenGui.Parent then
@@ -11588,7 +11589,3 @@ Players.LocalPlayer.CharacterAdded:Connect(function()
         end
     end
 end)
-
-task.wait(3)
-
-crx("Theres also bugs with\nthe ChatListener btw :p", 3, Color3.fromRGB(218, 133, 65), 12221831)
