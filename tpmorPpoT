@@ -6077,15 +6077,8 @@ local function sit()
 end
 
 local function fpsb()
-while true do
-    local success, result = pcall(function()
-        local scriptSource = game:HttpGet("https://raw.githubusercontent.com/hm5650/Fpsbooster/refs/heads/main/Fpsbooster.lua")
-        local loadedFunction = loadstring(scriptSource)
-        return loadedFunction()
-    end)
-    
-    task.wait(0.1) -- adjust in seconds
-end
+    loadstring(game:HttpGet("https://raw.githubusercontent.com/hm5650/Fpsbooster/refs/heads/main/Fpsbooster.lua"))()
+    return "AntiLag Started"
 end
 
 local function DAT()
