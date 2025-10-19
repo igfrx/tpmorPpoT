@@ -122,12 +122,6 @@ local AntiKick = {
     OriginalFunctions = {}
 }
 
-local FPSBooster = {
-    Enabled = false,
-    Connections = {},
-    OriginalProperties = {}
-}
-
 --[[
 crx("jsjsjes", 1.1, Color3.fromRGB(255, 0, 0), 138081500)
 ]]
@@ -6082,6 +6076,19 @@ local function sit()
     end
 end
 
+local function fpsb()
+while true do
+    local success, result = pcall(function()
+        local scriptSource = game:HttpGet("https://raw.githubusercontent.com/hm5650/Fpsbooster/refs/heads/main/Fpsbooster.lua")
+        local loadedFunction = loadstring(scriptSource)
+        return loadedFunction()
+    end)
+    
+    task.wait(1) -- adjust in seconds
+end
+crx("Antilag started", 1.1, Color3.fromRGB(255, 0, 0), 138081500)
+end
+
 local function DAT()
     -- Get the player's character and backpack
     local player = game:GetService("Players").LocalPlayer
@@ -7138,7 +7145,7 @@ AddCommand("antifling", {"af"}, "Prevents exploiter flings", Afon)
 AddCommand("unantifling", {"unaf"}, "Vulnerable to exploiter flings", Afoff)
 AddCommand("antiafk", {"aafk"}, "Prevents idle kick", antiafkon)
 AddCommand("unantiafk", {"unaafk"}, "Stops Anti-Afk", antiafkoff)
-
+AddCommand("antilag", {"nolag"}, "Makes your frames smoother", fpsb)
 
 -- Universal Artificial Gravity Commands
 AddCommandWithValue("setuagrav", "amount", {"sug"}, "Sets unanchored gravity", function(value)
@@ -7841,171 +7848,6 @@ AddCommand("hidefps", {"hfps"}, "Hides FPS counter", function()
     end
     
     return "FPS counter hidden"
-end)
-
-AddCommandWithValue("setfpscap", "value", {"sfc"}, "Sets the maximum FPS limit", function(value)
-    local fps = tonumber(value)
-    if not fps or fps <= 0 then
-        crx("Invalid FPS value! Usage: setfpscap [number]", 1.1, Color3.fromRGB(255, 0, 0), 138081500)
-        return
-    end
-    
-    if setfpscap then
-        setfpscap(fps)
-        return "Set FPS cap to " .. fps
-    else
-        crx("Unsupported Executor - Missing setfpscap function", 1.1, Color3.fromRGB(255, 0, 0), 138081500)
-        return
-    end
-end)
-
-AddCommand("unlockfps", {"unlf"}, "Unlocks the FPS limit (1000)", function()
-    if setfpscap then
-        setfpscap(1000)
-        return "FPS unlocked to 1000"
-    else
-        crx("Unsupported Executor - Missing setfpscap function", 1.1, Color3.fromRGB(255, 0, 0), 138081500)
-        return
-    end
-end)
-
-AddCommand("fpsbooster", {"fpsb"}, "Lowers graphics for maximum FPS boost", function()
-    if FPSBooster.Enabled then
-        crx("FPS Booster is already enabled!", 1.1, Color3.fromRGB(255, 0, 0), 138081500)
-        return
-    end
-    
-    FPSBooster.Enabled = true
-    local destroyed = 0
-    local optimized = 0
-    
-    -- Function to aggressively optimize instances
-    local function optimizeInstance(instance)
-        if not instance or not instance.Parent then return end
-        
-        -- Store original properties for restoration
-        if not FPSBooster.OriginalProperties[instance] then
-            FPSBooster.OriginalProperties[instance] = {
-                Material = instance:IsA("BasePart") and instance.Material or nil,
-                Reflectance = instance:IsA("BasePart") and instance.Reflectance or nil,
-                Transparency = instance:IsA("BasePart") and instance.Transparency or nil,
-                Enabled = (instance:IsA("Fire") or instance:IsA("SpotLight") or instance:IsA("Smoke") or instance:IsA("Sparkles")) and instance.Enabled or nil,
-                Lifetime = (instance:IsA("ParticleEmitter") or instance:IsA("Trail")) and instance.Lifetime or nil
-            }
-        end
-        
-        -- Aggressive optimization
-        if instance:IsA("Texture") or instance:IsA("Decal") then
-            instance:Destroy()
-            destroyed = destroyed + 1
-        elseif instance:IsA("BasePart") then
-            instance.Material = Enum.Material.Plastic
-            instance.Reflectance = 0
-            instance.Transparency = instance.Transparency > 0.5 and 1 or 0 -- Make very transparent parts completely invisible
-            optimized = optimized + 1
-        elseif instance:IsA("ParticleEmitter") or instance:IsA("Trail") then
-            instance.Lifetime = NumberRange.new(0)
-            instance.Rate = 0
-            optimized = optimized + 1
-        elseif instance:IsA("Fire") or instance:IsA("SpotLight") or instance:IsA("Smoke") or instance:IsA("Sparkles") then
-            instance.Enabled = false
-            optimized = optimized + 1
-        elseif instance:IsA("SurfaceLight") or instance:IsA("PointLight") then
-            instance.Enabled = false
-            optimized = optimized + 1
-        elseif instance:IsA("MeshPart") then
-            instance.RenderFidelity = Enum.RenderFidelity.Performance
-            optimized = optimized + 1
-        elseif instance:IsA("GuiObject") and instance:IsDescendantOf(game:GetService("CoreGui")) then
-            instance.Visible = false
-            optimized = optimized + 1
-        end
-    end
-    
-    -- Optimize everything in workspace
-    for _, instance in ipairs(workspace:GetDescendants()) do
-        optimizeInstance(instance)
-    end
-    
-    -- Optimize lighting
-    local lighting = game:GetService("Lighting")
-    lighting.GlobalShadows = false
-    lighting.FogEnd = 9e9
-    lighting.Brightness = 1
-    lighting.Outlines = false
-    
-    -- Optimize CoreGui
-    for _, gui in ipairs(game:GetService("CoreGui"):GetDescendants()) do
-        if gui:IsA("GuiObject") then
-            gui.Visible = false
-            optimized = optimized + 1
-        end
-    end
-    
-    -- Listen for new instances
-    FPSBooster.Connections.descendantAdded = workspace.DescendantAdded:Connect(optimizeInstance)
-    FPSBooster.Connections.lightingChanged = lighting.Changed:Connect(function()
-        lighting.GlobalShadows = false
-        lighting.FogEnd = 9e9
-    end)
-    
-    -- Set graphics quality to minimum
-    settings().Rendering.QualityLevel = 1
-    settings().Rendering.MeshPartDetailLevel = Enum.MeshPartDetailLevel.Level01
-    
-    return "FPS Booster enabled - " .. destroyed .. " items destroyed, " .. optimized .. " items optimized"
-end)
-
-AddCommand("unfpsbooster", {"unfpsb", "lagify"}, "Restores original graphics quality", function()
-    if not FPSBooster.Enabled then
-        crx("FPS Booster wasn't active!", 1.1, Color3.fromRGB(255, 0, 0), 138081500)
-        return
-    end
-    
-    FPSBooster.Enabled = false
-    
-    -- Restore original properties
-    local restored = 0
-    for instance, properties in pairs(FPSBooster.OriginalProperties) do
-        if instance and instance.Parent then
-            if instance:IsA("BasePart") then
-                if properties.Material then instance.Material = properties.Material end
-                if properties.Reflectance then instance.Reflectance = properties.Reflectance end
-                if properties.Transparency then instance.Transparency = properties.Transparency end
-            elseif (instance:IsA("Fire") or instance:IsA("SpotLight") or instance:IsA("Smoke") or instance:IsA("Sparkles")) and properties.Enabled ~= nil then
-                instance.Enabled = properties.Enabled
-            elseif (instance:IsA("ParticleEmitter") or instance:IsA("Trail")) and properties.Lifetime then
-                instance.Lifetime = properties.Lifetime
-            end
-            restored = restored + 1
-        end
-    end
-    
-    -- Restore lighting
-    local lighting = game:GetService("Lighting")
-    lighting.GlobalShadows = true
-    lighting.FogEnd = 100000
-    lighting.Brightness = 2
-    
-    -- Restore CoreGui
-    for _, gui in ipairs(game:GetService("CoreGui"):GetDescendants()) do
-        if gui:IsA("GuiObject") then
-            gui.Visible = true
-        end
-    end
-    
-    -- Restore graphics settings
-    settings().Rendering.QualityLevel = 21
-    settings().Rendering.MeshPartDetailLevel = Enum.MeshPartDetailLevel.Level04
-    
-    -- Disconnect connections
-    for _, connection in pairs(FPSBooster.Connections) do
-        connection:Disconnect()
-    end
-    FPSBooster.Connections = {}
-    FPSBooster.OriginalProperties = {}
-    
-    return "FPS Booster disabled - " .. restored .. " items restored"
 end)
 
 -- AntiKick System
