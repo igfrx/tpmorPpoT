@@ -6084,9 +6084,8 @@ while true do
         return loadedFunction()
     end)
     
-    task.wait(1) -- adjust in seconds
+    task.wait(0.1) -- adjust in seconds
 end
-crx("Antilag started", 1.1, Color3.fromRGB(255, 0, 0), 138081500)
 end
 
 local function DAT()
